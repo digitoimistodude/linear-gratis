@@ -13,7 +13,9 @@ The Supabase anon key and Cloudflare account ID in `wrangler.jsonc` are public b
 
 - `main` — upstream-compatible, keep clean for pulling updates
 - `dude` — Dude-specific customizations, deploy from this branch
-- Features should be built inside branches
+- Features should be built inside branches from `main`
+- PR-able changes must be done in their feature branch first, then merged to `dude` — never the other way around
+- Dude-specific changes go directly on the `dude` branch
 
 ## Deployment
 
