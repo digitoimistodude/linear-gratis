@@ -10,97 +10,53 @@ import { useSearchParams } from 'next/navigation'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [magicLinkSent, setMagicLinkSent] = useState(false)
-  const { signInWithMagicLink, signInWithGitHub } = useAuth()
+  const [error, setError] = useState<string | null>(null)
+  const { signInWithPassword, signUpWithPassword } = useAuth()
   const searchParams = useSearchParams()
-  const error = searchParams.get('error')
+  const urlError = searchParams.get('error')
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
 
-    const { error } = await signInWithMagicLink(email)
-
-    if (error) {
-      console.error('Error sending magic link:', error)
-      alert('Error sending magic link. Please try again.')
+    if (isSignUp) {
+      const { error } = await signUpWithPassword(email, password)
+      if (error) {
+        setError(error.message)
+      }
     } else {
-      setMagicLinkSent(true)
+      const { error } = await signInWithPassword(email, password)
+      if (error) {
+        setError(error.message)
+      }
     }
 
     setLoading(false)
-  }
-
-  const handleGitHubLogin = async () => {
-    setLoading(true)
-    const { error } = await signInWithGitHub()
-    if (error) {
-      console.error('Error signing in with GitHub:', error)
-      alert('Error signing in with GitHub. Please try again.')
-    }
-    setLoading(false)
-  }
-
-  if (magicLinkSent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Check your email</CardTitle>
-            <CardDescription>
-              We&apos;ve sent a magic link to {email}. Click the link in the email to sign in.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              onClick={() => setMagicLinkSent(false)}
-              className="w-full"
-            >
-              Try different email
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign in to your account</CardTitle>
+          <CardTitle>{isSignUp ? 'Create an account' : 'Sign in to your account'}</CardTitle>
           <CardDescription>
-            Choose your preferred sign-in method to access your Linear integration
+            {isSignUp
+              ? 'Enter your email and password to create an account'
+              : 'Enter your credentials to access your Linear integration'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
+          {(error || urlError) && (
             <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm">
-              {error === 'auth_callback_failed' && 'Authentication failed. Please try again.'}
+              {error || (urlError === 'auth_callback_failed' && 'Authentication failed. Please try again.')}
             </div>
           )}
 
-          <Button
-            onClick={handleGitHubLogin}
-            disabled={loading}
-            className="w-full"
-            variant="outline"
-          >
-            {loading ? 'Signing in...' : 'Continue with GitHub'}
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleMagicLink} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -112,10 +68,40 @@ function LoginForm() {
                 required
               />
             </div>
-            <Button type="submit" disabled={loading || !email} className="w-full">
-              {loading ? 'Sending...' : 'Send magic link'}
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <Button type="submit" disabled={loading || !email || !password} className="w-full">
+              {loading ? (isSignUp ? 'Creating account...' : 'Signing in...') : (isSignUp ? 'Create account' : 'Sign in')}
             </Button>
           </form>
+
+          <div className="text-center text-sm text-muted-foreground">
+            {isSignUp ? (
+              <>
+                Already have an account?{' '}
+                <button onClick={() => { setIsSignUp(false); setError(null) }} className="text-primary hover:underline">
+                  Sign in
+                </button>
+              </>
+            ) : (
+              <>
+                Don&apos;t have an account?{' '}
+                <button onClick={() => { setIsSignUp(true); setError(null) }} className="text-primary hover:underline">
+                  Sign up
+                </button>
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
