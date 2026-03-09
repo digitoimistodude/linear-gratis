@@ -4,6 +4,7 @@
 * Allow all authenticated users to edit and delete shared resources (`feature/shared-views`)
 * Add cursor pointer to all interactive elements (`fix/cursor-pointer`)
 * Redirect to `/views` after login instead of `/profile` (dude-specific change)
+* Remove unnecessary top padding from empty state card (dude-specific change)
 * Remove sign-up link from login page (dude-specific change)
 
 ### 0.1.1: 2026-03-09
