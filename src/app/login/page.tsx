@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -15,6 +15,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { signInWithPassword, signUpWithPassword } = useAuth()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const urlError = searchParams.get('error')
 
@@ -27,11 +28,15 @@ function LoginForm() {
       const { error } = await signUpWithPassword(email, password)
       if (error) {
         setError(error.message)
+      } else {
+        router.push('/profile')
       }
     } else {
       const { error } = await signInWithPassword(email, password)
       if (error) {
         setError(error.message)
+      } else {
+        router.push('/profile')
       }
     }
 
@@ -85,23 +90,6 @@ function LoginForm() {
             </Button>
           </form>
 
-          <div className="text-center text-sm text-muted-foreground">
-            {isSignUp ? (
-              <>
-                Already have an account?{' '}
-                <button onClick={() => { setIsSignUp(false); setError(null) }} className="text-primary hover:underline">
-                  Sign in
-                </button>
-              </>
-            ) : (
-              <>
-                Don&apos;t have an account?{' '}
-                <button onClick={() => { setIsSignUp(true); setError(null) }} className="text-primary hover:underline">
-                  Sign up
-                </button>
-              </>
-            )}
-          </div>
         </CardContent>
       </Card>
     </div>
