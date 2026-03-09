@@ -39,6 +39,20 @@ The Supabase anon key and Cloudflare account ID in `wrangler.jsonc` are public b
 - All components must look like Linear.app
 - Use existing shadcn/ui components from `src/components/ui/`
 
+## Changelog
+
+- CHANGELOG.md format: `### x.x.x: yyyy-mm-dd` headings with `*` bullets, no main heading
+- Keep version in package.json in sync with CHANGELOG.md
+- Reference Linear issues at end: `Fix navigation bug, Ref: DEV-123`
+- Update CHANGELOG.md after each change
+- Use present tense in commits and CHANGELOG.md
+- No formatting in CHANGELOG.md except `inline code` and when absolute necessary
+- Use `*` as bullets in CHANGELOG.md
+- Keep CHANGELOG.md date up to date when adding entries
+- Use semver, major only with major changes, minor for "major" changes, patches for small changes - never continue longer than .20 patch
+- Add branch name in parentheses for PR-able features: `Add feature x (`feature/branch-name`)`
+- Mark dude-specific changes with `(dude-specific change)` at the end
+
 ## Commits and code style
 
 - Always commit build and asset files
