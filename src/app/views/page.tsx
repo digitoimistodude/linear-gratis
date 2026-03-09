@@ -544,7 +544,7 @@ export default function PublicViewsPage() {
 
         {projects.length === 0 && teams.length === 0 && (
           <Card className="mb-6">
-            <CardContent className="pt-6">
+            <CardContent>
               <p className="text-center text-gray-600">
                 No projects or teams found. Make sure your Linear API token is
                 valid and you have access to projects and teams.
