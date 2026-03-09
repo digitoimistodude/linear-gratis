@@ -58,3 +58,4 @@ The Supabase anon key and Cloudflare account ID in `wrangler.jsonc` are public b
 - If new tasks come in, don't jump to them right away — add them to the list in order of urgency and finish your current work first
 - Do not ever guess features, always proof them via looking up the repo, official docs, GitHub code, issues, if possible
 - When looking things up, do not use years in search terms like 2024 or 2025, look up recent information
+- Keep documentation up to date — when making changes, update internal docs at ~/Projects/internal.docs.dude.fi and add relevant comments to the Linear issue
