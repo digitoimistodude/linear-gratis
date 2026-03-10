@@ -1,3 +1,11 @@
+### 0.2.1: 2026-03-10
+
+* Add visibility controls to hide internal comments and activity from public views (`feature/hide-internal-data`)
+* Respect `show_descriptions` setting in issue detail modal (`feature/hide-internal-data`)
+* Set document title and favicon from branding settings on public pages (`feature/white-label-title`)
+* Use auto width for branding logo to scale naturally (`fix/logo-auto-width`)
+* Sort projects and teams dropdowns alphabetically (`fix/alphabetical-projects`)
+
 ### 0.2.0: 2026-03-09
 
 * Add shared views, forms, domains and roadmaps across authenticated users (`feature/shared-views`)
