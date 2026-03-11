@@ -1,5 +1,7 @@
 ### 0.2.2: 2026-03-11
 
+* Add ability to exclude specific issues from public views (`feature/exclude-issues`)
+* Show real profile photos from Linear in issue detail modal (`feature/profile-photos`)
 * Fix Google Fonts not loading in branding custom fonts (`fix/google-fonts`)
 * Fix checkbox gap not rendering due to inline margin override (dude-specific change)
 
