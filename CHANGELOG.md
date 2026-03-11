@@ -1,3 +1,8 @@
+### 0.2.2: 2026-03-11
+
+* Fix Google Fonts not loading in branding custom fonts (`fix/google-fonts`)
+* Fix checkbox gap not rendering due to inline margin override (dude-specific change)
+
 ### 0.2.1: 2026-03-10
 
 * Add visibility controls to hide internal comments and activity from public views (`feature/hide-internal-data`)
