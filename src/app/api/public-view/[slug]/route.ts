@@ -76,6 +76,12 @@ export async function GET(
       throw new Error(`Failed to fetch issues from Linear: ${issuesResult.error}`);
     }
 
+    // Filter out excluded issues
+    const excludedIds = viewData.excluded_issue_ids || [];
+    const filteredIssues = excludedIds.length > 0
+      ? issuesResult.issues?.filter((issue: { id: string }) => !excludedIds.includes(issue.id))
+      : issuesResult.issues;
+
     return NextResponse.json({
       success: true,
       view: {
@@ -98,7 +104,7 @@ export async function GET(
         show_activity: viewData.show_activity ?? false,
         created_at: viewData.created_at
       },
-      issues: issuesResult.issues
+      issues: filteredIssues
     });
 
   } catch (error) {
@@ -198,6 +204,12 @@ export async function POST(
       throw new Error(`Failed to fetch issues from Linear: ${issuesResult.error}`);
     }
 
+    // Filter out excluded issues
+    const excludedIds = viewData.excluded_issue_ids || [];
+    const filteredIssues = excludedIds.length > 0
+      ? issuesResult.issues?.filter((issue: { id: string }) => !excludedIds.includes(issue.id))
+      : issuesResult.issues;
+
     return NextResponse.json({
       success: true,
       view: {
@@ -221,7 +233,7 @@ export async function POST(
         show_activity: viewData.show_activity ?? false,
         created_at: viewData.created_at
       },
-      issues: issuesResult.issues
+      issues: filteredIssues
     });
 
   } catch (error) {
