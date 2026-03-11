@@ -35,6 +35,7 @@ export type IssueHistory = {
   toPriority?: number;
   user: {
     name: string;
+    avatarUrl?: string;
   };
 };
 
@@ -55,6 +56,7 @@ export type IssueDetail = {
   assignee?: {
     id: string;
     name: string;
+    avatarUrl?: string;
   };
   labels: Array<{
     id: string;
@@ -163,6 +165,7 @@ export async function GET(
               toPriority
               actor {
                 name
+                avatarUrl
               }
             }
           }` : '';
@@ -187,6 +190,7 @@ export async function GET(
           assignee {
             id
             name
+            avatarUrl
           }
           labels {
             nodes {
@@ -238,6 +242,7 @@ export async function GET(
           assignee?: {
             id: string;
             name: string;
+            avatarUrl?: string;
           };
           labels: {
             nodes: Array<{
@@ -283,6 +288,7 @@ export async function GET(
               toPriority?: number;
               actor: {
                 name: string;
+                avatarUrl?: string;
               };
             }>;
           };
@@ -330,7 +336,7 @@ export async function GET(
         toAssignee: h.toAssignee,
         fromPriority: h.fromPriority,
         toPriority: h.toPriority,
-        user: h.actor,
+        user: { name: h.actor.name, avatarUrl: h.actor.avatarUrl },
       })),
     };
 
