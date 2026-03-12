@@ -72,6 +72,7 @@ export default function PublicViewsPage() {
   const [allowIssueCreation, setAllowIssueCreation] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
+  const [showProjectUpdates, setShowProjectUpdates] = useState(true);
   const [excludedIssueIds, setExcludedIssueIds] = useState<string[]>([]);
   const [availableIssues, setAvailableIssues] = useState<Array<{ id: string; identifier: string; title: string }>>([]);
   const [loadingIssues, setLoadingIssues] = useState(false);
@@ -249,6 +250,7 @@ export default function PublicViewsPage() {
         password_hash: passwordHash,
         is_active: true,
         allow_issue_creation: allowIssueCreation,
+        show_project_updates: showProjectUpdates,
         excluded_issue_ids: excludedIssueIds,
         ...sourceData,
       });
@@ -333,6 +335,7 @@ export default function PublicViewsPage() {
     setAllowIssueCreation(false);
     setShowComments(false);
     setShowActivity(false);
+    setShowProjectUpdates(true);
     setExcludedIssueIds([]);
     setAvailableIssues([]);
     setIssueFilter("");
@@ -378,6 +381,7 @@ export default function PublicViewsPage() {
     setAllowIssueCreation(view.allow_issue_creation || false);
     setShowComments(view.show_comments || false);
     setShowActivity(view.show_activity || false);
+    setShowProjectUpdates(view.show_project_updates !== false);
     setExcludedIssueIds(view.excluded_issue_ids || []);
 
     // Set source type and selection based on existing view
@@ -464,6 +468,7 @@ export default function PublicViewsPage() {
           allow_issue_creation: allowIssueCreation,
           show_comments: showComments,
           show_activity: showActivity,
+          show_project_updates: showProjectUpdates,
           excluded_issue_ids: excludedIssueIds,
           ...sourceData,
         })
@@ -829,6 +834,25 @@ export default function PublicViewsPage() {
                       </p>
                     </div>
                   </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={showProjectUpdates}
+                        onChange={() => setShowProjectUpdates(!showProjectUpdates)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label
+                        htmlFor="show-project-updates"
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        Show project updates
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Display the project updates button on the public board view
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1115,6 +1139,25 @@ export default function PublicViewsPage() {
                       </Label>
                       <p className="text-xs text-muted-foreground mt-1">
                         Display status changes, assignee changes, and other activity when viewing issue details
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={showProjectUpdates}
+                        onChange={() => setShowProjectUpdates(!showProjectUpdates)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label
+                        htmlFor="edit-show-project-updates"
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        Show project updates
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Display the project updates button on the public board view
                       </p>
                     </div>
                   </div>
