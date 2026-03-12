@@ -1,3 +1,7 @@
+### 0.2.3: 2026-03-12
+
+* Add toggle to hide project updates from public views (`feature/hide-project-updates`)
+
 ### 0.2.2: 2026-03-11
 
 * Add ability to exclude specific issues from public views (`feature/exclude-issues`)
