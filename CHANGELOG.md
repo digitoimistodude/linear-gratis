@@ -1,6 +1,7 @@
 ### 0.2.3: 2026-03-12
 
 * Add toggle to hide project updates from public views (`feature/hide-project-updates`)
+* Add Linear-accurate priority icons and estimate display on cards and detail modal (`feature/priority-icons`)
 * Hide non-functional Display and Stats buttons until implemented, Ref: DEV-843, DEV-844 (dude-specific change)
 
 ### 0.2.2: 2026-03-11
