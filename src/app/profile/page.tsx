@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 export default function ProfilePage() {
   const { user, signOut, loading: authLoading } = useAuth()
   const [linearToken, setLinearToken] = useState('')
+  const [hideOnboarding, setHideOnboarding] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -25,13 +26,17 @@ export default function ProfilePage() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('linear_api_token')
+        .select('linear_api_token, hide_onboarding')
         .eq('id', user.id)
         .single()
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         console.error('Error loading profile:', error)
-      } else if (data?.linear_api_token) {
+      } else if (data) {
+        setHideOnboarding(data.hide_onboarding ?? false)
+      }
+
+      if (data?.linear_api_token) {
         try {
           const decryptedToken = await decryptTokenClient(data.linear_api_token)
           setLinearToken(decryptedToken)
@@ -84,6 +89,7 @@ export default function ProfilePage() {
           id: user.id,
           email: user.email!,
           linear_api_token: encryptedToken,
+          hide_onboarding: hideOnboarding,
           updated_at: new Date().toISOString()
         })
 
@@ -147,6 +153,40 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label>Email address</Label>
               <Input value={user.email || ''} disabled />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Display preferences</CardTitle>
+            <CardDescription>
+              Customize how the dashboard looks
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Hide onboarding section</Label>
+                <p className="text-sm text-muted-foreground">
+                  Hide the hero section and action cards on the dashboard
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={hideOnboarding}
+                onClick={() => setHideOnboarding(!hideOnboarding)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  hideOnboarding ? 'bg-primary' : 'bg-muted'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    hideOnboarding ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
             </div>
           </CardContent>
         </Card>

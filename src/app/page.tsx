@@ -47,6 +47,7 @@ export default function Home() {
 
   // Check if user has Linear API token set up
   const [hasLinearToken, setHasLinearToken] = useState<boolean | null>(null);
+  const [hideOnboarding, setHideOnboarding] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -55,7 +56,7 @@ export default function Home() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("linear_api_token")
+          .select("linear_api_token, hide_onboarding")
           .eq("id", user.id)
           .single();
 
@@ -64,6 +65,7 @@ export default function Home() {
           setHasLinearToken(false);
         } else {
           setHasLinearToken(!!data?.linear_api_token);
+          setHideOnboarding(data?.hide_onboarding ?? false);
         }
       } catch (error) {
         console.error("Error checking Linear token:", error);
@@ -966,6 +968,7 @@ export default function Home() {
       <Navigation />
       <div className="container mx-auto px-6 py-12">
         {/* Hero section */}
+        {!hideOnboarding && (
         <div className="max-w-4xl mx-auto mb-12">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
@@ -1013,6 +1016,7 @@ export default function Home() {
             </Card>
           </div>
         </div>
+        )}
 
         <div id="form" className="max-w-2xl mx-auto">
           <LinearIssueForm />

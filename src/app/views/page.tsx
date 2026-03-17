@@ -26,7 +26,7 @@ import { supabase, PublicView } from "@/lib/supabase";
 import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Trash2, Eye, Copy, Globe, Lock, Edit3 } from "lucide-react";
+import { Trash2, Eye, Copy, Globe, Lock, Edit3, X } from "lucide-react";
 import bcrypt from "bcryptjs";
 
 type Project = {
@@ -77,6 +77,12 @@ export default function PublicViewsPage() {
   const [availableIssues, setAvailableIssues] = useState<Array<{ id: string; identifier: string; title: string }>>([]);
   const [loadingIssues, setLoadingIssues] = useState(false);
   const [issueFilter, setIssueFilter] = useState("");
+  const [hideViewsOnboarding, setHideViewsOnboarding] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('hideViewsOnboarding') === 'true'
+    }
+    return false
+  });
 
   const loadUserData = useCallback(async () => {
     if (!user) return;
@@ -508,6 +514,7 @@ export default function PublicViewsPage() {
     <div className="min-h-screen">
       <Navigation />
       <div className="max-w-6xl mx-auto p-6">
+        {!hideViewsOnboarding && (
         <div className="mb-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-4">Public read-only views</h1>
@@ -557,7 +564,7 @@ export default function PublicViewsPage() {
             </Card>
           </div>
 
-          <div className="text-center">
+          <div className="text-center space-y-3">
             {linearToken ? (
               <Button
                 onClick={() => {
@@ -580,8 +587,21 @@ export default function PublicViewsPage() {
                 </Button>
               </Link>
             )}
+            <div>
+              <button
+                onClick={() => {
+                  setHideViewsOnboarding(true)
+                  localStorage.setItem('hideViewsOnboarding', 'true')
+                }}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="h-3 w-3" />
+                Hide this section
+              </button>
+            </div>
           </div>
         </div>
+        )}
 
         {message && (
           <div
@@ -1340,9 +1360,22 @@ export default function PublicViewsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Your public views</h2>
-              <span className="text-sm text-muted-foreground">
-                {views.length} view{views.length !== 1 ? "s" : ""}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">
+                  {views.length} view{views.length !== 1 ? "s" : ""}
+                </span>
+                <Button
+                  onClick={() => {
+                    setShowCreateView(true);
+                    setShowEditView(false);
+                    setEditingView(null);
+                  }}
+                  disabled={projects.length === 0 && teams.length === 0}
+                  size="sm"
+                >
+                  Create new view
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-4">
