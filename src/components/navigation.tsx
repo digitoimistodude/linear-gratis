@@ -10,6 +10,7 @@ import { BrandingSettings } from '@/lib/supabase'
 export function Navigation() {
   const { user, signOut, loading } = useAuth()
   const [branding, setBranding] = useState<BrandingSettings | null>(null)
+  const [brandingLoaded, setBrandingLoaded] = useState(false)
 
   // Load branding settings for authenticated users
   useEffect(() => {
@@ -19,7 +20,9 @@ export function Navigation() {
       try {
         const response = await fetch('/api/branding')
         if (response.ok) {
-          const data = (await response.json()) as { branding: BrandingSettings | null }
+          const text = await response.text()
+          if (!text) return
+          const data = JSON.parse(text) as { branding: BrandingSettings | null }
           setBranding(data.branding)
 
           // Apply favicon in admin
@@ -35,6 +38,8 @@ export function Navigation() {
         }
       } catch (err) {
         console.error('Error loading branding:', err)
+      } finally {
+        setBrandingLoaded(true)
       }
     }
 
@@ -42,6 +47,11 @@ export function Navigation() {
   }, [user])
 
   const renderLogo = () => {
+    // Don't show fallback text while branding is loading for authenticated users
+    if (user && !brandingLoaded) {
+      return <div className="h-6" />
+    }
+
     if (branding?.logo_url) {
       return (
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
