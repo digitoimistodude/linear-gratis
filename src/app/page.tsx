@@ -24,6 +24,7 @@ import {
   Heart,
   ChevronRight,
   Settings,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -1014,6 +1015,24 @@ export default function Home() {
                 </Button>
               </CardContent>
             </Card>
+          </div>
+
+          <div className="text-center mt-6">
+            <button
+              onClick={async () => {
+                setHideOnboarding(true);
+                if (user) {
+                  await supabase
+                    .from("profiles")
+                    .update({ hide_onboarding: true })
+                    .eq("id", user.id);
+                }
+              }}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-3 w-3" />
+              Hide this section
+            </button>
           </div>
         </div>
         )}
