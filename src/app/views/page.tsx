@@ -1364,17 +1364,19 @@ export default function PublicViewsPage() {
                 <span className="text-sm text-muted-foreground">
                   {views.length} view{views.length !== 1 ? "s" : ""}
                 </span>
-                <Button
-                  onClick={() => {
-                    setShowCreateView(true);
-                    setShowEditView(false);
-                    setEditingView(null);
-                  }}
-                  disabled={projects.length === 0 && teams.length === 0}
-                  size="sm"
-                >
-                  Create new view
-                </Button>
+                {linearToken && (
+                  <Button
+                    onClick={() => {
+                      setShowCreateView(true);
+                      setShowEditView(false);
+                      setEditingView(null);
+                    }}
+                    disabled={projects.length === 0 && teams.length === 0}
+                    size="sm"
+                  >
+                    Create new view
+                  </Button>
+                )}
               </div>
             </div>
 
