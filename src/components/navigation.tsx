@@ -25,15 +25,13 @@ export function Navigation() {
           const data = JSON.parse(text) as { branding: BrandingSettings | null }
           setBranding(data.branding)
 
-          // Apply favicon in admin
+          // Apply favicon in admin - remove all existing favicons first
           if (data.branding?.favicon_url) {
-            let favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-            if (!favicon) {
-              favicon = document.createElement('link')
-              favicon.rel = 'icon'
-              document.head.appendChild(favicon)
-            }
+            document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => el.remove())
+            const favicon = document.createElement('link')
+            favicon.rel = 'icon'
             favicon.href = data.branding.favicon_url
+            document.head.appendChild(favicon)
           }
         }
       } catch (err) {
