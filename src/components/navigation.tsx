@@ -45,59 +45,60 @@ export function Navigation() {
         </div>
 
         <div className="flex items-center gap-2">
-          <SimpleThemeToggle />
           {user ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Link href="/views">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Public views
+                </Button>
+              </Link>
+              <Link href="/forms">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Forms
+                </Button>
+              </Link>
+              <Link href="/roadmaps">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Roadmaps
+                </Button>
+              </Link>
+              <Link href="/profile/branding">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Branding
+                </Button>
+              </Link>
+              <Link href="/profile/domains">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Domains
+                </Button>
+              </Link>
+              <Link href="/profile">
+                <Button variant="ghost" size="sm" className="font-medium">
+                  Profile
+                </Button>
+              </Link>
               <span className="text-sm text-muted-foreground hidden sm:block">
                 {user.email}
               </span>
-              <div className="flex items-center gap-2">
-                <Link href="/forms">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Forms
-                  </Button>
-                </Link>
-                <Link href="/roadmaps">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Roadmaps
-                  </Button>
-                </Link>
-                <Link href="/views">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Public views
-                  </Button>
-                </Link>
-                <Link href="/profile/branding">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Branding
-                  </Button>
-                </Link>
-                <Link href="/profile/domains">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Domains
-                  </Button>
-                </Link>
-                <Link href="/profile">
-                  <Button variant="ghost" size="sm" className="font-medium">
-                    Profile
-                  </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => signOut()}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Sign out
-                </Button>
-              </div>
+              <SimpleThemeToggle />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut()}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Sign out
+              </Button>
             </div>
           ) : (
-            <Link href="/login">
-              <Button size="sm" className="font-medium">
-                Sign in
-              </Button>
-            </Link>
+            <>
+              <SimpleThemeToggle />
+              <Link href="/login">
+                <Button size="sm" className="font-medium">
+                  Sign in
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       </div>

@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MetricsBar } from "@/components/metrics-bar";
@@ -37,6 +38,7 @@ import { KanbanMockup } from "@/components/mockups/kanban-mockup";
 
 export default function Home() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     customerName: "Sarah Chen",
     customerEmail: "sarah@acme.com",
@@ -73,6 +75,13 @@ export default function Home() {
 
     checkLinearToken();
   }, [user]);
+
+  // Redirect authenticated users with token to public views
+  useEffect(() => {
+    if (hasLinearToken === true) {
+      router.replace("/views");
+    }
+  }, [hasLinearToken, router]);
 
   if (loading) {
     return (
