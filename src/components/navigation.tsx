@@ -44,7 +44,7 @@ export function Navigation() {
   const renderLogo = () => {
     if (branding?.logo_url) {
       return (
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200">
+        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
           <img
             src={branding.logo_url}
             alt={branding.brand_name || 'Logo'}
@@ -57,7 +57,7 @@ export function Navigation() {
             className="flex-shrink-0"
           />
           {branding.brand_name && (
-            <span className="text-xl font-semibold">{branding.brand_name}</span>
+            <span className="text-base font-semibold">{branding.brand_name}</span>
           )}
         </Link>
       )
@@ -65,14 +65,14 @@ export function Navigation() {
 
     if (branding?.brand_name) {
       return (
-        <Link href="/" className="text-xl font-semibold hover:text-primary transition-colors duration-200">
+        <Link href="/" className="text-base font-semibold hover:text-primary transition-colors duration-200">
           {branding.brand_name}
         </Link>
       )
     }
 
     return (
-      <Link href="/" className="text-xl font-semibold hover:text-primary transition-colors duration-200">
+      <Link href="/" className="text-base font-semibold hover:text-primary transition-colors duration-200">
         linear.gratis
       </Link>
     )
