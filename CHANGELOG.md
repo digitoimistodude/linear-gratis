@@ -1,3 +1,10 @@
+### 0.2.4: 2026-03-17
+
+* Add hide onboarding toggle in profile settings and dismissible views onboarding section (`feature/hide-onboarding`)
+* Add Create new view button to public views list header (`feature/hide-onboarding`)
+* Use branding logo and name in admin navigation, Ref: DEV-835 (dude-specific change)
+* Use branding favicon in admin, Ref: DEV-836 (dude-specific change)
+
 ### 0.2.3: 2026-03-12
 
 * Add toggle to hide project updates from public views (`feature/hide-project-updates`)
