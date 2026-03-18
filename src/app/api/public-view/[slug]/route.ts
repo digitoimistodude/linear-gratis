@@ -103,6 +103,7 @@ export async function GET(
         allow_issue_creation: viewData.allow_issue_creation,
         show_comments: viewData.show_comments ?? false,
         show_activity: viewData.show_activity ?? false,
+        allow_customer_comments: viewData.allow_customer_comments ?? false,
         created_at: viewData.created_at
       },
       issues: filteredIssues
@@ -233,6 +234,7 @@ export async function POST(
         allow_issue_creation: viewData.allow_issue_creation,
         show_comments: viewData.show_comments ?? false,
         show_activity: viewData.show_activity ?? false,
+        allow_customer_comments: viewData.allow_customer_comments ?? false,
         created_at: viewData.created_at
       },
       issues: filteredIssues

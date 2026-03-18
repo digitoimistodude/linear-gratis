@@ -69,6 +69,21 @@ export type PublicView = {
   expires_at?: string
   allow_issue_creation: boolean
   excluded_issue_ids: string[]
+  allow_customer_comments: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type ViewComment = {
+  id: string
+  view_id: string
+  issue_id: string
+  author_name: string
+  author_email: string
+  content: string
+  is_approved: boolean
+  is_hidden: boolean
+  ip_hash?: string
   created_at: string
   updated_at: string
 }

@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { IssueDetail } from '@/app/api/public-view/[slug]/issue/[issueId]/route'
+import { ViewCommentSection } from '@/components/view-comment-section'
 
 interface IssueDetailModalProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ interface IssueDetailModalProps {
   showActivity?: boolean
   showLabels?: boolean
   showDescriptions?: boolean
+  allowCustomerComments?: boolean
 }
 
 const getPriorityIcon = (priority: number) => {
@@ -140,11 +142,11 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComments = false, showActivity = false, showLabels = true, showDescriptions = true }: IssueDetailModalProps) {
+export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComments = false, showActivity = false, showLabels = true, showDescriptions = true, allowCustomerComments = false }: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'activity' | 'comments'>(showActivity ? 'activity' : 'comments')
+  const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'discussion'>(allowCustomerComments ? 'discussion' : showActivity ? 'activity' : 'comments')
 
   useEffect(() => {
     if (isOpen && issueId) {
@@ -422,10 +424,22 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
                 </div>
               )}
 
-              {/* Activity/Comments Tabs - only shown when enabled in view settings */}
-              {(showComments || showActivity) && (
+              {/* Activity/Comments/Discussion Tabs - only shown when enabled in view settings */}
+              {(showComments || showActivity || allowCustomerComments) && (
               <div className="border-t border-border pt-6">
                 <div className="flex items-center gap-4 mb-6">
+                  {allowCustomerComments && (
+                  <button
+                    onClick={() => setActiveTab('discussion')}
+                    className={`text-sm font-medium pb-2 border-b-2 transition-colors ${
+                      activeTab === 'discussion'
+                        ? 'border-primary text-foreground'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Discussion
+                  </button>
+                  )}
                   {showActivity && (
                   <button
                     onClick={() => setActiveTab('activity')}
@@ -553,6 +567,16 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
                       </div>
                     ))}
                   </div>
+                )}
+
+                {/* Discussion Tab (Customer Comments) */}
+                {allowCustomerComments && activeTab === 'discussion' && (
+                  <ViewCommentSection
+                    viewSlug={viewSlug}
+                    issueId={issueId}
+                    issueIdentifier={issue?.identifier}
+                    allowComments={true}
+                  />
                 )}
               </div>
               )}

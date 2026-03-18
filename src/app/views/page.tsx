@@ -85,6 +85,7 @@ export default function PublicViewsPage() {
     }
     return false
   });
+  const [allowCustomerComments, setAllowCustomerComments] = useState(false);
 
   const loadUserData = useCallback(async () => {
     if (!user) return;
@@ -260,6 +261,7 @@ export default function PublicViewsPage() {
         allow_issue_creation: allowIssueCreation,
         show_project_updates: showProjectUpdates,
         excluded_issue_ids: excludedIssueIds,
+        allow_customer_comments: allowCustomerComments,
         ...sourceData,
       });
 
@@ -349,6 +351,7 @@ export default function PublicViewsPage() {
     setExcludedIssueIds([]);
     setAvailableIssues([]);
     setIssueFilter("");
+    setAllowCustomerComments(false);
     setShowCreateView(false);
     setEditingView(null);
     setShowEditView(false);
@@ -395,6 +398,7 @@ export default function PublicViewsPage() {
     setShowDescriptions(view.show_descriptions !== false);
     setShowLabels(view.show_labels !== false);
     setExcludedIssueIds(view.excluded_issue_ids || []);
+    setAllowCustomerComments(view.allow_customer_comments || false);
 
     // Set source type and selection based on existing view
     if (view.project_id) {
@@ -484,6 +488,7 @@ export default function PublicViewsPage() {
           show_activity: showActivity,
           show_project_updates: showProjectUpdates,
           excluded_issue_ids: excludedIssueIds,
+          allow_customer_comments: allowCustomerComments,
           ...sourceData,
         })
         .eq("id", editingView.id);
@@ -915,6 +920,22 @@ export default function PublicViewsPage() {
                       </p>
                     </div>
                   </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={allowCustomerComments}
+                        onChange={() => setAllowCustomerComments(!allowCustomerComments)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium cursor-pointer">
+                        Allow customer commenting
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Let viewers comment on issues. Comments are stored separately and synced to Linear as attachments.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1254,6 +1275,22 @@ export default function PublicViewsPage() {
                       </Label>
                       <p className="text-xs text-muted-foreground mt-1">
                         Display the project updates button on the public board view
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={allowCustomerComments}
+                        onChange={() => setAllowCustomerComments(!allowCustomerComments)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium cursor-pointer">
+                        Allow customer commenting
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Let viewers comment on issues. Comments are stored separately and synced to Linear as attachments.
                       </p>
                     </div>
                   </div>

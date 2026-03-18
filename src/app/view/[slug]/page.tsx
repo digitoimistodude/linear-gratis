@@ -54,6 +54,20 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
 
   // Load branding settings for this view's owner
   const { branding } = useBrandingSettings(view?.user_id || null)
+  // Auto-open issue detail modal from URL path (e.g. /view/slug/KM-81)
+  useEffect(() => {
+    if (issues.length === 0 || selectedIssueId) return
+    const pathParts = window.location.pathname.split('/')
+    // URL format: /view/slug/IDENTIFIER
+    if (pathParts.length >= 4) {
+      const identifier = pathParts[3]
+      const issue = issues.find(i => i.identifier === identifier)
+      if (issue) {
+        setSelectedIssueId(issue.id)
+        setShowIssueDetail(true)
+      }
+    }
+  }, [issues]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const initParams = async () => {
@@ -146,11 +160,18 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   const handleIssueClick = (issueId: string) => {
     setSelectedIssueId(issueId)
     setShowIssueDetail(true)
+    // Update URL with issue identifier
+    const issue = issues.find(i => i.id === issueId)
+    if (issue) {
+      window.history.pushState(null, '', `/view/${slug}/${issue.identifier}`)
+    }
   }
 
   const handleCloseIssueDetail = () => {
     setShowIssueDetail(false)
     setSelectedIssueId(null)
+    // Restore base URL
+    window.history.pushState(null, '', `/view/${slug}`)
   }
 
   const handleSubmitIssue = async (issueData: {
@@ -533,6 +554,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           showActivity={view?.show_activity}
           showLabels={view?.show_labels}
           showDescriptions={view?.show_descriptions}
+          allowCustomerComments={view?.allow_customer_comments}
         />
       )}
 
