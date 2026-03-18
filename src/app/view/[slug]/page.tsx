@@ -531,6 +531,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           viewSlug={slug}
           showComments={view?.show_comments}
           showActivity={view?.show_activity}
+          showLabels={view?.show_labels}
           showDescriptions={view?.show_descriptions}
         />
       )}

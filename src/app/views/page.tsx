@@ -72,7 +72,9 @@ export default function PublicViewsPage() {
   const [allowIssueCreation, setAllowIssueCreation] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
-  const [showProjectUpdates, setShowProjectUpdates] = useState(true);
+  const [showProjectUpdates, setShowProjectUpdates] = useState(false);
+  const [showDescriptions, setShowDescriptions] = useState(false);
+  const [showLabels, setShowLabels] = useState(false);
   const [excludedIssueIds, setExcludedIssueIds] = useState<string[]>([]);
   const [availableIssues, setAvailableIssues] = useState<Array<{ id: string; identifier: string; title: string }>>([]);
   const [loadingIssues, setLoadingIssues] = useState(false);
@@ -246,9 +248,9 @@ export default function PublicViewsPage() {
         view_title: viewTitle,
         description: viewDescription || null,
         show_assignees: true,
-        show_labels: true,
+        show_labels: showLabels,
         show_priorities: true,
-        show_descriptions: true,
+        show_descriptions: showDescriptions,
         show_comments: showComments,
         show_activity: showActivity,
         allowed_statuses: [],
@@ -341,7 +343,9 @@ export default function PublicViewsPage() {
     setAllowIssueCreation(false);
     setShowComments(false);
     setShowActivity(false);
-    setShowProjectUpdates(true);
+    setShowProjectUpdates(false);
+    setShowDescriptions(false);
+    setShowLabels(false);
     setExcludedIssueIds([]);
     setAvailableIssues([]);
     setIssueFilter("");
@@ -388,6 +392,8 @@ export default function PublicViewsPage() {
     setShowComments(view.show_comments || false);
     setShowActivity(view.show_activity || false);
     setShowProjectUpdates(view.show_project_updates !== false);
+    setShowDescriptions(view.show_descriptions !== false);
+    setShowLabels(view.show_labels !== false);
     setExcludedIssueIds(view.excluded_issue_ids || []);
 
     // Set source type and selection based on existing view
@@ -472,6 +478,8 @@ export default function PublicViewsPage() {
           password_protected: passwordProtected,
           password_hash: passwordHash,
           allow_issue_creation: allowIssueCreation,
+          show_descriptions: showDescriptions,
+          show_labels: showLabels,
           show_comments: showComments,
           show_activity: showActivity,
           show_project_updates: showProjectUpdates,
@@ -794,9 +802,43 @@ export default function PublicViewsPage() {
                   <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                     4
                   </div>
-                  Interaction settings
+                  Display and interaction settings
                 </h3>
                 <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={showDescriptions}
+                        onChange={() => setShowDescriptions(!showDescriptions)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium cursor-pointer">
+                        Show issue descriptions
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Display issue descriptions in the detail modal
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={showLabels}
+                        onChange={() => setShowLabels(!showLabels)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium cursor-pointer">
+                        Show labels
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Display labels on kanban cards and in the detail modal
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 mt-0.5">
                       <Checkbox
@@ -1096,15 +1138,49 @@ export default function PublicViewsPage() {
                 </div>
               </div>
 
-              {/* Interaction Settings */}
+              {/* Display and Interaction Settings */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                     4
                   </div>
-                  Interaction settings
+                  Display and interaction settings
                 </h3>
                 <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={showDescriptions}
+                        onChange={() => setShowDescriptions(!showDescriptions)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium cursor-pointer">
+                        Show issue descriptions
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Display issue descriptions in the detail modal
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={showLabels}
+                        onChange={() => setShowLabels(!showLabels)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium cursor-pointer">
+                        Show labels
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Display labels on kanban cards and in the detail modal
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0 mt-0.5">
                       <Checkbox

@@ -94,6 +94,7 @@ const getStateIcon = (stateType: string, color: string) => {
 export function KanbanBoard({
   issues,
   showAssignees = true,
+  showLabels = true,
   showPriorities = true,
   className = '',
   filters,
@@ -328,7 +329,7 @@ export function KanbanBoard({
                                 )}
 
                                 {/* Label badges */}
-                                {issue.labels.map((label) => (
+                                {showLabels && issue.labels.map((label) => (
                                   <div
                                     key={label.id}
                                     className="flex items-center gap-1 text-xs font-medium overflow-hidden flex-shrink-0 transition-colors duration-150 hover:text-white"

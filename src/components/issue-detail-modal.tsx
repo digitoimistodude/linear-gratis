@@ -13,6 +13,7 @@ interface IssueDetailModalProps {
   viewSlug: string
   showComments?: boolean
   showActivity?: boolean
+  showLabels?: boolean
   showDescriptions?: boolean
 }
 
@@ -139,7 +140,7 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComments = false, showActivity = false, showDescriptions = true }: IssueDetailModalProps) {
+export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComments = false, showActivity = false, showLabels = true, showDescriptions = true }: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -317,7 +318,7 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
                 )}
 
                 {/* Labels */}
-                {issue.labels.map((label) => (
+                {showLabels && issue.labels.map((label) => (
                   <div
                     key={label.id}
                     className="flex items-center gap-1.5 px-2 py-1 bg-accent/50 rounded-md"
