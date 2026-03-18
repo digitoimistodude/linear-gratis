@@ -1,5 +1,7 @@
-### 0.2.5: 2026-03-18
+### 0.3.0: 2026-03-18
 
+* Add customer commenting on public view issues with Linear attachment sync (`feature/customer-comments`), Ref: DEV-825
+* Add deep linking for issues via `/view/slug/IDENTIFIER` URL pattern (`feature/customer-comments`)
 * Add show descriptions and show labels toggles to public view settings, default hidden for new views (`feature/toggle-descriptions-labels`)
 * Default project updates to hidden for new views
 
