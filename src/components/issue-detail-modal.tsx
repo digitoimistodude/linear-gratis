@@ -5,12 +5,14 @@ import { X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { IssueDetail } from '@/app/api/public-view/[slug]/issue/[issueId]/route'
+import { ViewCommentSection } from '@/components/view-comment-section'
 
 interface IssueDetailModalProps {
   isOpen: boolean
   onClose: () => void
   issueId: string
   viewSlug: string
+  allowCustomerComments?: boolean
 }
 
 const getPriorityIcon = (priority: number) => {
@@ -95,11 +97,11 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug }: IssueDetailModalProps) {
+export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, allowCustomerComments = false }: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'activity' | 'comments'>('activity')
+  const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'discussion'>(allowCustomerComments ? 'discussion' : 'activity')
 
   useEffect(() => {
     if (isOpen && issueId) {
@@ -369,9 +371,21 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug }: IssueDe
                 </div>
               )}
 
-              {/* Activity/Comments Tabs */}
+              {/* Activity/Comments/Discussion Tabs */}
               <div className="border-t border-border pt-6">
                 <div className="flex items-center gap-4 mb-6">
+                  {allowCustomerComments && (
+                  <button
+                    onClick={() => setActiveTab('discussion')}
+                    className={`text-sm font-medium pb-2 border-b-2 transition-colors ${
+                      activeTab === 'discussion'
+                        ? 'border-primary text-foreground'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Discussion
+                  </button>
+                  )}
                   <button
                     onClick={() => setActiveTab('activity')}
                     className={`text-sm font-medium pb-2 border-b-2 transition-colors ${
@@ -499,6 +513,16 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug }: IssueDe
                       </div>
                     ))}
                   </div>
+                )}
+
+                {/* Discussion Tab (Customer Comments) */}
+                {allowCustomerComments && activeTab === 'discussion' && (
+                  <ViewCommentSection
+                    viewSlug={viewSlug}
+                    issueId={issueId}
+                    issueIdentifier={issue?.identifier}
+                    allowComments={true}
+                  />
                 )}
               </div>
             </div>
