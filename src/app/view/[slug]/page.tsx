@@ -541,6 +541,8 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           onClose={handleCloseIssueDetail}
           issueId={selectedIssueId}
           viewSlug={slug}
+          showLabels={view.show_labels}
+          showDescriptions={view.show_descriptions}
         />
       )}
 

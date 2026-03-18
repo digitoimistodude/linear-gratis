@@ -11,6 +11,8 @@ interface IssueDetailModalProps {
   onClose: () => void
   issueId: string
   viewSlug: string
+  showLabels?: boolean
+  showDescriptions?: boolean
 }
 
 const getPriorityIcon = (priority: number) => {
@@ -95,7 +97,7 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug }: IssueDetailModalProps) {
+export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showLabels = true, showDescriptions = true }: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -265,7 +267,7 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug }: IssueDe
                 )}
 
                 {/* Labels */}
-                {issue.labels.map((label) => (
+                {showLabels && issue.labels.map((label) => (
                   <div
                     key={label.id}
                     className="flex items-center gap-1.5 px-2 py-1 bg-accent/50 rounded-md"
@@ -280,7 +282,7 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug }: IssueDe
               </div>
 
               {/* Description */}
-              {issue.description && (
+              {showDescriptions && issue.description && (
                 <div className="mb-8">
                   <h3 className="text-sm font-medium text-foreground mb-3">Description</h3>
                   <div className="prose prose-sm max-w-none text-foreground/90 markdown-content">
