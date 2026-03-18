@@ -1,3 +1,8 @@
+### 0.2.5: 2026-03-18
+
+* Add show descriptions and show labels toggles to public view settings, default hidden for new views (`feature/toggle-descriptions-labels`)
+* Default project updates to hidden for new views
+
 ### 0.2.4: 2026-03-17
 
 * Add hide onboarding toggle in profile settings and dismissible views onboarding section (`feature/hide-onboarding`)
