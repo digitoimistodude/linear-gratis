@@ -167,21 +167,76 @@ export async function POST(
 
     const comment = newComment as Pick<ViewComment, 'id' | 'author_name' | 'content' | 'created_at' | 'is_approved'>;
 
-    // Create attachment in Linear to notify the team
+    // Sync comment to Linear
     try {
+      const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
+      const urlSuffix = issueIdentifier || issueId;
+      const viewUrl = `https://${appDomain}/view/${view.slug}/${urlSuffix}`;
+
+      // Get personal API token from profiles
       const { data: profileData } = await supabaseAdmin
         .from('profiles')
         .select('linear_api_token')
         .eq('id', view.user_id)
         .single();
 
-      if (profileData?.linear_api_token) {
-        const decryptedToken = decryptToken(profileData.linear_api_token);
-        const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
-        const urlSuffix = issueIdentifier || issueId;
-        const viewUrl = `https://${appDomain}/view/${view.slug}/${urlSuffix}`;
+      // Get OAuth token from workspace_settings
+      const { data: workspaceSettings } = await supabaseAdmin
+        .from('workspace_settings')
+        .select('linear_oauth_token')
+        .limit(1)
+        .single();
 
-        const mutation = `
+      const personalToken = profileData?.linear_api_token
+        ? decryptToken(profileData.linear_api_token)
+        : null;
+
+      const oauthToken = workspaceSettings?.linear_oauth_token
+        ? decryptToken(workspaceSettings.linear_oauth_token)
+        : null;
+
+      // Build comment body
+      const commentBody = `${trimmedContent}\n\n---\nCommented via [${appDomain}](${viewUrl})`;
+
+      // Post comment to Linear
+      const commentToken = oauthToken || personalToken;
+      if (commentToken) {
+        const commentMutation = `
+          mutation CommentCreate($input: CommentCreateInput!) {
+            commentCreate(input: $input) {
+              success
+            }
+          }
+        `;
+
+        // Build the comment input
+        const commentInput: Record<string, string> = {
+          issueId,
+          body: commentBody,
+        };
+
+        // When using OAuth token, use createAsUser and displayIconUrl
+        if (oauthToken) {
+          commentInput.createAsUser = authorName.trim();
+          commentInput.displayIconUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName.trim())}&background=random&size=128`;
+        }
+
+        await fetch('https://api.linear.app/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `${commentToken.replace(/[^\x00-\xFF]/g, '')}`,
+          },
+          body: JSON.stringify({
+            query: commentMutation,
+            variables: { input: commentInput },
+          }),
+        });
+      }
+
+      // Create attachment using personal API key (always, if available)
+      if (personalToken) {
+        const attachmentMutation = `
           mutation AttachmentCreate($input: AttachmentCreateInput!) {
             attachmentCreate(input: $input) {
               success
@@ -193,15 +248,15 @@ export async function POST(
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `${decryptedToken.replace(/[^\x00-\xFF]/g, '')}`,
+            Authorization: `${personalToken.replace(/[^\x00-\xFF]/g, '')}`,
           },
           body: JSON.stringify({
-            query: mutation,
+            query: attachmentMutation,
             variables: {
               input: {
                 issueId,
-                title: `${authorName.trim()} commented via ${view.name}`,
-                subtitle: trimmedContent.slice(0, 100) + (trimmedContent.length > 100 ? '...' : ''),
+                title: 'Customer discussion',
+                subtitle: `${view.name} - ${appDomain}`,
                 url: viewUrl,
               },
             },
