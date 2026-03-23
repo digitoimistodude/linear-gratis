@@ -203,6 +203,7 @@ export async function POST(
                 title: `${authorName.trim()} commented via ${view.name}`,
                 subtitle: trimmedContent.slice(0, 100) + (trimmedContent.length > 100 ? '...' : ''),
                 url: viewUrl,
+                commentBody: `**${authorName.trim()}** commented via [${view.name}](${viewUrl}):\n\n> ${trimmedContent}`,
               },
             },
           }),
