@@ -1,6 +1,8 @@
 -- Workspace-level settings (single row)
 CREATE TABLE IF NOT EXISTS workspace_settings (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    linear_oauth_client_id TEXT,
+    linear_oauth_client_secret TEXT,
     linear_oauth_token TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

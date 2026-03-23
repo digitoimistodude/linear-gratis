@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Navigation } from '@/components/navigation'
 import { useRouter } from 'next/navigation'
 
@@ -12,6 +14,9 @@ export default function WorkspaceSettingsPage() {
   const router = useRouter()
   const [oauthConnected, setOauthConnected] = useState(false)
   const [oauthConfigured, setOauthConfigured] = useState(false)
+  const [clientId, setClientId] = useState('')
+  const [clientSecret, setClientSecret] = useState('')
+  const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
@@ -39,7 +44,6 @@ export default function WorkspaceSettingsPage() {
 
     checkOAuthStatus()
 
-    // Handle OAuth callback messages
     const params = new URLSearchParams(window.location.search)
     const oauthResult = params.get('linear_oauth')
     if (oauthResult === 'success') {
@@ -52,6 +56,39 @@ export default function WorkspaceSettingsPage() {
       window.history.replaceState({}, '', '/settings')
     }
   }, [user, authLoading, router, checkOAuthStatus])
+
+  const saveCredentials = async () => {
+    if (!clientId.trim() || !clientSecret.trim()) {
+      setMessage({ type: 'error', text: 'Both Client ID and Client Secret are required' })
+      return
+    }
+
+    setSaving(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch('/api/auth/linear/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: clientId.trim(), clientSecret: clientSecret.trim() }),
+      })
+
+      if (response.ok) {
+        setOauthConfigured(true)
+        setClientId('')
+        setClientSecret('')
+        setMessage({ type: 'success', text: 'Credentials saved. Click "Connect Linear app" to authorize.' })
+      } else {
+        const data = await response.json() as { error?: string }
+        setMessage({ type: 'error', text: data.error || 'Failed to save credentials' })
+      }
+    } catch (error) {
+      console.error('Error saving credentials:', error)
+      setMessage({ type: 'error', text: 'Failed to save credentials' })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (authLoading || loading) {
     return (
@@ -86,7 +123,7 @@ export default function WorkspaceSettingsPage() {
           <CardHeader>
             <CardTitle>Linear app connection</CardTitle>
             <CardDescription>
-              Connect a Linear OAuth app so customer comments on public views appear as a bot in Linear instead of as the user who created the view.
+              Connect a Linear OAuth app so customer comments on public views appear as a bot in Linear instead of as the view owner.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -113,7 +150,7 @@ export default function WorkspaceSettingsPage() {
             ) : oauthConfigured ? (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Without this connection, customer comments in Linear will appear as posted by the view owner. Connect the app to show them as a separate bot identity.
+                  Credentials saved. Connect the app to authorize it with your Linear workspace.
                 </p>
                 <Button
                   onClick={() => {
@@ -125,12 +162,9 @@ export default function WorkspaceSettingsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  To enable bot-identity comments, a workspace admin needs to create a Linear OAuth app first. This is a one-time setup.
-                </p>
                 <div className="bg-muted/50 rounded-lg p-4 border border-border/50">
-                  <h3 className="font-semibold mb-3">Setup guide</h3>
-                  <ol className="text-sm text-muted-foreground space-y-3 list-decimal list-inside">
+                  <h3 className="font-semibold mb-3">Step 1: Create a Linear OAuth app</h3>
+                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
                     <li>
                       Open{' '}
                       <a
@@ -143,7 +177,7 @@ export default function WorkspaceSettingsPage() {
                       </a>
                     </li>
                     <li>
-                      Set the <strong>application name</strong> - this is what appears as the commenter in Linear (e.g. your company name or domain)
+                      Set the <strong>application name</strong> - this is what appears as the commenter in Linear
                     </li>
                     <li>
                       Set the <strong>callback URL</strong> to:{' '}
@@ -151,17 +185,37 @@ export default function WorkspaceSettingsPage() {
                         {typeof window !== 'undefined' ? `${window.location.origin}/api/auth/linear/callback` : '/api/auth/linear/callback'}
                       </code>
                     </li>
-                    <li>
-                      Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> from Linear
-                    </li>
-                    <li>
-                      Add them as environment variables on your server:{' '}
-                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">LINEAR_OAUTH_CLIENT_ID</code>{' '}
-                      and{' '}
-                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">LINEAR_OAUTH_CLIENT_SECRET</code>
-                    </li>
-                    <li>Restart the server and come back here to connect</li>
                   </ol>
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className="font-semibold">Step 2: Paste credentials</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-id">Client ID</Label>
+                    <Input
+                      id="client-id"
+                      placeholder="Paste your Linear OAuth Client ID"
+                      value={clientId}
+                      onChange={(e) => setClientId(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="client-secret">Client Secret</Label>
+                    <Input
+                      id="client-secret"
+                      type="password"
+                      placeholder="Paste your Linear OAuth Client Secret"
+                      value={clientSecret}
+                      onChange={(e) => setClientSecret(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    onClick={saveCredentials}
+                    disabled={saving || !clientId.trim() || !clientSecret.trim()}
+                    className="w-full"
+                  >
+                    {saving ? 'Saving...' : 'Save and continue'}
+                  </Button>
                 </div>
               </div>
             )}

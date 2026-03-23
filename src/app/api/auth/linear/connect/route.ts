@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase';
 import crypto from 'crypto';
 
 export async function GET() {
@@ -11,10 +12,17 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const clientId = process.env.LINEAR_OAUTH_CLIENT_ID;
+    // Read client ID from workspace settings
+    const { data: settings } = await supabaseAdmin
+      .from('workspace_settings')
+      .select('linear_oauth_client_id')
+      .limit(1)
+      .single();
+
+    const clientId = settings?.linear_oauth_client_id;
     if (!clientId) {
       return NextResponse.json(
-        { error: 'Linear OAuth is not configured. Set LINEAR_OAUTH_CLIENT_ID environment variable.' },
+        { error: 'Linear OAuth is not configured. Save your Client ID and Secret in Workspace settings first.' },
         { status: 500 }
       );
     }
@@ -22,10 +30,8 @@ export async function GET() {
     const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
     const redirectUri = `https://${appDomain}/api/auth/linear/callback`;
 
-    // Generate a random state parameter for CSRF protection
     const state = crypto.randomBytes(32).toString('hex');
 
-    // Store state in a cookie for validation on callback
     const authUrl = new URL('https://linear.app/oauth/authorize');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
@@ -39,7 +45,7 @@ export async function GET() {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
-      maxAge: 600, // 10 minutes
+      maxAge: 600,
       path: '/',
     });
 

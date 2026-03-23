@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { encryptToken } from '@/lib/encryption';
+import { encryptToken, decryptToken } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,15 +42,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const clientId = process.env.LINEAR_OAUTH_CLIENT_ID;
-    const clientSecret = process.env.LINEAR_OAUTH_CLIENT_SECRET;
+    // Read client credentials from workspace settings
+    const { data: wsSettings } = await supabaseAdmin
+      .from('workspace_settings')
+      .select('id, linear_oauth_client_id, linear_oauth_client_secret')
+      .limit(1)
+      .single();
 
-    if (!clientId || !clientSecret) {
+    if (!wsSettings?.linear_oauth_client_id || !wsSettings?.linear_oauth_client_secret) {
       return NextResponse.redirect(
         `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('OAuth not configured')}`
       );
     }
 
+    const clientId = wsSettings.linear_oauth_client_id;
+    const clientSecret = decryptToken(wsSettings.linear_oauth_client_secret);
     const redirectUri = `https://${appDomain}/api/auth/linear/callback`;
 
     // Exchange authorization code for access token
