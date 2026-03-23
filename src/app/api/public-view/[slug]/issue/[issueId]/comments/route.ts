@@ -167,7 +167,7 @@ export async function POST(
 
     const comment = newComment as Pick<ViewComment, 'id' | 'author_name' | 'content' | 'created_at' | 'is_approved'>;
 
-    // Create attachment in Linear to notify the team
+    // Sync comment to Linear as a bot-identity comment
     try {
       const { data: profileData } = await supabaseAdmin
         .from('profiles')
@@ -181,28 +181,32 @@ export async function POST(
         const urlSuffix = issueIdentifier || issueId;
         const viewUrl = `https://${appDomain}/view/${view.slug}/${urlSuffix}`;
 
-        const mutation = `
-          mutation AttachmentCreate($input: AttachmentCreateInput!) {
-            attachmentCreate(input: $input) {
+        const headers = {
+          'Content-Type': 'application/json',
+          Authorization: `${decryptedToken.replace(/[^\x00-\xFF]/g, '')}`,
+        };
+
+        // Create a comment with bot identity using createAsUser
+        const commentMutation = `
+          mutation CommentCreate($input: CommentCreateInput!) {
+            commentCreate(input: $input) {
               success
+              comment { id }
             }
           }
         `;
 
         await fetch('https://api.linear.app/graphql', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `${decryptedToken.replace(/[^\x00-\xFF]/g, '')}`,
-          },
+          headers,
           body: JSON.stringify({
-            query: mutation,
+            query: commentMutation,
             variables: {
               input: {
                 issueId,
-                title: `${authorName.trim()} commented via ${view.name}`,
-                subtitle: trimmedContent.slice(0, 100) + (trimmedContent.length > 100 ? '...' : ''),
-                url: viewUrl,
+                body: `**${authorName.trim()}** commented via [${view.name}](${viewUrl}):\n\n> ${trimmedContent}`,
+                createAsUser: authorName.trim(),
+                displayIconUrl: `https://${appDomain}/favicon-32x32.png`,
               },
             },
           }),
