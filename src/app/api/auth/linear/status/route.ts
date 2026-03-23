@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { encryptToken } from '@/lib/encryption';
 
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -19,23 +19,24 @@ export async function GET() {
       .single();
 
     return NextResponse.json({
-      connected: !!settings?.linear_oauth_token,
-      oauthConfigured: !!settings?.linear_oauth_client_id,
-      hasClientId: !!settings?.linear_oauth_client_id,
+      connected: !!(settings?.linear_oauth_token),
+      oauthConfigured: !!(settings?.linear_oauth_client_id),
     });
   } catch (error) {
     console.error('Linear OAuth status error:', error);
-    return NextResponse.json({ error: 'Failed to check status' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to check Linear OAuth status' },
+      { status: 500 }
+    );
   }
 }
 
-// POST - Save client ID and secret
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -43,11 +44,15 @@ export async function POST(request: NextRequest) {
     const { clientId, clientSecret } = body;
 
     if (!clientId || !clientSecret) {
-      return NextResponse.json({ error: 'Client ID and Client Secret are required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Client ID and Client Secret are required' },
+        { status: 400 }
+      );
     }
 
     const encryptedSecret = encryptToken(clientSecret);
 
+    // Check if workspace_settings already has a row
     const { data: existing } = await supabaseAdmin
       .from('workspace_settings')
       .select('id')
@@ -55,35 +60,43 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existing) {
-      await supabaseAdmin
+      const { error: updateError } = await supabaseAdmin
         .from('workspace_settings')
         .update({
           linear_oauth_client_id: clientId,
           linear_oauth_client_secret: encryptedSecret,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id);
+
+      if (updateError) throw updateError;
     } else {
-      await supabaseAdmin
+      const { error: insertError } = await supabaseAdmin
         .from('workspace_settings')
         .insert({
           linear_oauth_client_id: clientId,
           linear_oauth_client_secret: encryptedSecret,
         });
+
+      if (insertError) throw insertError;
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Linear OAuth save error:', error);
-    return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to save Linear OAuth credentials' },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -94,15 +107,23 @@ export async function DELETE() {
       .single();
 
     if (existing) {
-      await supabaseAdmin
+      const { error: updateError } = await supabaseAdmin
         .from('workspace_settings')
-        .update({ linear_oauth_token: null })
+        .update({
+          linear_oauth_token: null,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', existing.id);
+
+      if (updateError) throw updateError;
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Linear OAuth disconnect error:', error);
-    return NextResponse.json({ error: 'Failed to disconnect' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to disconnect Linear OAuth' },
+      { status: 500 }
+    );
   }
 }

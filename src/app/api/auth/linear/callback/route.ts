@@ -1,136 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { encryptToken, decryptToken } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
+  const origin = new URL(request.url).origin;
+
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const error = searchParams.get('error');
 
-    const baseUrl = new URL(request.url).origin;
-
     if (error) {
-      return NextResponse.redirect(
-        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent(error)}`
-      );
+      console.error('Linear OAuth error:', error);
+      return NextResponse.redirect(`${origin}/settings?linear_oauth=error`);
     }
 
     if (!code || !state) {
-      return NextResponse.redirect(
-        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Missing authorization code')}`
-      );
+      return NextResponse.redirect(`${origin}/settings?linear_oauth=error`);
     }
 
-    // Validate state parameter
+    // Validate state cookie for CSRF protection
     const storedState = request.cookies.get('linear_oauth_state')?.value;
     if (!storedState || storedState !== state) {
-      return NextResponse.redirect(
-        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Invalid state parameter')}`
-      );
+      console.error('Linear OAuth state mismatch');
+      return NextResponse.redirect(`${origin}/settings?linear_oauth=error`);
     }
 
-    // Get the authenticated user
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.redirect(
-        `${baseUrl}/login`
-      );
-    }
-
-    // Read client credentials from workspace settings
-    const { data: wsSettings } = await supabaseAdmin
+    // Read OAuth credentials from workspace_settings
+    const { data: settings, error: settingsError } = await supabaseAdmin
       .from('workspace_settings')
       .select('id, linear_oauth_client_id, linear_oauth_client_secret')
       .limit(1)
       .single();
 
-    if (!wsSettings?.linear_oauth_client_id || !wsSettings?.linear_oauth_client_secret) {
-      return NextResponse.redirect(
-        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('OAuth not configured')}`
-      );
+    if (settingsError || !settings?.linear_oauth_client_id || !settings?.linear_oauth_client_secret) {
+      console.error('Linear OAuth credentials not found in workspace_settings');
+      return NextResponse.redirect(`${origin}/settings?linear_oauth=error`);
     }
 
-    const clientId = wsSettings.linear_oauth_client_id;
-    const clientSecret = decryptToken(wsSettings.linear_oauth_client_secret);
-    // Use the actual request URL as redirect_uri so it matches what was sent in the connect request
-    const redirectUri = `${baseUrl}/api/auth/linear/callback`;
+    const clientId = settings.linear_oauth_client_id;
+    const clientSecret = decryptToken(settings.linear_oauth_client_secret);
+    const redirectUri = `${origin}/api/auth/linear/callback`;
 
-    // Exchange authorization code for access token
+    // Exchange code for access token
     const tokenResponse = await fetch('https://api.linear.app/oauth/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
         client_id: clientId,
         client_secret: clientSecret,
-        redirect_uri: redirectUri,
-        code,
-      }),
+      }).toString(),
     });
 
     if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error('Linear OAuth token exchange failed:', errorText);
-      return NextResponse.redirect(
-        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Token exchange failed')}`
-      );
+      const errorBody = await tokenResponse.text();
+      console.error('Linear OAuth token exchange failed:', errorBody);
+      return NextResponse.redirect(`${origin}/settings?linear_oauth=error`);
     }
 
-    const tokenData = await tokenResponse.json() as {
-      access_token: string;
-      token_type: string;
-      expires_in?: number;
-      scope?: string;
-    };
+    const tokenData = await tokenResponse.json() as { access_token?: string };
+    const accessToken = tokenData.access_token;
 
-    // Encrypt and store the OAuth token in workspace settings
-    const encryptedToken = encryptToken(tokenData.access_token);
+    if (!accessToken) {
+      console.error('No access token in Linear OAuth response');
+      return NextResponse.redirect(`${origin}/settings?linear_oauth=error`);
+    }
 
-    // Upsert workspace settings (single row)
-    const { data: existing } = await supabaseAdmin
+    // Encrypt and store the token
+    const encryptedToken = encryptToken(accessToken);
+
+    const { error: updateError } = await supabaseAdmin
       .from('workspace_settings')
-      .select('id')
-      .limit(1)
-      .single();
-
-    let updateError;
-    if (existing) {
-      const result = await supabaseAdmin
-        .from('workspace_settings')
-        .update({ linear_oauth_token: encryptedToken })
-        .eq('id', existing.id);
-      updateError = result.error;
-    } else {
-      const result = await supabaseAdmin
-        .from('workspace_settings')
-        .insert({ linear_oauth_token: encryptedToken });
-      updateError = result.error;
-    }
+      .update({
+        linear_oauth_token: encryptedToken,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', settings.id);
 
     if (updateError) {
-      console.error('Failed to store OAuth token:', updateError);
-      return NextResponse.redirect(
-        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Failed to save token')}`
-      );
+      console.error('Failed to store Linear OAuth token:', updateError);
+      return NextResponse.redirect(`${origin}/settings?linear_oauth=error`);
     }
 
-    // Clear the state cookie and redirect to profile with success
-    const response = NextResponse.redirect(
-      `${baseUrl}/settings?linear_oauth=success`
-    );
+    // Clear the state cookie and redirect to success
+    const response = NextResponse.redirect(`${origin}/settings?linear_oauth=success`);
     response.cookies.delete('linear_oauth_state');
-
     return response;
-  } catch (error) {
-    console.error('Linear OAuth callback error:', error);
-    const baseUrl = new URL(request.url).origin;
-    return NextResponse.redirect(
-      `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Unexpected error')}`
-    );
+  } catch (err) {
+    console.error('Linear OAuth callback error:', err);
+    return NextResponse.redirect(`${origin}/settings?linear_oauth=error`);
   }
 }

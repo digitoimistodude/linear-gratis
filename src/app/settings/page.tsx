@@ -1,35 +1,53 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Navigation } from '@/components/navigation'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function WorkspaceSettingsPage() {
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Loading...</h2>
+        </div>
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
+  )
+}
+
+function SettingsContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [oauthConnected, setOauthConnected] = useState(false)
-  const [oauthConfigured, setOauthConfigured] = useState(false)
+  const searchParams = useSearchParams()
+
+  const [oauthStatus, setOauthStatus] = useState<{
+    connected: boolean
+    oauthConfigured: boolean
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
+  const [showSetup, setShowSetup] = useState(false)
   const [clientId, setClientId] = useState('')
   const [clientSecret, setClientSecret] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const checkOAuthStatus = useCallback(async () => {
+  const loadStatus = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/linear/status')
-      if (response.ok) {
-        const data = await response.json() as { connected: boolean; oauthConfigured: boolean }
-        setOauthConnected(data.connected)
-        setOauthConfigured(data.oauthConfigured)
+      const res = await fetch('/api/auth/linear/status')
+      if (res.ok) {
+        const data = await res.json() as { connected: boolean; oauthConfigured: boolean }
+        setOauthStatus(data)
       }
-    } catch (error) {
-      console.error('Error checking OAuth status:', error)
+    } catch (err) {
+      console.error('Failed to load OAuth status:', err)
     } finally {
       setLoading(false)
     }
@@ -37,190 +55,230 @@ export default function WorkspaceSettingsPage() {
 
   useEffect(() => {
     if (authLoading) return
+
     if (!user) {
       router.push('/login')
       return
     }
 
-    checkOAuthStatus()
+    loadStatus()
+  }, [user, authLoading, router, loadStatus])
 
-    const params = new URLSearchParams(window.location.search)
-    const oauthResult = params.get('linear_oauth')
+  // Handle OAuth callback result from URL params
+  useEffect(() => {
+    const oauthResult = searchParams.get('linear_oauth')
     if (oauthResult === 'success') {
-      setMessage({ type: 'success', text: 'Linear app connected! Customer comments will now appear as a bot in Linear.' })
-      setOauthConnected(true)
-      window.history.replaceState({}, '', '/settings')
+      setMessage({ type: 'success', text: 'Linear app connected successfully!' })
+      loadStatus()
+      // Clean the URL
+      router.replace('/settings')
     } else if (oauthResult === 'error') {
-      const errorMsg = params.get('message') || 'Failed to connect'
-      setMessage({ type: 'error', text: `Linear app connection failed: ${errorMsg}` })
-      window.history.replaceState({}, '', '/settings')
+      setMessage({ type: 'error', text: 'Failed to connect Linear app. Please try again.' })
+      router.replace('/settings')
     }
-  }, [user, authLoading, router, checkOAuthStatus])
+  }, [searchParams, loadStatus, router])
 
   const saveCredentials = async () => {
-    if (!clientId.trim() || !clientSecret.trim()) {
-      setMessage({ type: 'error', text: 'Both Client ID and Client Secret are required' })
-      return
-    }
+    if (!clientId.trim() || !clientSecret.trim()) return
 
     setSaving(true)
     setMessage(null)
 
     try {
-      const response = await fetch('/api/auth/linear/status', {
+      const res = await fetch('/api/auth/linear/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId: clientId.trim(), clientSecret: clientSecret.trim() }),
       })
 
-      if (response.ok) {
-        setOauthConfigured(true)
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Credentials saved. You can now connect your Linear app.' })
+        setShowSetup(false)
         setClientId('')
         setClientSecret('')
-        setMessage({ type: 'success', text: 'Credentials saved. Click "Connect Linear app" to authorize.' })
+        await loadStatus()
       } else {
-        const data = await response.json() as { error?: string }
-        setMessage({ type: 'error', text: data.error || 'Failed to save credentials' })
+        const data = await res.json() as { error?: string }
+        setMessage({ type: 'error', text: data.error || 'Failed to save credentials.' })
       }
-    } catch (error) {
-      console.error('Error saving credentials:', error)
-      setMessage({ type: 'error', text: 'Failed to save credentials' })
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to save credentials.' })
     } finally {
       setSaving(false)
     }
   }
 
-  if (authLoading || loading) {
+  const disconnectOAuth = async () => {
+    setDisconnecting(true)
+    setMessage(null)
+
+    try {
+      const res = await fetch('/api/auth/linear/status', { method: 'DELETE' })
+
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Linear app disconnected.' })
+        await loadStatus()
+      } else {
+        setMessage({ type: 'error', text: 'Failed to disconnect.' })
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to disconnect.' })
+    } finally {
+      setDisconnecting(false)
+    }
+  }
+
+  const callbackUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/api/auth/linear/callback`
+    : ''
+
+  if (authLoading || !user) {
     return (
-      <div className="min-h-screen">
-        <Navigation />
-        <div className="max-w-2xl mx-auto p-6">
-          <div className="text-center py-12">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Loading...</h2>
         </div>
       </div>
     )
   }
 
-  if (!user) return null
-
   return (
-    <div className="min-h-screen">
-      <Navigation />
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Workspace settings</h1>
-
-        {message && (
-          <div className={`p-3 rounded-lg text-sm ${
-            message.type === 'success'
-              ? 'bg-green-50 border border-green-200 text-green-800 dark:bg-green-950/20 dark:border-green-800/30 dark:text-green-400'
-              : 'bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/20 dark:border-red-800/30 dark:text-red-400'
-          }`}>
-            {message.text}
-          </div>
-        )}
+    <div className="min-h-screen p-6">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <h1 className="text-2xl font-bold">Settings</h1>
 
         <Card>
           <CardHeader>
             <CardTitle>Linear app connection</CardTitle>
             <CardDescription>
-              Connect a Linear OAuth app so customer comments on public views appear as a bot in Linear instead of as the view owner.
+              Connect a Linear OAuth app so customer comments appear as the app identity instead of your personal account.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {oauthConnected ? (
-              <div className="flex items-center justify-between">
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : oauthStatus?.connected ? (
+              /* Connected state */
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-sm text-foreground">Connected - customer comments appear as the app in Linear</span>
+                  <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-sm font-medium text-green-700 dark:text-green-400">Connected</span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    const response = await fetch('/api/auth/linear/status', { method: 'DELETE' })
-                    if (response.ok) {
-                      setOauthConnected(false)
-                      setMessage({ type: 'success', text: 'Linear app disconnected' })
-                    }
-                  }}
-                >
-                  Disconnect
-                </Button>
-              </div>
-            ) : oauthConfigured ? (
-              <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Credentials saved. Connect the app to authorize it with your Linear workspace.
+                  Your Linear app is connected. Customer comments will be posted using the app identity.
                 </p>
                 <Button
-                  onClick={() => {
-                    window.location.href = '/api/auth/linear/connect'
-                  }}
+                  variant="outline"
+                  onClick={disconnectOAuth}
+                  disabled={disconnecting}
                 >
-                  Connect Linear app
+                  {disconnecting ? 'Disconnecting...' : 'Disconnect'}
                 </Button>
               </div>
-            ) : (
+            ) : oauthStatus?.oauthConfigured && !showSetup ? (
+              /* Configured but not connected */
               <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  OAuth credentials are configured but the app is not yet connected.
+                </p>
+                <div className="flex items-center gap-2">
+                  <a href="/api/auth/linear/connect">
+                    <Button>Connect Linear app</Button>
+                  </a>
+                  <Button variant="outline" onClick={() => setShowSetup(true)}>
+                    Edit credentials
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Not configured / Setup mode */
+              <div className="space-y-6">
                 <div className="bg-muted/50 rounded-lg p-4 border border-border/50">
-                  <h3 className="font-semibold mb-3">Step 1: Create a Linear OAuth app</h3>
+                  <h3 className="font-semibold mb-3">Setup instructions</h3>
                   <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
                     <li>
-                      Open{' '}
+                      Go to{' '}
                       <a
                         href="https://linear.app/settings/api/applications/new"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:underline"
+                        className="text-primary underline"
                       >
-                        Linear - New OAuth application
+                        Linear &rarr; Settings &rarr; API &rarr; Create OAuth application
                       </a>
                     </li>
                     <li>
-                      Set the <strong>application name</strong> - this is what appears as the commenter in Linear
+                      Set the <strong>application name</strong> to whatever you want customers to see as the commenter (e.g. &quot;Customer Feedback Bot&quot;)
                     </li>
                     <li>
-                      Set the <strong>callback URL</strong> to:{' '}
-                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
-                        {typeof window !== 'undefined' ? `${window.location.origin}/api/auth/linear/callback` : '/api/auth/linear/callback'}
-                      </code>
+                      Set the <strong>callback URL</strong> to:
+                      {callbackUrl && (
+                        <code className="block mt-1 px-2 py-1 bg-muted rounded text-xs font-mono break-all">
+                          {callbackUrl}
+                        </code>
+                      )}
                     </li>
+                    <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> and paste them below</li>
                   </ol>
                 </div>
 
-                <div className="space-y-3">
-                  <h3 className="font-semibold">Step 2: Paste credentials</h3>
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="client-id">Client ID</Label>
                     <Input
                       id="client-id"
-                      placeholder="Paste your Linear OAuth Client ID"
+                      type="text"
+                      placeholder="Your Linear OAuth Client ID"
                       value={clientId}
                       onChange={(e) => setClientId(e.target.value)}
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="client-secret">Client Secret</Label>
                     <Input
                       id="client-secret"
                       type="password"
-                      placeholder="Paste your Linear OAuth Client Secret"
+                      placeholder="Your Linear OAuth Client Secret"
                       value={clientSecret}
                       onChange={(e) => setClientSecret(e.target.value)}
                     />
                   </div>
-                  <Button
-                    onClick={saveCredentials}
-                    disabled={saving || !clientId.trim() || !clientSecret.trim()}
-                    className="w-full"
-                  >
-                    {saving ? 'Saving...' : 'Save and continue'}
-                  </Button>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={saveCredentials}
+                      disabled={saving || !clientId.trim() || !clientSecret.trim()}
+                    >
+                      {saving ? 'Saving...' : 'Save and continue'}
+                    </Button>
+                    {oauthStatus?.oauthConfigured && (
+                      <Button variant="ghost" onClick={() => setShowSetup(false)}>
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {message && (
+              <div className={`p-3 rounded-lg text-sm ${
+                message.type === 'success'
+                  ? 'bg-green-50 border border-green-200 text-green-800 dark:bg-green-950/20 dark:border-green-800/30 dark:text-green-400'
+                  : 'bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/20 dark:border-red-800/30 dark:text-red-400'
+              }`}>
+                {message.text}
               </div>
             )}
           </CardContent>
         </Card>
+
+        <div className="text-center">
+          <Button variant="link" onClick={() => router.push('/')}>
+            &larr; Back to dashboard
+          </Button>
+        </div>
       </div>
     </div>
   )
