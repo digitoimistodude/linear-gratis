@@ -10,17 +10,17 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state');
     const error = searchParams.get('error');
 
-    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
+    const baseUrl = new URL(request.url).origin;
 
     if (error) {
       return NextResponse.redirect(
-        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent(error)}`
+        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent(error)}`
       );
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Missing authorization code')}`
+        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Missing authorization code')}`
       );
     }
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const storedState = request.cookies.get('linear_oauth_state')?.value;
     if (!storedState || storedState !== state) {
       return NextResponse.redirect(
-        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Invalid state parameter')}`
+        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Invalid state parameter')}`
       );
     }
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.redirect(
-        `https://${appDomain}/login`
+        `${baseUrl}/login`
       );
     }
 
@@ -51,13 +51,14 @@ export async function GET(request: NextRequest) {
 
     if (!wsSettings?.linear_oauth_client_id || !wsSettings?.linear_oauth_client_secret) {
       return NextResponse.redirect(
-        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('OAuth not configured')}`
+        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('OAuth not configured')}`
       );
     }
 
     const clientId = wsSettings.linear_oauth_client_id;
     const clientSecret = decryptToken(wsSettings.linear_oauth_client_secret);
-    const redirectUri = `https://${appDomain}/api/auth/linear/callback`;
+    // Use the actual request URL as redirect_uri so it matches what was sent in the connect request
+    const redirectUri = `${baseUrl}/api/auth/linear/callback`;
 
     // Exchange authorization code for access token
     const tokenResponse = await fetch('https://api.linear.app/oauth/token', {
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
       const errorText = await tokenResponse.text();
       console.error('Linear OAuth token exchange failed:', errorText);
       return NextResponse.redirect(
-        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Token exchange failed')}`
+        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Token exchange failed')}`
       );
     }
 
@@ -114,22 +115,22 @@ export async function GET(request: NextRequest) {
     if (updateError) {
       console.error('Failed to store OAuth token:', updateError);
       return NextResponse.redirect(
-        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Failed to save token')}`
+        `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Failed to save token')}`
       );
     }
 
     // Clear the state cookie and redirect to profile with success
     const response = NextResponse.redirect(
-      `https://${appDomain}/settings?linear_oauth=success`
+      `${baseUrl}/settings?linear_oauth=success`
     );
     response.cookies.delete('linear_oauth_state');
 
     return response;
   } catch (error) {
     console.error('Linear OAuth callback error:', error);
-    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
+    const baseUrl = new URL(request.url).origin;
     return NextResponse.redirect(
-      `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Unexpected error')}`
+      `${baseUrl}/settings?linear_oauth=error&message=${encodeURIComponent('Unexpected error')}`
     );
   }
 }

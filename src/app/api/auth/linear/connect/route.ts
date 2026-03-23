@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import crypto from 'crypto';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -27,8 +27,8 @@ export async function GET() {
       );
     }
 
-    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
-    const redirectUri = `https://${appDomain}/api/auth/linear/callback`;
+    const origin = request.headers.get('origin') || request.headers.get('referer')?.replace(/\/[^/]*$/, '') || `https://${process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis'}`;
+    const redirectUri = `${origin}/api/auth/linear/callback`;
 
     const state = crypto.randomBytes(32).toString('hex');
 
