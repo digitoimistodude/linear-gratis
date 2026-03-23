@@ -171,8 +171,14 @@ export async function POST(
     try {
       const { data: profileData } = await supabaseAdmin
         .from('profiles')
-        .select('linear_api_token, linear_oauth_token')
+        .select('linear_api_token')
         .eq('id', view.user_id)
+        .single();
+
+      const { data: workspaceSettings } = await supabaseAdmin
+        .from('workspace_settings')
+        .select('linear_oauth_token')
+        .limit(1)
         .single();
 
       if (profileData?.linear_api_token) {
@@ -189,9 +195,9 @@ export async function POST(
           }
         `;
 
-        // Use OAuth token (bot identity) if available, otherwise fall back to personal API key
-        if (profileData.linear_oauth_token) {
-          const oauthToken = decryptToken(profileData.linear_oauth_token);
+        // Use workspace OAuth token (bot identity) if available, otherwise fall back to personal API key
+        if (workspaceSettings?.linear_oauth_token) {
+          const oauthToken = decryptToken(workspaceSettings.linear_oauth_token);
           await fetch('https://api.linear.app/graphql', {
             method: 'POST',
             headers: {

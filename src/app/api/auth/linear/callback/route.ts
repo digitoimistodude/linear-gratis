@@ -14,13 +14,13 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.redirect(
-        `https://${appDomain}/profile?linear_oauth=error&message=${encodeURIComponent(error)}`
+        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent(error)}`
       );
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        `https://${appDomain}/profile?linear_oauth=error&message=${encodeURIComponent('Missing authorization code')}`
+        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Missing authorization code')}`
       );
     }
 
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const storedState = request.cookies.get('linear_oauth_state')?.value;
     if (!storedState || storedState !== state) {
       return NextResponse.redirect(
-        `https://${appDomain}/profile?linear_oauth=error&message=${encodeURIComponent('Invalid state parameter')}`
+        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Invalid state parameter')}`
       );
     }
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     if (!clientId || !clientSecret) {
       return NextResponse.redirect(
-        `https://${appDomain}/profile?linear_oauth=error&message=${encodeURIComponent('OAuth not configured')}`
+        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('OAuth not configured')}`
       );
     }
 
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       const errorText = await tokenResponse.text();
       console.error('Linear OAuth token exchange failed:', errorText);
       return NextResponse.redirect(
-        `https://${appDomain}/profile?linear_oauth=error&message=${encodeURIComponent('Token exchange failed')}`
+        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Token exchange failed')}`
       );
     }
 
@@ -81,24 +81,40 @@ export async function GET(request: NextRequest) {
       scope?: string;
     };
 
-    // Encrypt and store the OAuth token
+    // Encrypt and store the OAuth token in workspace settings
     const encryptedToken = encryptToken(tokenData.access_token);
 
-    const { error: updateError } = await supabaseAdmin
-      .from('profiles')
-      .update({ linear_oauth_token: encryptedToken })
-      .eq('id', user.id);
+    // Upsert workspace settings (single row)
+    const { data: existing } = await supabaseAdmin
+      .from('workspace_settings')
+      .select('id')
+      .limit(1)
+      .single();
+
+    let updateError;
+    if (existing) {
+      const result = await supabaseAdmin
+        .from('workspace_settings')
+        .update({ linear_oauth_token: encryptedToken })
+        .eq('id', existing.id);
+      updateError = result.error;
+    } else {
+      const result = await supabaseAdmin
+        .from('workspace_settings')
+        .insert({ linear_oauth_token: encryptedToken });
+      updateError = result.error;
+    }
 
     if (updateError) {
       console.error('Failed to store OAuth token:', updateError);
       return NextResponse.redirect(
-        `https://${appDomain}/profile?linear_oauth=error&message=${encodeURIComponent('Failed to save token')}`
+        `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Failed to save token')}`
       );
     }
 
     // Clear the state cookie and redirect to profile with success
     const response = NextResponse.redirect(
-      `https://${appDomain}/profile?linear_oauth=success`
+      `https://${appDomain}/settings?linear_oauth=success`
     );
     response.cookies.delete('linear_oauth_state');
 
@@ -107,7 +123,7 @@ export async function GET(request: NextRequest) {
     console.error('Linear OAuth callback error:', error);
     const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
     return NextResponse.redirect(
-      `https://${appDomain}/profile?linear_oauth=error&message=${encodeURIComponent('Unexpected error')}`
+      `https://${appDomain}/settings?linear_oauth=error&message=${encodeURIComponent('Unexpected error')}`
     );
   }
 }

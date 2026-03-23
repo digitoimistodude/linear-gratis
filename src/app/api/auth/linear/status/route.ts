@@ -11,14 +11,14 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
+    const { data: settings } = await supabaseAdmin
+      .from('workspace_settings')
       .select('linear_oauth_token')
-      .eq('id', user.id)
+      .limit(1)
       .single();
 
     return NextResponse.json({
-      connected: !!profile?.linear_oauth_token,
+      connected: !!settings?.linear_oauth_token,
       oauthConfigured: !!process.env.LINEAR_OAUTH_CLIENT_ID,
     });
   } catch (error) {
@@ -36,10 +36,18 @@ export async function DELETE() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await supabaseAdmin
-      .from('profiles')
-      .update({ linear_oauth_token: null })
-      .eq('id', user.id);
+    const { data: existing } = await supabaseAdmin
+      .from('workspace_settings')
+      .select('id')
+      .limit(1)
+      .single();
+
+    if (existing) {
+      await supabaseAdmin
+        .from('workspace_settings')
+        .update({ linear_oauth_token: null })
+        .eq('id', existing.id);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

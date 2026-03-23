@@ -14,8 +14,6 @@ export default function ProfilePage() {
   const { user, signOut, loading: authLoading } = useAuth()
   const [linearToken, setLinearToken] = useState('')
   const [hideOnboarding, setHideOnboarding] = useState(false)
-  const [oauthConnected, setOauthConnected] = useState(false)
-  const [oauthConfigured, setOauthConfigured] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -54,20 +52,6 @@ export default function ProfilePage() {
     }
   }, [user])
 
-  // Check OAuth status
-  const checkOAuthStatus = useCallback(async () => {
-    try {
-      const response = await fetch('/api/auth/linear/status')
-      if (response.ok) {
-        const data = await response.json() as { connected: boolean; oauthConfigured: boolean }
-        setOauthConnected(data.connected)
-        setOauthConfigured(data.oauthConfigured)
-      }
-    } catch (error) {
-      console.error('Error checking OAuth status:', error)
-    }
-  }, [])
-
   useEffect(() => {
     if (authLoading) return // Wait for auth to finish loading
 
@@ -76,24 +60,9 @@ export default function ProfilePage() {
       return
     }
 
-    // Load existing token and OAuth status
+    // Load existing token
     loadProfile()
-    checkOAuthStatus()
-
-    // Handle OAuth callback messages
-    const params = new URLSearchParams(window.location.search)
-    const oauthResult = params.get('linear_oauth')
-    if (oauthResult === 'success') {
-      setMessage({ type: 'success', text: 'Linear app connected successfully! Customer comments will now show as a bot in Linear.' })
-      setOauthConnected(true)
-      // Clean URL
-      window.history.replaceState({}, '', '/profile')
-    } else if (oauthResult === 'error') {
-      const errorMsg = params.get('message') || 'Failed to connect'
-      setMessage({ type: 'error', text: `Linear app connection failed: ${errorMsg}` })
-      window.history.replaceState({}, '', '/profile')
-    }
-  }, [user, authLoading, router, loadProfile, checkOAuthStatus])
+  }, [user, authLoading, router, loadProfile])
 
   const saveProfile = async () => {
     if (!user) return
@@ -303,92 +272,6 @@ export default function ProfilePage() {
                   </Button>
                 </form>
               </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Linear app connection</CardTitle>
-            <CardDescription>
-              Connect a Linear OAuth app so customer comments on public views appear as a bot in Linear instead of as you.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {oauthConnected ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-sm text-foreground">Connected - customer comments will appear as the app in Linear</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    const response = await fetch('/api/auth/linear/status', { method: 'DELETE' })
-                    if (response.ok) {
-                      setOauthConnected(false)
-                      setMessage({ type: 'success', text: 'Linear app disconnected' })
-                    }
-                  }}
-                >
-                  Disconnect
-                </Button>
-              </div>
-            ) : oauthConfigured ? (
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Without this connection, customer comments in Linear will appear as posted by you.
-                </p>
-                <Button
-                  onClick={() => {
-                    window.location.href = '/api/auth/linear/connect'
-                  }}
-                >
-                  Connect Linear app
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  To enable bot-identity comments, a workspace admin needs to create a Linear OAuth app first.
-                </p>
-                <div className="bg-muted/50 rounded-lg p-4 border border-border/50">
-                  <h3 className="font-semibold mb-3">Setup guide</h3>
-                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-                    <li>
-                      Open{' '}
-                      <a
-                        href="https://linear.app/settings/api/applications/new"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        Linear API settings - New OAuth application
-                      </a>
-                    </li>
-                    <li>
-                      Set the app name (this is what appears as the commenter in Linear)
-                    </li>
-                    <li>
-                      Set the callback URL to:{' '}
-                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
-                        {typeof window !== 'undefined' ? `${window.location.origin}/api/auth/linear/callback` : '/api/auth/linear/callback'}
-                      </code>
-                    </li>
-                    <li>
-                      Copy the <strong>Client ID</strong> and <strong>Client Secret</strong>
-                    </li>
-                    <li>
-                      Add them as environment variables:{' '}
-                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">LINEAR_OAUTH_CLIENT_ID</code>{' '}
-                      and{' '}
-                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">LINEAR_OAUTH_CLIENT_SECRET</code>
-                    </li>
-                    <li>Restart the server and come back here to connect</li>
-                  </ol>
-                </div>
-              </div>
             )}
           </CardContent>
         </Card>
