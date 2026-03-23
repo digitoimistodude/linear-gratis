@@ -167,26 +167,19 @@ export async function POST(
 
     const comment = newComment as Pick<ViewComment, 'id' | 'author_name' | 'content' | 'created_at' | 'is_approved'>;
 
-    // Sync comment to Linear as a bot-identity comment
+    // Sync comment to Linear
     try {
       const { data: profileData } = await supabaseAdmin
         .from('profiles')
-        .select('linear_api_token')
+        .select('linear_api_token, linear_oauth_token')
         .eq('id', view.user_id)
         .single();
 
       if (profileData?.linear_api_token) {
-        const decryptedToken = decryptToken(profileData.linear_api_token);
         const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
         const urlSuffix = issueIdentifier || issueId;
         const viewUrl = `https://${appDomain}/view/${view.slug}/${urlSuffix}`;
 
-        const headers = {
-          'Content-Type': 'application/json',
-          Authorization: `${decryptedToken.replace(/[^\x00-\xFF]/g, '')}`,
-        };
-
-        // Create a comment with bot identity using createAsUser
         const commentMutation = `
           mutation CommentCreate($input: CommentCreateInput!) {
             commentCreate(input: $input) {
@@ -196,21 +189,47 @@ export async function POST(
           }
         `;
 
-        await fetch('https://api.linear.app/graphql', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            query: commentMutation,
-            variables: {
-              input: {
-                issueId,
-                body: `**${authorName.trim()}** commented via [${view.name}](${viewUrl}):\n\n> ${trimmedContent}`,
-                createAsUser: authorName.trim(),
-                displayIconUrl: `https://${appDomain}/favicon-32x32.png`,
-              },
+        // Use OAuth token (bot identity) if available, otherwise fall back to personal API key
+        if (profileData.linear_oauth_token) {
+          const oauthToken = decryptToken(profileData.linear_oauth_token);
+          await fetch('https://api.linear.app/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${oauthToken}`,
             },
-          }),
-        });
+            body: JSON.stringify({
+              query: commentMutation,
+              variables: {
+                input: {
+                  issueId,
+                  body: `**${authorName.trim()}** commented via [${view.name}](${viewUrl}):\n\n> ${trimmedContent}`,
+                  createAsUser: authorName.trim(),
+                  displayIconUrl: `https://${appDomain}/favicon-32x32.png`,
+                },
+              },
+            }),
+          });
+        } else {
+          // Fallback: use personal API key (comment shows as token owner)
+          const personalToken = decryptToken(profileData.linear_api_token);
+          await fetch('https://api.linear.app/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `${personalToken.replace(/[^\x00-\xFF]/g, '')}`,
+            },
+            body: JSON.stringify({
+              query: commentMutation,
+              variables: {
+                input: {
+                  issueId,
+                  body: `**${authorName.trim()}** commented via [${view.name}](${viewUrl}):\n\n> ${trimmedContent}`,
+                },
+              },
+            }),
+          });
+        }
       }
     } catch (linearError) {
       // Don't fail the comment if Linear sync fails

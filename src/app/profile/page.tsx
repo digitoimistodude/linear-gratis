@@ -14,6 +14,8 @@ export default function ProfilePage() {
   const { user, signOut, loading: authLoading } = useAuth()
   const [linearToken, setLinearToken] = useState('')
   const [hideOnboarding, setHideOnboarding] = useState(false)
+  const [oauthConnected, setOauthConnected] = useState(false)
+  const [oauthConfigured, setOauthConfigured] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -52,6 +54,20 @@ export default function ProfilePage() {
     }
   }, [user])
 
+  // Check OAuth status
+  const checkOAuthStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/auth/linear/status')
+      if (response.ok) {
+        const data = await response.json() as { connected: boolean; oauthConfigured: boolean }
+        setOauthConnected(data.connected)
+        setOauthConfigured(data.oauthConfigured)
+      }
+    } catch (error) {
+      console.error('Error checking OAuth status:', error)
+    }
+  }, [])
+
   useEffect(() => {
     if (authLoading) return // Wait for auth to finish loading
 
@@ -60,9 +76,24 @@ export default function ProfilePage() {
       return
     }
 
-    // Load existing token
+    // Load existing token and OAuth status
     loadProfile()
-  }, [user, authLoading, router, loadProfile])
+    checkOAuthStatus()
+
+    // Handle OAuth callback messages
+    const params = new URLSearchParams(window.location.search)
+    const oauthResult = params.get('linear_oauth')
+    if (oauthResult === 'success') {
+      setMessage({ type: 'success', text: 'Linear app connected successfully! Customer comments will now show as a bot in Linear.' })
+      setOauthConnected(true)
+      // Clean URL
+      window.history.replaceState({}, '', '/profile')
+    } else if (oauthResult === 'error') {
+      const errorMsg = params.get('message') || 'Failed to connect'
+      setMessage({ type: 'error', text: `Linear app connection failed: ${errorMsg}` })
+      window.history.replaceState({}, '', '/profile')
+    }
+  }, [user, authLoading, router, loadProfile, checkOAuthStatus])
 
   const saveProfile = async () => {
     if (!user) return
@@ -275,6 +306,53 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {oauthConfigured && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Linear app connection</CardTitle>
+            <CardDescription>
+              Connect the Linear app to enable bot-identity comments. When customers comment on public views, comments appear as the app in Linear instead of as you.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {oauthConnected ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-sm text-foreground">Connected</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const response = await fetch('/api/auth/linear/status', { method: 'DELETE' })
+                    if (response.ok) {
+                      setOauthConnected(false)
+                      setMessage({ type: 'success', text: 'Linear app disconnected' })
+                    }
+                  }}
+                >
+                  Disconnect
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Without this connection, customer comments in Linear will appear as posted by you. Connect the app to show them as a separate bot identity.
+                </p>
+                <Button
+                  onClick={() => {
+                    window.location.href = '/api/auth/linear/connect'
+                  }}
+                >
+                  Connect Linear app
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        )}
 
         <div className="text-center">
           <Button variant="link" onClick={() => router.push('/')}>
