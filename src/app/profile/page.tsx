@@ -307,12 +307,11 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {oauthConfigured && (
         <Card>
           <CardHeader>
             <CardTitle>Linear app connection</CardTitle>
             <CardDescription>
-              Connect the Linear app to enable bot-identity comments. When customers comment on public views, comments appear as the app in Linear instead of as you.
+              Connect a Linear OAuth app so customer comments on public views appear as a bot in Linear instead of as you.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -320,7 +319,7 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-sm text-foreground">Connected</span>
+                  <span className="text-sm text-foreground">Connected - customer comments will appear as the app in Linear</span>
                 </div>
                 <Button
                   variant="outline"
@@ -336,10 +335,10 @@ export default function ProfilePage() {
                   Disconnect
                 </Button>
               </div>
-            ) : (
+            ) : oauthConfigured ? (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Without this connection, customer comments in Linear will appear as posted by you. Connect the app to show them as a separate bot identity.
+                  Without this connection, customer comments in Linear will appear as posted by you.
                 </p>
                 <Button
                   onClick={() => {
@@ -349,10 +348,50 @@ export default function ProfilePage() {
                   Connect Linear app
                 </Button>
               </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  To enable bot-identity comments, a workspace admin needs to create a Linear OAuth app first.
+                </p>
+                <div className="bg-muted/50 rounded-lg p-4 border border-border/50">
+                  <h3 className="font-semibold mb-3">Setup guide</h3>
+                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>
+                      Open{' '}
+                      <a
+                        href="https://linear.app/settings/api/applications/new"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Linear API settings - New OAuth application
+                      </a>
+                    </li>
+                    <li>
+                      Set the app name (this is what appears as the commenter in Linear)
+                    </li>
+                    <li>
+                      Set the callback URL to:{' '}
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">
+                        {typeof window !== 'undefined' ? `${window.location.origin}/api/auth/linear/callback` : '/api/auth/linear/callback'}
+                      </code>
+                    </li>
+                    <li>
+                      Copy the <strong>Client ID</strong> and <strong>Client Secret</strong>
+                    </li>
+                    <li>
+                      Add them as environment variables:{' '}
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">LINEAR_OAUTH_CLIENT_ID</code>{' '}
+                      and{' '}
+                      <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">LINEAR_OAUTH_CLIENT_SECRET</code>
+                    </li>
+                    <li>Restart the server and come back here to connect</li>
+                  </ol>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
-        )}
 
         <div className="text-center">
           <Button variant="link" onClick={() => router.push('/')}>
