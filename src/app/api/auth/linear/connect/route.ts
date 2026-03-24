@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     authorizeUrl.searchParams.set('scope', 'write');
     authorizeUrl.searchParams.set('state', state);
     authorizeUrl.searchParams.set('actor', 'app');
+    authorizeUrl.searchParams.set('prompt', 'consent');
 
     // Set state cookie for CSRF validation
     const response = NextResponse.redirect(authorizeUrl.toString());
