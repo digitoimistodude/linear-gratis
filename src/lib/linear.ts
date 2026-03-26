@@ -26,6 +26,11 @@ export type LinearIssue = {
     name: string;
     color: string;
   }>;
+  parent?: {
+    id: string;
+    identifier: string;
+    title: string;
+  };
   createdAt: string;
   updatedAt: string;
 };
@@ -102,6 +107,11 @@ export async function fetchLinearIssues(
                 color
               }
             }
+            parent {
+              id
+              identifier
+              title
+            }
             createdAt
             updatedAt
           }
@@ -153,6 +163,11 @@ export async function fetchLinearIssues(
                 color: string;
               }>;
             };
+            parent?: {
+              id: string;
+              identifier: string;
+              title: string;
+            };
             createdAt: string;
             updatedAt: string;
           }>;
@@ -181,6 +196,7 @@ export async function fetchLinearIssues(
       state: issue.state,
       assignee: issue.assignee,
       labels: issue.labels.nodes,
+      parent: issue.parent,
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
     }));

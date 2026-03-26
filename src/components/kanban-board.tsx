@@ -9,6 +9,7 @@ interface KanbanBoardProps {
   showLabels?: boolean
   showPriorities?: boolean
   showDescriptions?: boolean
+  showSubIssues?: boolean
   className?: string
   filters?: FilterState
   onIssueClick?: (issueId: string) => void
@@ -96,12 +97,16 @@ export function KanbanBoard({
   showAssignees = true,
   showLabels = true,
   showPriorities = true,
+  showSubIssues = true,
   className = '',
   filters,
   onIssueClick
 }: KanbanBoardProps) {
+  // Filter out sub-issues if disabled
+  const visibleIssues = showSubIssues ? issues : issues.filter(issue => !issue.parent)
+
   // Filter issues based on provided filters
-  const filteredIssues = filters ? issues.filter(issue => {
+  const filteredIssues = filters ? visibleIssues.filter(issue => {
     // Search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase()
@@ -144,7 +149,7 @@ export function KanbanBoard({
     }
 
     return true
-  }) : issues
+  }) : visibleIssues
 
   // Group filtered issues by their state
   const groupedIssues = filteredIssues.reduce((acc, issue) => {
@@ -279,6 +284,16 @@ export function KanbanBoard({
                                 )}
                               </div>
 
+                              {/* Parent indicator for sub-issues */}
+                              {issue.parent && (
+                                <div className="flex items-center gap-1 mb-1">
+                                  <svg className="w-3 h-3 text-muted-foreground" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M4 3v6.5a2.5 2.5 0 0 0 2.5 2.5H12" />
+                                    <path d="M4 3L2 5l2 2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                  <span className="text-xs text-muted-foreground truncate">{issue.parent.identifier}</span>
+                                </div>
+                              )}
                               {/* Issue title */}
                               <div className="mb-3">
                                 <h4 className="text-sm font-medium text-foreground leading-tight tracking-tight line-clamp-2">

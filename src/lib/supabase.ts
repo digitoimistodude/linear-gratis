@@ -70,6 +70,7 @@ export type PublicView = {
   allow_issue_creation: boolean
   excluded_issue_ids: string[]
   allow_customer_comments: boolean
+  show_sub_issues: boolean
   created_at: string
   updated_at: string
 }

@@ -25,6 +25,11 @@ export type LinearIssue = {
     name: string;
     color: string;
   }>;
+  parent?: {
+    id: string;
+    identifier: string;
+    title: string;
+  };
   createdAt: string;
   updatedAt: string;
 };
@@ -112,6 +117,11 @@ export async function POST(request: NextRequest) {
                 color
               }
             }
+            parent {
+              id
+              identifier
+              title
+            }
             createdAt
             updatedAt
           }
@@ -164,6 +174,11 @@ export async function POST(request: NextRequest) {
                 color: string;
               }>;
             };
+            parent?: {
+              id: string;
+              identifier: string;
+              title: string;
+            };
             createdAt: string;
             updatedAt: string;
           }>;
@@ -195,6 +210,7 @@ export async function POST(request: NextRequest) {
       state: issue.state,
       assignee: issue.assignee,
       labels: issue.labels.nodes,
+      parent: issue.parent,
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
     }));

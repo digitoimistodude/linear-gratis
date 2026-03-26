@@ -86,6 +86,7 @@ export default function PublicViewsPage() {
     return false
   });
   const [allowCustomerComments, setAllowCustomerComments] = useState(false);
+  const [showSubIssues, setShowSubIssues] = useState(true);
 
   const loadUserData = useCallback(async () => {
     if (!user) return;
@@ -262,6 +263,7 @@ export default function PublicViewsPage() {
         show_project_updates: showProjectUpdates,
         excluded_issue_ids: excludedIssueIds,
         allow_customer_comments: allowCustomerComments,
+        show_sub_issues: showSubIssues,
         ...sourceData,
       });
 
@@ -352,6 +354,7 @@ export default function PublicViewsPage() {
     setAvailableIssues([]);
     setIssueFilter("");
     setAllowCustomerComments(false);
+    setShowSubIssues(true);
     setShowCreateView(false);
     setEditingView(null);
     setShowEditView(false);
@@ -399,6 +402,7 @@ export default function PublicViewsPage() {
     setShowLabels(view.show_labels !== false);
     setExcludedIssueIds(view.excluded_issue_ids || []);
     setAllowCustomerComments(view.allow_customer_comments || false);
+    setShowSubIssues(view.show_sub_issues !== false);
 
     // Set source type and selection based on existing view
     if (view.project_id) {
@@ -489,6 +493,7 @@ export default function PublicViewsPage() {
           show_project_updates: showProjectUpdates,
           excluded_issue_ids: excludedIssueIds,
           allow_customer_comments: allowCustomerComments,
+          show_sub_issues: showSubIssues,
           ...sourceData,
         })
         .eq("id", editingView.id);
@@ -936,6 +941,23 @@ export default function PublicViewsPage() {
                       </p>
                     </div>
                   </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={showSubIssues}
+                        onChange={() => setShowSubIssues(!showSubIssues)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium cursor-pointer">
+                        Show sub-issues
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Display sub-issues as separate cards on the board
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1291,6 +1313,23 @@ export default function PublicViewsPage() {
                       </Label>
                       <p className="text-xs text-muted-foreground mt-1">
                         Let viewers comment on issues. Comments are stored separately and synced to Linear as attachments.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Checkbox
+                        checked={showSubIssues}
+                        onChange={() => setShowSubIssues(!showSubIssues)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium cursor-pointer">
+                        Show sub-issues
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Display sub-issues as separate cards on the board
                       </p>
                     </div>
                   </div>
