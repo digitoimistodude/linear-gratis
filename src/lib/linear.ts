@@ -73,7 +73,7 @@ export async function fetchLinearIssues(
         issues(
           filter: { ${filterCondition} }
           orderBy: updatedAt
-          first: 50
+          first: 250
         ) {
           nodes {
             id

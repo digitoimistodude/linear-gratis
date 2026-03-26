@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         issues(
           filter: { ${filterCondition} }
           orderBy: updatedAt
-          first: 50
+          first: 250
         ) {
           nodes {
             id
