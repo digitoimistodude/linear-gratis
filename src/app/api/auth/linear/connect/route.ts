@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { decryptToken } from '@/lib/encryption';
 import crypto from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
-    // Read OAuth client ID from workspace_settings
+    // Read OAuth settings from workspace_settings
     const { data: settings, error } = await supabaseAdmin
       .from('workspace_settings')
-      .select('linear_oauth_client_id')
+      .select('id, linear_oauth_client_id, linear_oauth_client_secret, linear_oauth_token')
       .limit(1)
       .single();
 
@@ -19,6 +20,30 @@ export async function GET(request: NextRequest) {
     }
 
     const clientId = settings.linear_oauth_client_id;
+
+    // If there's an existing token, revoke it first so Linear shows the consent screen
+    if (settings.linear_oauth_token && settings.linear_oauth_client_secret) {
+      try {
+        const existingToken = decryptToken(settings.linear_oauth_token);
+        const clientSecret = decryptToken(settings.linear_oauth_client_secret);
+        await fetch('https://api.linear.app/oauth/revoke', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            token: existingToken,
+          }).toString(),
+        });
+        // Clear the stored token
+        await supabaseAdmin
+          .from('workspace_settings')
+          .update({ linear_oauth_token: null })
+          .eq('id', settings.id);
+      } catch (revokeError) {
+        console.error('Failed to revoke existing token:', revokeError);
+      }
+    }
 
     // Determine the redirect URI from the request origin
     const origin = request.headers.get('origin') || request.headers.get('referer')?.replace(/\/[^/]*$/, '') || new URL(request.url).origin;

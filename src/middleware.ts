@@ -41,6 +41,11 @@ export async function middleware(request: NextRequest) {
   // Refresh Supabase auth session first
   const response = await updateSession(request);
 
+  // Add noindex header for public view pages
+  if (request.nextUrl.pathname.startsWith('/view/')) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
+
   const hostname = request.headers.get('host') || '';
   const url = request.nextUrl;
 
