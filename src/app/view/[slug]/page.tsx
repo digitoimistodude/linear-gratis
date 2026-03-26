@@ -82,6 +82,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     }
   }, [issues]) // eslint-disable-line react-hooks/exhaustive-deps
 
+
   useEffect(() => {
     const initParams = async () => {
       const resolvedParams = await params
