@@ -55,6 +55,18 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   // Load branding settings for this view's owner
   const { branding } = useBrandingSettings(view?.user_id || null)
 
+  // Prevent search engine indexing of public views
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="robots"]') as HTMLMetaElement
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.name = 'robots'
+      document.head.appendChild(meta)
+    }
+    meta.content = 'noindex, nofollow'
+    return () => { meta.remove() }
+  }, [])
+
   useEffect(() => {
     const initParams = async () => {
       const resolvedParams = await params

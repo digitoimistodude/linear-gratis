@@ -12,6 +12,7 @@ export default function robots(): MetadataRoute.Robots {
           '/profile',
           '/_next/',
           '/admin',
+          '/view/',
         ],
       },
       {
