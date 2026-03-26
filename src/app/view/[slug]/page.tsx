@@ -479,6 +479,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
               showLabels={view.show_labels}
               showPriorities={view.show_priorities}
               showDescriptions={view.show_descriptions}
+              showSubIssues={view.show_sub_issues !== false}
               className="w-full"
               filters={filters}
               onIssueClick={handleIssueClick}
