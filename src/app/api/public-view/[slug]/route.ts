@@ -69,10 +69,11 @@ export async function GET(
       throw new Error(`Failed to fetch issues from Linear: ${issuesResult.error}`);
     }
 
-    // Filter out excluded issues
-    const excludedIds = viewData.excluded_issue_ids || [];
-    const filteredIssues = excludedIds.length > 0
-      ? issuesResult.issues?.filter((issue: { id: string }) => !excludedIds.includes(issue.id))
+    // Strip out any issues the view owner has excluded. Filtering happens
+    // server-side so excluded IDs never leave the server.
+    const excludedIds = new Set<string>(viewData.excluded_issue_ids ?? []);
+    const visibleIssues = excludedIds.size > 0
+      ? issuesResult.issues.filter((issue) => !excludedIds.has(issue.id))
       : issuesResult.issues;
 
     return NextResponse.json({
@@ -92,15 +93,15 @@ export async function GET(
         show_labels: viewData.show_labels,
         show_priorities: viewData.show_priorities,
         show_descriptions: viewData.show_descriptions,
-        show_project_updates: viewData.show_project_updates ?? true,
-        allow_issue_creation: viewData.allow_issue_creation,
         show_comments: viewData.show_comments ?? false,
         show_activity: viewData.show_activity ?? false,
+        show_project_updates: viewData.show_project_updates ?? true,
+        allow_issue_creation: viewData.allow_issue_creation,
         allow_customer_comments: viewData.allow_customer_comments ?? false,
         show_sub_issues: viewData.show_sub_issues ?? true,
         created_at: viewData.created_at
       },
-      issues: filteredIssues
+      issues: visibleIssues
     });
 
   } catch (error) {
@@ -193,10 +194,9 @@ export async function POST(
       throw new Error(`Failed to fetch issues from Linear: ${issuesResult.error}`);
     }
 
-    // Filter out excluded issues
-    const excludedIds = viewData.excluded_issue_ids || [];
-    const filteredIssues = excludedIds.length > 0
-      ? issuesResult.issues?.filter((issue: { id: string }) => !excludedIds.includes(issue.id))
+    const excludedIds = new Set<string>(viewData.excluded_issue_ids ?? []);
+    const visibleIssues = excludedIds.size > 0
+      ? issuesResult.issues.filter((issue) => !excludedIds.has(issue.id))
       : issuesResult.issues;
 
     return NextResponse.json({
@@ -216,16 +216,16 @@ export async function POST(
         show_labels: viewData.show_labels,
         show_priorities: viewData.show_priorities,
         show_descriptions: viewData.show_descriptions,
+        show_comments: viewData.show_comments ?? false,
+        show_activity: viewData.show_activity ?? false,
         show_project_updates: viewData.show_project_updates ?? true,
         password_protected: viewData.password_protected,
         allow_issue_creation: viewData.allow_issue_creation,
-        show_comments: viewData.show_comments ?? false,
-        show_activity: viewData.show_activity ?? false,
         allow_customer_comments: viewData.allow_customer_comments ?? false,
         show_sub_issues: viewData.show_sub_issues ?? true,
         created_at: viewData.created_at
       },
-      issues: filteredIssues
+      issues: visibleIssues
     });
 
   } catch (error) {

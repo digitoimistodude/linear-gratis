@@ -84,7 +84,6 @@ export async function GET(
       );
     }
 
-    // Check if view exists and is active
     const { data: viewData, error: viewError } = await supabaseAdmin
       .from('public_views')
       .select('*')
@@ -99,7 +98,6 @@ export async function GET(
       );
     }
 
-    // Check if view has expired
     if (viewData.expires_at && new Date(viewData.expires_at) < new Date()) {
       return NextResponse.json(
         { error: 'This public view has expired' },
@@ -116,56 +114,13 @@ export async function GET(
       );
     }
 
-    // Build GraphQL query based on view visibility settings
-    const showComments = viewData.show_comments ?? false;
-    const showActivity = viewData.show_activity ?? false;
+    // Gate comments and history via GraphQL @include. Keeps the query text
+    // static (cacheable, readable) while view settings control the flags.
+    const includeComments = viewData.show_comments ?? false;
+    const includeActivity = viewData.show_activity ?? false;
 
-    const commentsFragment = showComments ? `
-          comments {
-            nodes {
-              id
-              body
-              createdAt
-              updatedAt
-              user {
-                id
-                name
-                avatarUrl
-              }
-            }
-          }` : '';
-
-    const historyFragment = showActivity ? `
-          history {
-            nodes {
-              id
-              createdAt
-              fromState {
-                name
-                color
-              }
-              toState {
-                name
-                color
-              }
-              fromAssignee {
-                name
-              }
-              toAssignee {
-                name
-              }
-              fromPriority
-              toPriority
-              actor {
-                name
-                avatarUrl
-              }
-            }
-          }` : '';
-
-    // Fetch issue details from Linear using GraphQL
     const query = `
-      query IssueDetail($issueId: String!) {
+      query IssueDetail($issueId: String!, $includeComments: Boolean!, $includeActivity: Boolean!) {
         issue(id: $issueId) {
           id
           identifier
@@ -194,7 +149,46 @@ export async function GET(
             }
           }
           createdAt
-          updatedAt${commentsFragment}${historyFragment}
+          updatedAt
+          comments @include(if: $includeComments) {
+            nodes {
+              id
+              body
+              createdAt
+              updatedAt
+              user {
+                id
+                name
+                avatarUrl
+              }
+            }
+          }
+          history @include(if: $includeActivity) {
+            nodes {
+              id
+              createdAt
+              fromState {
+                name
+                color
+              }
+              toState {
+                name
+                color
+              }
+              fromAssignee {
+                name
+              }
+              toAssignee {
+                name
+              }
+              fromPriority
+              toPriority
+              actor {
+                name
+                avatarUrl
+              }
+            }
+          }
         }
       }
     `;
@@ -203,11 +197,11 @@ export async function GET(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `${decryptedToken.replace(/[^\x00-\xFF]/g, '')}`,
+        Authorization: decryptedToken.trim(),
       },
       body: JSON.stringify({
         query,
-        variables: { issueId }
+        variables: { issueId, includeComments, includeActivity },
       }),
     });
 
@@ -307,7 +301,6 @@ export async function GET(
 
     const issue = result.data.issue;
 
-    // Transform the data to match our IssueDetail type
     const issueDetail: IssueDetail = {
       id: issue.id,
       identifier: issue.identifier,
@@ -322,8 +315,8 @@ export async function GET(
       labels: issue.labels.nodes,
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
-      comments: issue.comments?.nodes || [],
-      history: (issue.history?.nodes || []).map(h => ({
+      comments: issue.comments?.nodes ?? [],
+      history: (issue.history?.nodes ?? []).map((h) => ({
         id: h.id,
         createdAt: h.createdAt,
         fromState: h.fromState,

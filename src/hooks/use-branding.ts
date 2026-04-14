@@ -39,9 +39,66 @@ export function useBrandingSettings(userId: string | null) {
   return { branding, loading, error };
 }
 
-// Helper function to apply branding colours to CSS variables
-export function applyBrandingToPage(branding: BrandingSettings | null, pageTitle?: string) {
+const SYSTEM_FONTS = new Set([
+  'arial', 'helvetica', 'times new roman', 'times', 'courier new', 'courier',
+  'georgia', 'verdana', 'tahoma', 'trebuchet ms', 'system-ui', 'sans-serif',
+  'serif', 'monospace',
+]);
+
+const GOOGLE_FONT_WEIGHTS = 'wght@300;400;500;600;700';
+
+function injectGoogleFontsLink(fontsToLoad: string[]) {
+  const googleFonts = Array.from(
+    new Set(
+      fontsToLoad
+        .map(f => f.replace(/['"]/g, '').trim())
+        .filter(f => f && !SYSTEM_FONTS.has(f.toLowerCase())),
+    ),
+  );
+
+  const linkId = 'branding-google-fonts';
+  const existing = document.getElementById(linkId) as HTMLLinkElement | null;
+
+  if (googleFonts.length === 0) {
+    existing?.remove();
+    return;
+  }
+
+  const familyParams = googleFonts
+    .map(f => `family=${encodeURIComponent(f).replace(/%20/g, '+')}:${GOOGLE_FONT_WEIGHTS}`)
+    .join('&');
+  const href = `https://fonts.googleapis.com/css2?${familyParams}&display=swap`;
+
+  if (existing) {
+    if (existing.href !== href) existing.href = href;
+    return;
+  }
+
+  const link = document.createElement('link');
+  link.id = linkId;
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
+}
+
+// Helper function to apply branding colours to CSS variables.
+// `pageTitle` becomes the document title prefix (e.g. "My Roadmap - Acme").
+export function applyBrandingToPage(
+  branding: BrandingSettings | null,
+  pageTitle?: string,
+) {
   if (!branding) return;
+
+  // Update document.title from brand name + current page title. Either or
+  // both can be absent; composes with " - " when both are present.
+  if (typeof document !== 'undefined') {
+    const parts = [pageTitle, branding.brand_name].filter(
+      (s): s is string => Boolean(s && s.trim()),
+    );
+    if (parts.length > 0) {
+      document.title = parts.join(' - ');
+    }
+  }
 
   const root = document.documentElement;
 
@@ -100,24 +157,7 @@ export function applyBrandingToPage(branding: BrandingSettings | null, pageTitle
     }
   }
 
-  // Inject Google Fonts <link> for non-system fonts
-  const systemFonts = ['arial', 'helvetica', 'times new roman', 'times', 'courier new', 'courier', 'georgia', 'verdana', 'tahoma', 'trebuchet ms', 'system-ui', 'sans-serif', 'serif', 'monospace'];
-  const googleFonts = fontsToLoad.filter(f => !systemFonts.includes(f.toLowerCase().replace(/['"]/g, '')));
-  if (googleFonts.length > 0) {
-    const linkId = 'branding-google-fonts';
-    let link = document.getElementById(linkId) as HTMLLinkElement | null;
-    const families = googleFonts.map(f => f.replace(/['"]/g, '').replace(/ /g, '+')).join('&family=');
-    const href = `https://fonts.googleapis.com/css2?family=${families}:wght@300;400;500;600;700&display=swap`;
-    if (link) {
-      link.href = href;
-    } else {
-      link = document.createElement('link');
-      link.id = linkId;
-      link.rel = 'stylesheet';
-      link.href = href;
-      document.head.appendChild(link);
-    }
-  }
+  injectGoogleFontsLink(fontsToLoad);
 
   // Apply custom CSS
   if (branding.custom_css) {

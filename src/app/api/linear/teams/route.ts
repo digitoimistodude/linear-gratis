@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getLinearToken } from '@/lib/linear-token';
+import { paginateLinearConnection, type LinearConnection } from '@/lib/linear';
 
 export type Team = {
   id: string
@@ -8,6 +9,8 @@ export type Team = {
   key: string
   description?: string
 }
+
+type TeamNode = Team;
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,91 +39,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch all teams via cursor pagination (Linear API max is 250 per page)
-    type TeamNode = {
-      id: string
-      name: string
-      key: string
-      description?: string
-    }
-
-    const allTeams: TeamNode[] = [];
-    let endCursor: string | null = null;
-    let hasNextPage = true;
-
-    while (hasNextPage) {
-      const query = `
-        query Teams($after: String) {
-          teams(first: 250, after: $after) {
-            nodes {
-              id
-              name
-              key
-              description
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
+    const query = `
+      query Teams($after: String) {
+        teams(first: 250, after: $after) {
+          nodes {
+            id
+            name
+            key
+            description
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
           }
         }
-      `;
-
-      const response = await fetch('https://api.linear.app/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': apiToken.trim()
-        },
-        body: JSON.stringify({ query, variables: { after: endCursor } })
-      });
-
-      if (!response.ok) {
-        let errorDetails = '';
-        try {
-          const errorBody = await response.text();
-          errorDetails = ` - ${errorBody}`;
-        } catch {
-          // Ignore text parsing errors
-        }
-        throw new Error(`Linear API error: ${response.status} ${response.statusText}${errorDetails}`);
       }
+    `;
 
-      const result = await response.json() as {
-        data?: {
-          teams: {
-            nodes: TeamNode[]
-            pageInfo: {
-              hasNextPage: boolean
-              endCursor: string | null
-            }
-          }
-        }
-        errors?: Array<{ message: string }>
-      };
+    const result = await paginateLinearConnection<TeamNode>({
+      apiToken,
+      query,
+      extract: (data) =>
+        (data as { teams: LinearConnection<TeamNode> }).teams,
+    });
 
-      if (result.errors) {
-        throw new Error(`GraphQL errors: ${result.errors.map(e => e.message).join(', ')}`);
-      }
-
-      if (!result.data) {
-        throw new Error('No data returned from Linear API');
-      }
-
-      allTeams.push(...result.data.teams.nodes);
-      hasNextPage = result.data.teams.pageInfo.hasNextPage;
-      endCursor = result.data.teams.pageInfo.endCursor;
+    if (!result.success) {
+      throw new Error(result.error);
     }
 
-    return NextResponse.json({
-      success: true,
-      teams: allTeams.map(team => ({
+    const teams = result.nodes
+      .map(team => ({
         id: team.id,
         name: team.name,
         key: team.key,
         description: team.description
       }))
-    });
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+    return NextResponse.json({ success: true, teams });
 
   } catch (error) {
     console.error('Teams API error:', error);

@@ -2,6 +2,14 @@
 
 import { LinearIssue } from '@/app/api/linear/issues/route'
 import { FilterState } from '@/components/filter-dropdown'
+import { PriorityIcon, EstimateIcon } from '@/components/priority-icon'
+import { UserAvatar } from '@/components/user-avatar'
+
+// Shared Tailwind classes for the small metadata badges on a kanban card
+// (priority, estimate, label). Using theme tokens so the badges adapt to
+// whatever colour scheme the branding has set.
+const CARD_BADGE_CLASS =
+  'flex items-center gap-1 h-[22px] px-1 rounded border border-border bg-accent/40 text-muted-foreground text-xs font-medium overflow-hidden flex-shrink-0 max-w-[134px] transition-colors duration-150 hover:text-foreground'
 
 interface KanbanBoardProps {
   issues: LinearIssue[]
@@ -13,54 +21,6 @@ interface KanbanBoardProps {
   className?: string
   filters?: FilterState
   onIssueClick?: (issueId: string) => void
-}
-
-const getPriorityIcon = (priority: number) => {
-  if (priority === 1) {
-    return (
-      <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="#ff7235">
-        <path d="M3 1C1.91067 1 1 1.91067 1 3V13C1 14.0893 1.91067 15 3 15H13C14.0893 15 15 14.0893 15 13V3C15 1.91067 14.0893 1 13 1H3ZM7 4L9 4L8.75391 8.99836H7.25L7 4ZM9 11C9 11.5523 8.55228 12 8 12C7.44772 12 7 11.5523 7 11C7 10.4477 7.44772 10 8 10C8.55228 10 9 10.4477 9 11Z"></path>
-      </svg>
-    )
-  }
-
-  if (priority === 2) {
-    return (
-      <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="#9c9da6">
-        <rect x="1.5" y="8" width="3" height="6" rx="1"></rect>
-        <rect x="6.5" y="5" width="3" height="9" rx="1"></rect>
-        <rect x="11.5" y="2" width="3" height="12" rx="1"></rect>
-      </svg>
-    )
-  }
-
-  if (priority === 3) {
-    return (
-      <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="#9c9da6">
-        <rect x="1.5" y="8" width="3" height="6" rx="1"></rect>
-        <rect x="6.5" y="5" width="3" height="9" rx="1"></rect>
-        <rect x="11.5" y="2" width="3" height="12" rx="1" fillOpacity="0.4"></rect>
-      </svg>
-    )
-  }
-
-  if (priority === 4) {
-    return (
-      <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="#9c9da6">
-        <rect x="1.5" y="8" width="3" height="6" rx="1"></rect>
-        <rect x="6.5" y="5" width="3" height="9" rx="1" fillOpacity="0.4"></rect>
-        <rect x="11.5" y="2" width="3" height="12" rx="1" fillOpacity="0.4"></rect>
-      </svg>
-    )
-  }
-
-  return (
-    <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="#9c9da6">
-      <rect x="1.5" y="7.25" width="3" height="1.5" rx="0.5" opacity="0.9"></rect>
-      <rect x="6.5" y="7.25" width="3" height="1.5" rx="0.5" opacity="0.9"></rect>
-      <rect x="11.5" y="7.25" width="3" height="1.5" rx="0.5" opacity="0.9"></rect>
-    </svg>
-  )
 }
 
 const getStateIcon = (stateType: string, color: string) => {
@@ -182,16 +142,6 @@ export function KanbanBoard({
     return orderA - orderB
   })
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
-
   if (filteredIssues.length === 0 && issues.length > 0) {
     return (
       <div className="text-center py-20">
@@ -269,17 +219,7 @@ export function KanbanBoard({
                                 {/* Assignee in top right */}
                                 {showAssignees && issue.assignee && (
                                   <div className="flex-shrink-0">
-                                    {issue.assignee.avatarUrl ? (
-                                      <img
-                                        src={issue.assignee.avatarUrl}
-                                        alt={issue.assignee.name}
-                                        className="w-5 h-5 rounded-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                                        {getInitials(issue.assignee.name)}
-                                      </div>
-                                    )}
+                                    <UserAvatar name={issue.assignee.name} avatarUrl={issue.assignee.avatarUrl} />
                                   </div>
                                 )}
                               </div>
@@ -306,58 +246,25 @@ export function KanbanBoard({
 
                                 {/* Priority badge */}
                                 {showPriorities && (
-                                  <div
-                                    className="flex items-center gap-1 text-xs font-medium overflow-hidden flex-shrink-0 transition-colors duration-150 hover:text-white"
-                                    style={{
-                                      borderRadius: '4px',
-                                      height: '22px',
-                                      padding: '4px',
-                                      border: '0.5px solid lch(22.5 4.707 272)',
-                                      backgroundColor: 'lch(8.3 1.867 272)',
-                                      color: 'lch(62.6% 1.35 272 / 1)',
-                                      maxWidth: '134px'
-                                    }}
-                                  >
-                                    {getPriorityIcon(issue.priority)}
+                                  <div className={CARD_BADGE_CLASS}>
+                                    <PriorityIcon
+                                      priority={issue.priority}
+                                      priorityLabel={issue.priorityLabel}
+                                    />
                                   </div>
                                 )}
 
                                 {/* Estimate badge */}
                                 {issue.estimate != null && issue.estimate > 0 && (
-                                  <div
-                                    className="flex items-center gap-1 text-xs font-medium overflow-hidden flex-shrink-0 transition-colors duration-150 hover:text-white"
-                                    style={{
-                                      borderRadius: '4px',
-                                      height: '22px',
-                                      padding: '4px',
-                                      border: '0.5px solid lch(22.5 4.707 272)',
-                                      backgroundColor: 'lch(8.3 1.867 272)',
-                                      color: 'lch(62.6% 1.35 272 / 1)',
-                                      maxWidth: '134px'
-                                    }}
-                                  >
-                                    <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
-                                      <path fillRule="evenodd" d="M3.741 14.5h8.521c1.691 0 2.778-1.795 1.993-3.293l-4.26-8.134c-.842-1.608-3.144-1.608-3.986 0l-4.26 8.134C.962 12.705 2.05 14.5 3.74 14.5ZM8 3.368a.742.742 0 0 0-.663.402l-4.26 8.134A.75.75 0 0 0 3.741 13H8V3.367Z" clipRule="evenodd"></path>
-                                    </svg>
+                                  <div className={CARD_BADGE_CLASS}>
+                                    <EstimateIcon />
                                     <span>{issue.estimate}</span>
                                   </div>
                                 )}
 
                                 {/* Label badges */}
                                 {showLabels && issue.labels.map((label) => (
-                                  <div
-                                    key={label.id}
-                                    className="flex items-center gap-1 text-xs font-medium overflow-hidden flex-shrink-0 transition-colors duration-150 hover:text-white"
-                                    style={{
-                                      borderRadius: '4px',
-                                      height: '22px',
-                                      padding: '4px',
-                                      border: '0.5px solid lch(22.5 4.707 272)',
-                                      backgroundColor: 'lch(8.3 1.867 272)',
-                                      color: 'lch(62.6% 1.35 272 / 1)',
-                                      maxWidth: '134px'
-                                    }}
-                                  >
+                                  <div key={label.id} className={CARD_BADGE_CLASS}>
                                     <div
                                       className="w-2 h-2 rounded-full"
                                       style={{ backgroundColor: label.color }}

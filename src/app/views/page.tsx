@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,6 +86,32 @@ export default function PublicViewsPage() {
   });
   const [allowCustomerComments, setAllowCustomerComments] = useState(false);
   const [showSubIssues, setShowSubIssues] = useState(true);
+
+  const EXCLUDED_PICKER_LIMIT = 200;
+
+  const filteredPickerIssues = useMemo(() => {
+    if (!issueFilter) return availableIssues;
+    const q = issueFilter.toLowerCase();
+    return availableIssues.filter(
+      (issue) =>
+        issue.identifier.toLowerCase().includes(q) ||
+        issue.title.toLowerCase().includes(q),
+    );
+  }, [availableIssues, issueFilter]);
+
+  const visiblePickerIssues = useMemo(
+    () => filteredPickerIssues.slice(0, EXCLUDED_PICKER_LIMIT),
+    [filteredPickerIssues],
+  );
+  const hiddenPickerCount = filteredPickerIssues.length - visiblePickerIssues.length;
+
+  const toggleExcludeIssue = useCallback((issueId: string) => {
+    setExcludedIssueIds((prev) =>
+      prev.includes(issueId)
+        ? prev.filter((id) => id !== issueId)
+        : [...prev, issueId],
+    );
+  }, []);
 
   const loadUserData = useCallback(async () => {
     if (!user) return;
@@ -347,31 +373,36 @@ export default function PublicViewsPage() {
     setShowEditView(false);
   };
 
-  const fetchViewIssues = async (projectId?: string, teamId?: string) => {
-    if (!linearToken || (!projectId && !teamId)) return;
+  const fetchPickerIssues = useCallback(
+    async (sourceProjectId?: string, sourceTeamId?: string) => {
+      if (!linearToken || (!sourceProjectId && !sourceTeamId)) return;
 
-    setLoadingIssues(true);
-    try {
-      const response = await fetch("/api/linear/issues", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          apiToken: linearToken,
-          projectId: projectId || undefined,
-          teamId: teamId || undefined,
-        }),
-      });
+      setLoadingIssues(true);
+      try {
+        const response = await fetch("/api/linear/issues", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            apiToken: linearToken,
+            projectId: sourceProjectId || undefined,
+            teamId: sourceTeamId || undefined,
+          }),
+        });
 
-      if (response.ok) {
-        const data = (await response.json()) as { issues?: Array<{ id: string; identifier: string; title: string }> };
-        setAvailableIssues(data.issues || []);
+        if (response.ok) {
+          const data = (await response.json()) as {
+            issues?: Array<{ id: string; identifier: string; title: string }>;
+          };
+          setAvailableIssues(data.issues ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch issues for exclusion picker:", error);
+      } finally {
+        setLoadingIssues(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch issues:", error);
-    } finally {
-      setLoadingIssues(false);
-    }
-  };
+    },
+    [linearToken],
+  );
 
   const startEditView = (view: PublicView) => {
     setEditingView(view);
@@ -382,26 +413,27 @@ export default function PublicViewsPage() {
     setPasswordProtected(view.password_protected || false);
     setPassword("");
     setAllowIssueCreation(view.allow_issue_creation || false);
-    setShowComments(view.show_comments || false);
-    setShowActivity(view.show_activity || false);
-    setShowProjectUpdates(view.show_project_updates !== false);
-    setShowDescriptions(view.show_descriptions !== false);
-    setShowLabels(view.show_labels !== false);
-    setExcludedIssueIds(view.excluded_issue_ids || []);
-    setAllowCustomerComments(view.allow_customer_comments || false);
-    setShowSubIssues(view.show_sub_issues !== false);
+    setShowComments(view.show_comments ?? false);
+    setShowActivity(view.show_activity ?? false);
+    setShowProjectUpdates(view.show_project_updates ?? false);
+    setShowDescriptions(view.show_descriptions ?? false);
+    setShowLabels(view.show_labels ?? false);
+    setExcludedIssueIds(view.excluded_issue_ids ?? []);
+    setAllowCustomerComments(view.allow_customer_comments ?? false);
+    setShowSubIssues(view.show_sub_issues ?? true);
+    setIssueFilter("");
 
     // Set source type and selection based on existing view
     if (view.project_id) {
       setSourceType("project");
       setSelectedProject(view.project_id);
       setSelectedTeam("");
-      fetchViewIssues(view.project_id, undefined);
+      fetchPickerIssues(view.project_id, undefined);
     } else if (view.team_id) {
       setSourceType("team");
       setSelectedTeam(view.team_id);
       setSelectedProject("");
-      fetchViewIssues(undefined, view.team_id);
+      fetchPickerIssues(undefined, view.team_id);
     } else {
       // No project or team set - default to project
       setSourceType("project");
@@ -1380,7 +1412,7 @@ export default function PublicViewsPage() {
                 </div>
               </div>
 
-              {/* Excluded Issues */}
+              {/* Excluded issues */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
@@ -1389,53 +1421,44 @@ export default function PublicViewsPage() {
                   Excluded issues
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Select issues to hide from this public view
+                  Tick any issues you want hidden from the public view.
                 </p>
                 <Input
                   placeholder="Filter by ID or title..."
                   value={issueFilter}
                   onChange={(e) => setIssueFilter(e.target.value)}
-                  className="mb-2"
                 />
-                <div className="max-h-64 overflow-y-auto space-y-2 border border-border rounded-lg p-3">
+                <div className="max-h-64 overflow-y-auto space-y-1 border border-border rounded-lg p-2">
                   {loadingIssues ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">Loading issues...</p>
-                  ) : availableIssues.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">No issues found</p>
+                    <p className="text-sm text-muted-foreground py-4 text-center">Loading issues…</p>
+                  ) : filteredPickerIssues.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No issues match that filter.</p>
                   ) : (
-                    availableIssues
-                      .filter((issue) => {
-                        if (!issueFilter) return true;
-                        const q = issueFilter.toLowerCase();
-                        return issue.identifier.toLowerCase().includes(q) || issue.title.toLowerCase().includes(q);
-                      })
-                      .map((issue) => {
-                        const toggleExclude = () => {
-                          setExcludedIssueIds((prev) =>
-                            prev.includes(issue.id)
-                              ? prev.filter((id) => id !== issue.id)
-                              : [...prev, issue.id]
-                          );
-                        };
-                        return (
-                          <div key={issue.id} className="flex items-center gap-2" onClick={toggleExclude}>
-                            <Checkbox
-                              checked={excludedIssueIds.includes(issue.id)}
-                              onChange={toggleExclude}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                            <span className="text-sm cursor-pointer flex-1 min-w-0">
-                              <span className="font-mono text-muted-foreground mr-2">{issue.identifier}</span>
-                              <span className="truncate">{issue.title}</span>
-                            </span>
-                          </div>
-                        );
-                      })
+                    visiblePickerIssues.map((issue) => (
+                      <label
+                        key={issue.id}
+                        className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={excludedIssueIds.includes(issue.id)}
+                          onChange={() => toggleExcludeIssue(issue.id)}
+                        />
+                        <span className="text-sm flex-1 min-w-0 flex items-baseline gap-2">
+                          <span className="font-mono text-muted-foreground">{issue.identifier}</span>
+                          <span className="truncate">{issue.title}</span>
+                        </span>
+                      </label>
+                    ))
                   )}
                 </div>
+                {hiddenPickerCount > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Showing first {EXCLUDED_PICKER_LIMIT} of {filteredPickerIssues.length} matches. Refine the filter to see more.
+                  </p>
+                )}
                 {excludedIssueIds.length > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    {excludedIssueIds.length} issue{excludedIssueIds.length !== 1 ? 's' : ''} will be hidden from this view
+                    {excludedIssueIds.length} issue{excludedIssueIds.length === 1 ? "" : "s"} will be hidden from this view.
                   </p>
                 )}
               </div>
@@ -1586,23 +1609,27 @@ export default function PublicViewsPage() {
                             Preview
                           </Button>
                         </Link>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEditView(view)}
-                          className="flex items-center gap-2"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteView(view.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {view.user_id === user?.id && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => startEditView(view)}
+                              className="flex items-center gap-2"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteView(view.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </CardContent>

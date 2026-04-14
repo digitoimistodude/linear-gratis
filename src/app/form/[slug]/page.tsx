@@ -124,7 +124,7 @@ export default function PublicFormPage() {
     if (branding) {
       applyBrandingToPage(branding, formConfig?.form_title)
     }
-  }, [branding, formConfig])
+  }, [branding, formConfig?.form_title])
 
   const onFormSubmit = async (values: FormData) => {
     if (!formConfig) return
@@ -243,6 +243,7 @@ export default function PublicFormPage() {
         {branding && (branding.logo_url || branding.brand_name) && (
           <div className="mb-6 text-center">
             {branding.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element -- user-provided URL, domain not known at build time
               <img
                 src={branding.logo_url}
                 alt={branding.brand_name || 'Logo'}
@@ -402,25 +403,31 @@ export default function PublicFormPage() {
           </CardContent>
         </Card>
 
-        {/* Custom footer */}
-        <div className="text-center mt-6 text-sm text-gray-500">
-          {branding?.footer_text ? (
-            <p className="whitespace-pre-wrap mb-2">{branding.footer_text}</p>
-          ) : null}
-          {(branding?.show_powered_by !== false) && (
-            <p>
-              {branding?.footer_text ? 'Powered by ' : 'Powered by '}
-              <a
-                href="https://linear.gratis"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                linear.gratis
-              </a>
-            </p>
-          )}
-        </div>
+        {/* Custom footer — skip rendering when there's nothing to show. */}
+        {(() => {
+          const showPoweredBy = branding?.show_powered_by !== false
+          if (!branding?.footer_text && !showPoweredBy) return null
+          return (
+            <div className="text-center mt-6 text-sm text-gray-500">
+              {branding?.footer_text ? (
+                <p className="whitespace-pre-wrap mb-2">{branding.footer_text}</p>
+              ) : null}
+              {showPoweredBy && (
+                <p>
+                  Powered by{' '}
+                  <a
+                    href="https://linear.gratis"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    linear.gratis
+                  </a>
+                </p>
+              )}
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

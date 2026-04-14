@@ -6,6 +6,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { IssueDetail } from '@/app/api/public-view/[slug]/issue/[issueId]/route'
 import { ViewCommentSection } from '@/components/view-comment-section'
+import { PriorityIcon, EstimateIcon } from '@/components/priority-icon'
+import { UserAvatar } from '@/components/user-avatar'
 
 interface IssueDetailModalProps {
   isOpen: boolean
@@ -17,54 +19,6 @@ interface IssueDetailModalProps {
   showLabels?: boolean
   showDescriptions?: boolean
   allowCustomerComments?: boolean
-}
-
-const getPriorityIcon = (priority: number) => {
-  if (priority === 1) {
-    return (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="#ff7235">
-        <path d="M3 1C1.91067 1 1 1.91067 1 3V13C1 14.0893 1.91067 15 3 15H13C14.0893 15 15 14.0893 15 13V3C15 1.91067 14.0893 1 13 1H3ZM7 4L9 4L8.75391 8.99836H7.25L7 4ZM9 11C9 11.5523 8.55228 12 8 12C7.44772 12 7 11.5523 7 11C7 10.4477 7.44772 10 8 10C8.55228 10 9 10.4477 9 11Z"></path>
-      </svg>
-    )
-  }
-
-  if (priority === 2) {
-    return (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="#9c9da6">
-        <rect x="1.5" y="8" width="3" height="6" rx="1"></rect>
-        <rect x="6.5" y="5" width="3" height="9" rx="1"></rect>
-        <rect x="11.5" y="2" width="3" height="12" rx="1"></rect>
-      </svg>
-    )
-  }
-
-  if (priority === 3) {
-    return (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="#9c9da6">
-        <rect x="1.5" y="8" width="3" height="6" rx="1"></rect>
-        <rect x="6.5" y="5" width="3" height="9" rx="1"></rect>
-        <rect x="11.5" y="2" width="3" height="12" rx="1" fillOpacity="0.4"></rect>
-      </svg>
-    )
-  }
-
-  if (priority === 4) {
-    return (
-      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="#9c9da6">
-        <rect x="1.5" y="8" width="3" height="6" rx="1"></rect>
-        <rect x="6.5" y="5" width="3" height="9" rx="1" fillOpacity="0.4"></rect>
-        <rect x="11.5" y="2" width="3" height="12" rx="1" fillOpacity="0.4"></rect>
-      </svg>
-    )
-  }
-
-  return (
-    <svg className="w-4 h-4" viewBox="0 0 16 16" fill="#9c9da6">
-      <rect x="1.5" y="7.25" width="3" height="1.5" rx="0.5" opacity="0.9"></rect>
-      <rect x="6.5" y="7.25" width="3" height="1.5" rx="0.5" opacity="0.9"></rect>
-      <rect x="11.5" y="7.25" width="3" height="1.5" rx="0.5" opacity="0.9"></rect>
-    </svg>
-  )
 }
 
 const getStateIcon = (stateType: string, color: string) => {
@@ -96,36 +50,6 @@ const getStateIcon = (stateType: string, color: string) => {
   )
 }
 
-const getInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-}
-
-const UserAvatar = ({ name, avatarUrl, size = 'sm' }: { name?: string; avatarUrl?: string; size?: 'sm' | 'md' }) => {
-  const sizeClass = size === 'md' ? 'w-7 h-7' : 'w-5 h-5'
-  const textSize = size === 'md' ? 'text-xs' : 'text-[10px]'
-
-  if (avatarUrl) {
-    return (
-      <img
-        src={avatarUrl}
-        alt={name || ''}
-        className={`${sizeClass} rounded-full flex-shrink-0 object-cover`}
-      />
-    )
-  }
-
-  return (
-    <div className={`${sizeClass} rounded-full bg-primary/10 flex items-center justify-center ${textSize} font-medium text-primary flex-shrink-0`}>
-      {name ? getInitials(name) : '?'}
-    </div>
-  )
-}
-
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
   const now = new Date()
@@ -142,7 +66,17 @@ const formatDate = (dateString: string) => {
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComments = false, showActivity = false, showLabels = true, showDescriptions = true, allowCustomerComments = false }: IssueDetailModalProps) {
+export function IssueDetailModal({
+  isOpen,
+  onClose,
+  issueId,
+  viewSlug,
+  showComments = false,
+  showActivity = false,
+  showLabels = true,
+  showDescriptions = true,
+  allowCustomerComments = false,
+}: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -297,16 +231,19 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
               <div className="flex items-center gap-3 mb-6 flex-wrap">
                 {/* Priority */}
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-accent/50 rounded-md">
-                  {getPriorityIcon(issue.priority)}
+                  <PriorityIcon
+                    priority={issue.priority}
+                    priorityLabel={issue.priorityLabel}
+                    className="w-4 h-4"
+                  />
                   <span className="text-xs font-medium text-foreground">{issue.priorityLabel}</span>
                 </div>
 
                 {/* Estimate */}
                 {issue.estimate != null && issue.estimate > 0 && (
                   <div className="flex items-center gap-1.5 px-2 py-1 bg-accent/50 rounded-md">
-                    <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
-                      <path fillRule="evenodd" d="M3.741 14.5h8.521c1.691 0 2.778-1.795 1.993-3.293l-4.26-8.134c-.842-1.608-3.144-1.608-3.986 0l-4.26 8.134C.962 12.705 2.05 14.5 3.74 14.5ZM8 3.368a.742.742 0 0 0-.663.402l-4.26 8.134A.75.75 0 0 0 3.741 13H8V3.367Z" clipRule="evenodd"></path>
-                    </svg>
+                    <EstimateIcon className="w-4 h-4" />
+
                     <span className="text-xs font-medium text-foreground">{issue.estimate}</span>
                   </div>
                 )}
@@ -343,7 +280,7 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
                       remarkPlugins={[remarkGfm]}
                       components={{
                         // Checkboxes
-                        input: ({ node, ...props }) => (
+                        input: ({ ...props }) => (
                           <input
                             {...props}
                             className="mr-2 accent-primary cursor-default"
@@ -351,7 +288,7 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
                           />
                         ),
                         // Links
-                        a: ({ node, ...props }) => (
+                        a: ({ ...props }) => (
                           <a
                             {...props}
                             className="text-primary hover:underline"
@@ -360,7 +297,7 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
                           />
                         ),
                         // Code blocks
-                        code: ({ node, className, ...props }) => {
+                        code: ({ className, ...props }) => {
                           const isInline = !className || !className.includes('language-');
                           return isInline ? (
                             <code {...props} className="bg-accent/60 px-1.5 py-0.5 rounded text-sm font-mono" />
@@ -369,51 +306,52 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
                           )
                         },
                         // Lists
-                        ul: ({ node, ...props }) => (
+                        ul: ({ ...props }) => (
                           <ul {...props} className="list-disc list-inside space-y-1 my-2" />
                         ),
-                        ol: ({ node, ...props }) => (
+                        ol: ({ ...props }) => (
                           <ol {...props} className="list-decimal list-inside space-y-1 my-2" />
                         ),
                         // Paragraphs
-                        p: ({ node, ...props }) => (
+                        p: ({ ...props }) => (
                           <p {...props} className="my-2 leading-relaxed" />
                         ),
                         // Headings
-                        h1: ({ node, ...props }) => (
+                        h1: ({ ...props }) => (
                           <h1 {...props} className="text-xl font-semibold mt-6 mb-3" />
                         ),
-                        h2: ({ node, ...props }) => (
+                        h2: ({ ...props }) => (
                           <h2 {...props} className="text-lg font-semibold mt-5 mb-2" />
                         ),
-                        h3: ({ node, ...props }) => (
+                        h3: ({ ...props }) => (
                           <h3 {...props} className="text-base font-semibold mt-4 mb-2" />
                         ),
-                        // Images
-                        img: ({ node, ...props }) => (
-                          <img {...props} className="rounded-lg max-w-full my-4" />
+                        // Images (from user-authored markdown; next/image can't be used for arbitrary external URLs)
+                        img: ({ alt, ...props }) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img {...props} alt={alt ?? ''} className="rounded-lg max-w-full my-4" />
                         ),
                         // Blockquotes
-                        blockquote: ({ node, ...props }) => (
+                        blockquote: ({ ...props }) => (
                           <blockquote {...props} className="border-l-4 border-border pl-4 italic text-muted-foreground my-3" />
                         ),
                         // Horizontal rules
-                        hr: ({ node, ...props }) => (
+                        hr: ({ ...props }) => (
                           <hr {...props} className="border-border my-4" />
                         ),
                         // Tables
-                        table: ({ node, ...props }) => (
+                        table: ({ ...props }) => (
                           <div className="overflow-x-auto my-4">
                             <table {...props} className="min-w-full border border-border rounded-md" />
                           </div>
                         ),
-                        thead: ({ node, ...props }) => (
+                        thead: ({ ...props }) => (
                           <thead {...props} className="bg-accent/40" />
                         ),
-                        th: ({ node, ...props }) => (
+                        th: ({ ...props }) => (
                           <th {...props} className="border border-border px-3 py-2 text-left font-medium" />
                         ),
-                        td: ({ node, ...props }) => (
+                        td: ({ ...props }) => (
                           <td {...props} className="border border-border px-3 py-2" />
                         ),
                       }}
@@ -520,12 +458,13 @@ export function IssueDetailModal({ isOpen, onClose, issueId, viewSlug, showComme
 
                             // Priority change - only show if both values exist and are different
                             if (item.toPriority !== undefined && item.fromPriority !== undefined && item.toPriority !== item.fromPriority) {
+                              // Linear's priority scheme: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
                               const priorityLabels: Record<number, string> = {
                                 0: 'None',
-                                1: 'Low',
-                                2: 'Medium',
-                                3: 'High',
-                                4: 'Urgent'
+                                1: 'Urgent',
+                                2: 'High',
+                                3: 'Medium',
+                                4: 'Low',
                               }
                               changes.push(
                                 <div key="priority">

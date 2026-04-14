@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -64,19 +64,7 @@ export default function CustomDomainsPage() {
   >([]);
   const [loadingTargets, setLoadingTargets] = useState(false);
 
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    loadDomains();
-    loadAvailableTargets();
-  }, [user, authLoading, router]);
-
-  const loadDomains = async () => {
+  const loadDomains = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -103,9 +91,9 @@ export default function CustomDomainsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
-  const loadAvailableTargets = async () => {
+  const loadAvailableTargets = useCallback(async () => {
     if (!user) return;
 
     setLoadingTargets(true);
@@ -134,7 +122,19 @@ export default function CustomDomainsPage() {
     } finally {
       setLoadingTargets(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    loadDomains();
+    loadAvailableTargets();
+  }, [user, authLoading, router, loadDomains, loadAvailableTargets]);
 
   const handleTargetTypeChange = (value: "form" | "view") => {
     setTargetType(value);
@@ -610,14 +610,16 @@ export default function CustomDomainsPage() {
                             Check SSL
                           </Button>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteDomain(domain)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {domain.user_id === user?.id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteDomain(domain)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
 

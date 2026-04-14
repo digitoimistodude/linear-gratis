@@ -63,12 +63,12 @@ export type PublicView = {
   show_comments: boolean
   show_activity: boolean
   show_project_updates: boolean
+  excluded_issue_ids: string[]
   allowed_statuses: string[]
   password_protected: boolean
   password_hash?: string
   expires_at?: string
   allow_issue_creation: boolean
-  excluded_issue_ids: string[]
   allow_customer_comments: boolean
   show_sub_issues: boolean
   created_at: string
@@ -93,7 +93,6 @@ export type BrandingSettings = {
   id: string
   user_id: string
   logo_url?: string
-  logo_width?: number
   logo_height?: number
   favicon_url?: string
   brand_name?: string

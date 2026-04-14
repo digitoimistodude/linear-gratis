@@ -234,7 +234,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     if (branding) {
       applyBrandingToPage(branding, view?.view_title)
     }
-  }, [branding, view])
+  }, [branding, view?.view_title])
 
   const hasActiveFilters = () => {
     return filters.search ||
@@ -335,6 +335,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           <div className="flex items-center gap-3 sm:gap-6 max-w-[50%] min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               {branding?.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element -- user-provided URL, domain not known at build time
                 <img
                   src={branding.logo_url}
                   alt={branding.brand_name || 'Logo'}
@@ -511,35 +512,41 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
         )}
       </div>
 
-      {/* Custom Footer */}
-      {!error && (branding?.footer_text || !view?.allow_issue_creation || branding?.show_powered_by !== false) && (
-        <footer className="px-4 sm:px-6 pb-6 mt-auto">
-          <div className="text-center py-8 border-t border-border/30">
-            {branding?.footer_text ? (
-              <p className="text-sm text-muted-foreground mb-2 whitespace-pre-wrap">
-                {branding.footer_text}
-              </p>
-            ) : !view?.allow_issue_creation ? (
-              <p className="text-sm text-muted-foreground mb-1">
-                Read-only view of Linear issues
-              </p>
-            ) : null}
-            {(branding?.show_powered_by !== false) && (
-              <p className="text-xs text-muted-foreground">
-                {branding?.footer_text ? 'Powered by ' : 'Create your own at '}
-                <a
-                  href="https://linear.gratis"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline transition-colors"
-                >
-                  linear.gratis
-                </a>
-              </p>
-            )}
-          </div>
-        </footer>
-      )}
+      {/* Custom Footer — only rendered when there's something to show. */}
+      {!error && (() => {
+        const showPoweredBy = branding?.show_powered_by !== false
+        const showReadOnlyNote = !branding?.footer_text && !view?.allow_issue_creation
+        const hasFooterContent = Boolean(branding?.footer_text) || showReadOnlyNote || showPoweredBy
+        if (!hasFooterContent) return null
+        return (
+          <footer className="px-4 sm:px-6 pb-6 mt-auto">
+            <div className="text-center py-8 border-t border-border/30">
+              {branding?.footer_text ? (
+                <p className="text-sm text-muted-foreground mb-2 whitespace-pre-wrap">
+                  {branding.footer_text}
+                </p>
+              ) : showReadOnlyNote ? (
+                <p className="text-sm text-muted-foreground mb-1">
+                  Read-only view of Linear issues
+                </p>
+              ) : null}
+              {showPoweredBy && (
+                <p className="text-xs text-muted-foreground">
+                  {branding?.footer_text ? 'Powered by ' : 'Create your own at '}
+                  <a
+                    href="https://linear.gratis"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline transition-colors"
+                  >
+                    linear.gratis
+                  </a>
+                </p>
+              )}
+            </div>
+          </footer>
+        )
+      })()}
 
       {/* Issue Creation Modal */}
       <IssueCreationModal
