@@ -1,6 +1,8 @@
-# Linear Integrations Worker App
+# Linear Integrations Worker App - linear.dude.fi Dude-fork
 
 A Next.js application that provides a web interface for creating Linear customer requests. This app allows users to submit customer feedback and requests directly to Linear projects through a user-friendly form interface.
+
+<img width="1200" height="630" alt="image" src="https://github.com/user-attachments/assets/84696dae-d535-4636-b653-c33ed4b8f4b4" />
 
 ## Features
 
