@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "linear.gratis | Free Linear Client Feedback Forms | Open Source Alternative to SteelSync & Lindie",
-  description: "Collect client feedback directly in Linear with linear.gratis. Free forever, open source alternative to SteelSync ($29/month) and Lindie ($0-99/month). No subscriptions, no limits, no email chaos.",
+  title: "linear.dude.fi | Linear issues shared with Dude clients",
+  description: "See your tasks being worked on in real time. Linear issues shared with Dude clients via linear.dude.fi.",
   keywords: [
     "Linear feedback forms",
     "Linear client feedback",
@@ -41,25 +41,25 @@ export const metadata: Metadata = {
     ]
   },
   openGraph: {
-    title: "linear.gratis - Free Linear Client Feedback Forms",
-    description: "Stop paying for basic Linear feedback collection. Free, open source alternative to SteelSync and Lindie.",
+    title: "linear.dude.fi - Linear issues shared with Dude clients",
+    description: "See your tasks being worked on in real time.",
     type: "website",
-    url: "https://linear.gratis",
-    siteName: "linear.gratis",
+    url: "https://linear.dude.fi",
+    siteName: "linear.dude.fi",
     images: [
       {
-        url: "https://linear.gratis/og-image.png",
+        url: "https://linear.dude.fi/og-image.png",
         width: 1200,
         height: 630,
-        alt: "linear.gratis - Free Linear Client Feedback Forms"
+        alt: "linear.dude.fi - Linear issues shared with Dude clients"
       }
     ]
   },
   twitter: {
     card: "summary_large_image",
-    title: "linear.gratis - Free Linear Client Feedback Forms",
-    description: "Free, open source Linear feedback collection. No subscriptions, no limits.",
-    images: ["https://linear.gratis/og-image.png"],
+    title: "linear.dude.fi - Linear issues shared with Dude clients",
+    description: "See your tasks being worked on in real time.",
+    images: ["https://linear.dude.fi/og-image.png"],
     creator: "@curiousgeorgios"
   },
   robots: {
