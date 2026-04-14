@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { getLinearToken } from '@/lib/linear-token';
 
 export type Team = {
   id: string
@@ -9,16 +11,30 @@ export type Team = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { apiToken } = await request.json() as { apiToken: string };
+    // Try to read token from body (backwards compat), otherwise resolve from session
+    let apiToken: string | null = null;
+    try {
+      const body = await request.json() as { apiToken?: string };
+      if (body.apiToken) apiToken = body.apiToken;
+    } catch {
+      // No body or invalid JSON — fall through to session resolution
+    }
+
+    if (!apiToken) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      apiToken = await getLinearToken(user.id);
+    }
 
     if (!apiToken) {
       return NextResponse.json(
-        { error: 'Missing required field: apiToken' },
+        { error: 'Linear API token not configured' },
         { status: 400 }
       );
     }
-
-    console.log('Teams API - Token length:', apiToken.length, 'First 20 chars:', apiToken.substring(0, 20));
 
     // Get teams from Linear using GraphQL
     const query = `

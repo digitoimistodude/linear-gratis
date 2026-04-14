@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getLinearToken } from "@/lib/linear-token";
 
 export type LinearIssue = {
   id: string;
@@ -34,7 +36,7 @@ export type LinearTeam = {
 };
 
 export type RequestBody = {
-  apiToken: string;
+  apiToken?: string;
   projectId?: string;
   teamId?: string;
   statuses?: string[];
@@ -42,12 +44,31 @@ export type RequestBody = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { apiToken, projectId, teamId, statuses } =
-      (await request.json()) as RequestBody;
+    // Read full body so we can pass through other params
+    let body: RequestBody = {};
+    try {
+      body = (await request.json()) as RequestBody;
+    } catch {
+      // No body or invalid JSON — fall through to session resolution
+    }
+
+    const { projectId, teamId, statuses } = body;
+
+    // Try to read token from body (backwards compat), otherwise resolve from session
+    let apiToken: string | null = body.apiToken ?? null;
+
+    if (!apiToken) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      apiToken = await getLinearToken(user.id);
+    }
 
     if (!apiToken) {
       return NextResponse.json(
-        { error: "Missing required field: apiToken" },
+        { error: "Linear API token not configured" },
         { status: 400 },
       );
     }

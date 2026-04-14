@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select";
 import { Navigation } from "@/components/navigation";
 import { supabase, Roadmap } from "@/lib/supabase";
-import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Globe, Lock, Plus, Map } from "lucide-react";
@@ -68,13 +67,9 @@ export default function RoadmapsPage() {
       // Get the session token
       const { data: { session } } = await supabase.auth.getSession();
 
-      // Load user profile and roadmaps in parallel
-      const [profileResult, roadmapsResult] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("linear_api_token")
-          .eq("id", user.id)
-          .single(),
+      // Check if a Linear token is available (workspace-shared or personal)
+      const [tokenStatusRes, roadmapsResult] = await Promise.all([
+        fetch("/api/linear/token-status"),
         fetch("/api/roadmaps", {
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
@@ -82,16 +77,11 @@ export default function RoadmapsPage() {
         }),
       ]);
 
-      // Handle profile
-      if (profileResult.data?.linear_api_token) {
-        try {
-          const decryptedToken = await decryptTokenClient(
-            profileResult.data.linear_api_token,
-          );
-          setLinearToken(decryptedToken);
-          await fetchProjects(decryptedToken);
-        } catch (error) {
-          console.error("Error decrypting token:", error);
+      if (tokenStatusRes.ok) {
+        const { hasToken } = (await tokenStatusRes.json()) as { hasToken: boolean };
+        if (hasToken) {
+          setLinearToken("configured");
+          await fetchProjects();
         }
       }
 
@@ -117,12 +107,12 @@ export default function RoadmapsPage() {
     loadUserData();
   }, [user, authLoading, router, loadUserData]);
 
-  const fetchProjects = async (token: string) => {
+  const fetchProjects = async () => {
     try {
       const response = await fetch("/api/linear/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiToken: token }),
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {

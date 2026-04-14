@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
 import {
   ArrowRight,
   Github,
@@ -53,17 +52,12 @@ export default function Home() {
 
     const checkLinearToken = async () => {
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("linear_api_token")
-          .eq("id", user.id)
-          .single();
-
-        if (error && error.code !== "PGRST116") {
-          console.error("Error loading profile:", error);
-          setHasLinearToken(false);
+        const res = await fetch("/api/linear/token-status");
+        if (res.ok) {
+          const { hasToken } = (await res.json()) as { hasToken: boolean };
+          setHasLinearToken(hasToken);
         } else {
-          setHasLinearToken(!!data?.linear_api_token);
+          setHasLinearToken(false);
         }
       } catch (error) {
         console.error("Error checking Linear token:", error);

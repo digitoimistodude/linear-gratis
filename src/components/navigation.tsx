@@ -77,6 +77,11 @@ export function Navigation() {
                     Domains
                   </Button>
                 </Link>
+                <Link href="/settings">
+                  <Button variant="ghost" size="sm" className="font-medium">
+                    Settings
+                  </Button>
+                </Link>
                 <Link href="/profile">
                   <Button variant="ghost" size="sm" className="font-medium">
                     Profile
