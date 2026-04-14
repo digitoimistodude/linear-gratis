@@ -1,16 +1,18 @@
-# Linear Integrations Worker App
+# Linear integrations worker app - linear.dude.fi Dude-fork
 
 A Next.js application that provides a web interface for creating Linear customer requests. This app allows users to submit customer feedback and requests directly to Linear projects through a user-friendly form interface.
 
+<img width="1200" height="630" alt="image" src="https://github.com/user-attachments/assets/84696dae-d535-4636-b653-c33ed4b8f4b4" />
+
 ## Features
 
-- 🔐 Secure authentication with Supabase
-- 📝 Customer request forms with validation
-- 🔒 Encrypted Linear API token storage
-- 🎨 Modern UI with Tailwind CSS and Radix UI
-- 🚀 Deployed on Cloudflare Pages
+**🔐 Secure authentication with Supabase**<br>
+**📝 Customer request forms with validation**<br>
+🔒 E**ncrypted Linear API token storage**<br>
+**🎨 Modern UI with Tailwind CSS and Radix UI**<br>
+**🚀 Deployed on Cloudflare Pages**
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
@@ -19,7 +21,7 @@ A Next.js application that provides a web interface for creating Linear customer
 - Supabase account
 - Linear API access
 
-### Environment Setup
+### Environment setup
 
 1. Clone the repository:
 ```bash
@@ -48,7 +50,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 ENCRYPTION_KEY=your-base64-encryption-key-here
 ```
 
-### Generating an Encryption Key
+### Generating an encryption key
 
 Generate a secure encryption key for protecting stored Linear API tokens:
 
@@ -56,7 +58,7 @@ Generate a secure encryption key for protecting stored Linear API tokens:
 openssl rand -base64 32
 ```
 
-### Supabase Setup
+### Supabase setup
 
 1. Create a new Supabase project
 2. Set up authentication (email/password recommended)
@@ -89,19 +91,22 @@ npm run deploy
 
 ## Architecture
 
-### Frontend
+### Front end
+
 - **Next.js 15** - React framework with App Router
 - **Tailwind CSS** - Utility-first CSS framework
 - **Radix UI** - Accessible component primitives
 - **React Hook Form** - Form handling with validation
 - **Framer Motion** - Animation library
 
-### Backend
+### Back end
+
 - **Supabase** - Authentication and database
 - **Linear SDK** - Official Linear API client
 - **Crypto-JS** - Encryption for sensitive data
 
 ### Deployment
+
 - **Cloudflare Pages** - Edge deployment platform
 - **Wrangler** - Cloudflare deployment tooling
 
