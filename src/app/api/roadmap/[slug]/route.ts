@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { Roadmap, KanbanColumn } from '@/lib/supabase';
-import { decryptToken } from '@/lib/encryption';
+import { getLinearToken } from '@/lib/linear-token';
 import { fetchRoadmapIssues, type RoadmapIssue } from '@/lib/linear';
 import bcrypt from 'bcryptjs';
 
@@ -177,22 +177,14 @@ export async function POST(
 }
 
 async function fetchRoadmapData(roadmap: Roadmap) {
-  // Get the user's Linear token
-  const { data: profileData, error: profileError } = await supabaseAdmin
-    .from('profiles')
-    .select('linear_api_token')
-    .eq('id', roadmap.user_id)
-    .single();
-
-  if (profileError || !profileData?.linear_api_token) {
+  // Get the Linear token (workspace-shared, falling back to user's personal)
+  const decryptedToken = await getLinearToken(roadmap.user_id);
+  if (!decryptedToken) {
     return NextResponse.json(
       { error: 'Unable to load data - Linear API token not found' },
       { status: 500 }
     );
   }
-
-  // Decrypt the token and fetch issues from Linear API
-  const decryptedToken = decryptToken(profileData.linear_api_token);
 
   if (!roadmap.project_ids || roadmap.project_ids.length === 0) {
     return NextResponse.json(

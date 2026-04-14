@@ -57,17 +57,25 @@ export default function Home() {
 
     const checkLinearToken = async () => {
       try {
+        // Check if a Linear token is available (workspace-shared or personal)
+        const res = await fetch("/api/linear/token-status");
+        if (res.ok) {
+          const { hasToken } = (await res.json()) as { hasToken: boolean };
+          setHasLinearToken(hasToken);
+        } else {
+          setHasLinearToken(false);
+        }
+
+        // Also fetch the hide_onboarding preference from the user's profile
         const { data, error } = await supabase
           .from("profiles")
-          .select("linear_api_token, hide_onboarding")
+          .select("hide_onboarding")
           .eq("id", user.id)
           .single();
 
         if (error && error.code !== "PGRST116") {
           console.error("Error loading profile:", error);
-          setHasLinearToken(false);
         } else {
-          setHasLinearToken(!!data?.linear_api_token);
           setHideOnboarding(data?.hide_onboarding ?? false);
         }
       } catch (error) {

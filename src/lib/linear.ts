@@ -388,10 +388,10 @@ export async function fetchRoadmapIssues(
  * using the official Linear SDK on the server-side.
  */
 export class LinearCustomerRequestManager {
-  private apiToken: string;
+  private apiToken: string | null;
 
-  constructor(apiToken: string) {
-    this.apiToken = apiToken;
+  constructor(apiToken?: string | null) {
+    this.apiToken = apiToken ?? null;
   }
 
   /**
@@ -425,7 +425,7 @@ export class LinearCustomerRequestManager {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiToken: this.apiToken,
+          ...(this.apiToken ? { apiToken: this.apiToken } : {}),
           customerData,
           requestData,
           projectId

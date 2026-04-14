@@ -1,20 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { getLinearToken } from '@/lib/linear-token';
 
 const LINEAR_API_URL = 'https://api.linear.app/graphql';
 
 interface MetadataRequest {
-  apiToken: string;
+  apiToken?: string;
   teamId?: string;
   projectId?: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { apiToken, teamId, projectId }: MetadataRequest = await request.json();
+    // Read full body so we can pass through other params
+    let body: MetadataRequest = {};
+    try {
+      body = await request.json() as MetadataRequest;
+    } catch {
+      // No body or invalid JSON — fall through to session resolution
+    }
+
+    const { teamId, projectId } = body;
+
+    // Try to read token from body (backwards compat), otherwise resolve from session
+    let apiToken: string | null = body.apiToken ?? null;
+
+    if (!apiToken) {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      apiToken = await getLinearToken(user.id);
+    }
 
     if (!apiToken) {
       return NextResponse.json(
-        { error: 'API token is required' },
+        { error: 'Linear API token not configured' },
         { status: 400 }
       );
     }

@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select";
 import { Navigation } from "@/components/navigation";
 import { supabase, PublicView } from "@/lib/supabase";
-import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Globe, Lock, Edit3, X } from "lucide-react";
@@ -93,32 +92,20 @@ export default function PublicViewsPage() {
 
     setLoading(true);
     try {
-      // Load user profile and views in parallel
-      const [profileResult, viewsResult] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("linear_api_token")
-          .eq("id", user.id)
-          .single(),
+      // Check if a Linear token is available (workspace-shared or personal)
+      const [tokenStatusRes, viewsResult] = await Promise.all([
+        fetch("/api/linear/token-status"),
         supabase
           .from("public_views")
           .select("*")
           .order("created_at", { ascending: false }),
       ]);
 
-      // Handle profile
-      if (profileResult.data?.linear_api_token) {
-        try {
-          const decryptedToken = await decryptTokenClient(
-            profileResult.data.linear_api_token,
-          );
-          setLinearToken(decryptedToken);
-          await Promise.all([
-            fetchProjects(decryptedToken),
-            fetchTeams(decryptedToken),
-          ]);
-        } catch (error) {
-          console.error("Error decrypting token:", error);
+      if (tokenStatusRes.ok) {
+        const { hasToken } = (await tokenStatusRes.json()) as { hasToken: boolean };
+        if (hasToken) {
+          setLinearToken("configured");
+          await Promise.all([fetchProjects(), fetchTeams()]);
         }
       }
 
@@ -145,12 +132,12 @@ export default function PublicViewsPage() {
     loadUserData();
   }, [user, authLoading, router, loadUserData]);
 
-  const fetchProjects = async (token: string) => {
+  const fetchProjects = async () => {
     try {
       const response = await fetch("/api/linear/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiToken: token }),
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {
@@ -162,12 +149,12 @@ export default function PublicViewsPage() {
     }
   };
 
-  const fetchTeams = async (token: string) => {
+  const fetchTeams = async () => {
     try {
       const response = await fetch("/api/linear/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiToken: token }),
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {

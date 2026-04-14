@@ -6,14 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Navigation } from '@/components/navigation'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function SettingsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Loading...</h2>
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="max-w-2xl mx-auto p-6">
+          <div className="text-center py-12">Loading...</div>
         </div>
       </div>
     }>
@@ -27,11 +29,12 @@ function SettingsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  // OAuth connection state
   const [oauthStatus, setOauthStatus] = useState<{
     connected: boolean
     oauthConfigured: boolean
   } | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loadingOauth, setLoadingOauth] = useState(true)
   const [saving, setSaving] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const [showSetup, setShowSetup] = useState(false)
@@ -39,7 +42,13 @@ function SettingsContent() {
   const [clientSecret, setClientSecret] = useState('')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const loadStatus = useCallback(async () => {
+  // Workspace shared Linear API token state
+  const [tokenConfigured, setTokenConfigured] = useState(false)
+  const [tokenInput, setTokenInput] = useState('')
+  const [tokenSaving, setTokenSaving] = useState(false)
+  const [loadingToken, setLoadingToken] = useState(true)
+
+  const loadOauthStatus = useCallback(async () => {
     try {
       const res = await fetch('/api/auth/linear/status')
       if (res.ok) {
@@ -49,7 +58,21 @@ function SettingsContent() {
     } catch (err) {
       console.error('Failed to load OAuth status:', err)
     } finally {
-      setLoading(false)
+      setLoadingOauth(false)
+    }
+  }, [])
+
+  const loadTokenStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/workspace/linear-token')
+      if (response.ok) {
+        const data = await response.json() as { configured: boolean }
+        setTokenConfigured(data.configured)
+      }
+    } catch (error) {
+      console.error('Error loading workspace token status:', error)
+    } finally {
+      setLoadingToken(false)
     }
   }, [])
 
@@ -61,22 +84,23 @@ function SettingsContent() {
       return
     }
 
-    loadStatus()
-  }, [user, authLoading, router, loadStatus])
+    loadOauthStatus()
+    loadTokenStatus()
+  }, [user, authLoading, router, loadOauthStatus, loadTokenStatus])
 
   // Handle OAuth callback result from URL params
   useEffect(() => {
     const oauthResult = searchParams.get('linear_oauth')
     if (oauthResult === 'success') {
       setMessage({ type: 'success', text: 'Linear app connected successfully!' })
-      loadStatus()
+      loadOauthStatus()
       // Clean the URL
       router.replace('/settings')
     } else if (oauthResult === 'error') {
       setMessage({ type: 'error', text: 'Failed to connect Linear app. Please try again.' })
       router.replace('/settings')
     }
-  }, [searchParams, loadStatus, router])
+  }, [searchParams, loadOauthStatus, router])
 
   const saveCredentials = async () => {
     if (!clientId.trim() || !clientSecret.trim()) return
@@ -96,7 +120,7 @@ function SettingsContent() {
         setShowSetup(false)
         setClientId('')
         setClientSecret('')
-        await loadStatus()
+        await loadOauthStatus()
       } else {
         const data = await res.json() as { error?: string }
         setMessage({ type: 'error', text: data.error || 'Failed to save credentials.' })
@@ -117,7 +141,7 @@ function SettingsContent() {
 
       if (res.ok) {
         setMessage({ type: 'success', text: 'Linear app disconnected.' })
-        await loadStatus()
+        await loadOauthStatus()
       } else {
         setMessage({ type: 'error', text: 'Failed to disconnect.' })
       }
@@ -128,24 +152,88 @@ function SettingsContent() {
     }
   }
 
+  const saveToken = async () => {
+    if (!tokenInput.trim()) {
+      setMessage({ type: 'error', text: 'Linear API token is required' })
+      return
+    }
+
+    setTokenSaving(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch('/api/workspace/linear-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tokenInput.trim() }),
+      })
+
+      if (response.ok) {
+        setTokenConfigured(true)
+        setTokenInput('')
+        setMessage({ type: 'success', text: 'Workspace Linear API token saved. All team members will use it automatically.' })
+      } else {
+        const data = await response.json() as { error?: string }
+        setMessage({ type: 'error', text: data.error || 'Failed to save token' })
+      }
+    } catch (error) {
+      console.error('Error saving token:', error)
+      setMessage({ type: 'error', text: 'Failed to save token' })
+    } finally {
+      setTokenSaving(false)
+    }
+  }
+
+  const removeToken = async () => {
+    setTokenSaving(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch('/api/workspace/linear-token', { method: 'DELETE' })
+      if (response.ok) {
+        setTokenConfigured(false)
+        setMessage({ type: 'success', text: 'Workspace Linear API token removed. Team members will now use their personal tokens.' })
+      } else {
+        setMessage({ type: 'error', text: 'Failed to remove token' })
+      }
+    } catch (error) {
+      console.error('Error removing token:', error)
+      setMessage({ type: 'error', text: 'Failed to remove token' })
+    } finally {
+      setTokenSaving(false)
+    }
+  }
+
   const callbackUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/api/auth/linear/callback`
     : ''
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Loading...</h2>
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="max-w-2xl mx-auto p-6">
+          <div className="text-center py-12">Loading...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold">Settings</h1>
+    <div className="min-h-screen">
+      <Navigation />
+      <div className="max-w-2xl mx-auto p-6 space-y-6">
+        <h1 className="text-2xl font-bold">Workspace settings</h1>
+
+        {message && (
+          <div className={`p-3 rounded-lg text-sm ${
+            message.type === 'success'
+              ? 'bg-green-50 border border-green-200 text-green-800 dark:bg-green-950/20 dark:border-green-800/30 dark:text-green-400'
+              : 'bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/20 dark:border-red-800/30 dark:text-red-400'
+          }`}>
+            {message.text}
+          </div>
+        )}
 
         <Card>
           <CardHeader>
@@ -155,7 +243,7 @@ function SettingsContent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {loading ? (
+            {loadingOauth ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : oauthStatus?.connected ? (
               /* Connected state */
@@ -261,24 +349,70 @@ function SettingsContent() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
 
-            {message && (
-              <div className={`p-3 rounded-lg text-sm ${
-                message.type === 'success'
-                  ? 'bg-green-50 border border-green-200 text-green-800 dark:bg-green-950/20 dark:border-green-800/30 dark:text-green-400'
-                  : 'bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/20 dark:border-red-800/30 dark:text-red-400'
-              }`}>
-                {message.text}
+        <Card>
+          <CardHeader>
+            <CardTitle>Shared Linear API token</CardTitle>
+            <CardDescription>
+              Set a workspace-wide Linear API token so all team members can use linear.gratis without configuring their own personal token. When set, this token is used instead of per-user tokens for all Linear API calls (fetching issues, creating issues, syncing comments, etc).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loadingToken ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : tokenConfigured ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-sm text-foreground">Configured - shared with all team members</span>
+                </div>
+                <Button variant="outline" size="sm" onClick={removeToken} disabled={tokenSaving}>
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-muted/50 rounded-lg p-4 border border-border/50">
+                  <h3 className="font-semibold mb-3">How to get your Linear API token</h3>
+                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>
+                      Open{' '}
+                      <a
+                        href="https://linear.app/settings/api"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Linear - API settings
+                      </a>
+                    </li>
+                    <li>Click &quot;Create personal API key&quot;</li>
+                    <li>Give it a name (e.g. &quot;linear.gratis shared&quot;)</li>
+                    <li>Copy the token and paste it below</li>
+                  </ol>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="workspace-token">Linear API token</Label>
+                  <Input
+                    id="workspace-token"
+                    type="password"
+                    placeholder="lin_api_..."
+                    value={tokenInput}
+                    onChange={(e) => setTokenInput(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+
+                <Button onClick={saveToken} disabled={tokenSaving || !tokenInput.trim()}>
+                  {tokenSaving ? 'Saving...' : 'Save workspace token'}
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
-
-        <div className="text-center">
-          <Button variant="link" onClick={() => router.push('/')}>
-            &larr; Back to dashboard
-          </Button>
-        </div>
       </div>
     </div>
   )
