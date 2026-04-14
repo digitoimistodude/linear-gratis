@@ -29,14 +29,14 @@ function LoginForm() {
       if (error) {
         setError(error.message)
       } else {
-        router.push('/profile')
+        router.push('/')
       }
     } else {
       const { error } = await signInWithPassword(email, password)
       if (error) {
         setError(error.message)
       } else {
-        router.push('/profile')
+        router.push('/')
       }
     }
 
