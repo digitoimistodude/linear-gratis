@@ -17,6 +17,14 @@ The Supabase anon key and Cloudflare account ID in `wrangler.jsonc` are public b
 - PR-able changes must be done in their feature branch first, then merged to `dude` — never the other way around
 - Dude-specific changes go directly on the `dude` branch
 
+## PR draft tasks for upstream PRs
+
+- Whenever a new PR-able feature/fix branch is created, also create a Linear PR draft task as a subtask of `DEV-814`
+- Title format: `PR: feature/branch-name - Short description` (or `fix/branch-name - Short description` for fixes)
+- Status: `In Review`
+- Description: summary of the change, which files were modified, and the branch name
+- Purpose: tracks upstream PRs that need to be opened against `curiousgeorgios/linear-gratis`
+
 ## Deployment
 
 - Build: `npm run build:worker`
