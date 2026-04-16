@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { decryptToken } from '@/lib/encryption';
+import { getLinearToken } from '@/lib/linear-token';
 import { fetchLinearIssues } from '@/lib/linear';
 import bcrypt from 'bcryptjs';
 
@@ -50,21 +50,13 @@ export async function GET(
     }
 
     // Get the user's Linear token
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('linear_api_token')
-      .eq('id', viewData.user_id)
-      .single();
-
-    if (profileError || !profileData?.linear_api_token) {
+    const decryptedToken = await getLinearToken(viewData.user_id);
+    if (!decryptedToken) {
       return NextResponse.json(
         { error: 'Unable to load data - Linear API token not found' },
         { status: 500 }
       );
     }
-
-    // Decrypt the token and fetch issues directly from Linear API
-    const decryptedToken = decryptToken(profileData.linear_api_token);
 
     const issuesResult = await fetchLinearIssues(decryptedToken, {
       projectId: viewData.project_id || undefined,
@@ -180,21 +172,13 @@ export async function POST(
     }
 
     // Get the user's Linear token
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('linear_api_token')
-      .eq('id', viewData.user_id)
-      .single();
-
-    if (profileError || !profileData?.linear_api_token) {
+    const decryptedToken = await getLinearToken(viewData.user_id);
+    if (!decryptedToken) {
       return NextResponse.json(
         { error: 'Unable to load data - Linear API token not found' },
         { status: 500 }
       );
     }
-
-    // Decrypt the token and fetch issues directly from Linear API
-    const decryptedToken = decryptToken(profileData.linear_api_token);
 
     const issuesResult = await fetchLinearIssues(decryptedToken, {
       projectId: viewData.project_id || undefined,

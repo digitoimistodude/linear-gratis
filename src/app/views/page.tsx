@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select";
 import { Navigation } from "@/components/navigation";
 import { supabase, PublicView } from "@/lib/supabase";
-import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Globe, Lock, Edit3 } from "lucide-react";
@@ -122,20 +121,10 @@ export default function PublicViewsPage() {
           .order("created_at", { ascending: false }),
       ]);
 
-      // Handle profile
+      // Handle profile - check if token is configured (server resolves it)
       if (profileResult.data?.linear_api_token) {
-        try {
-          const decryptedToken = await decryptTokenClient(
-            profileResult.data.linear_api_token,
-          );
-          setLinearToken(decryptedToken);
-          await Promise.all([
-            fetchProjects(decryptedToken),
-            fetchTeams(decryptedToken),
-          ]);
-        } catch (error) {
-          console.error("Error decrypting token:", error);
-        }
+        setLinearToken("configured");
+        await Promise.all([fetchProjects(), fetchTeams()]);
       }
 
       // Handle views
@@ -161,12 +150,12 @@ export default function PublicViewsPage() {
     loadUserData();
   }, [user, authLoading, router, loadUserData]);
 
-  const fetchProjects = async (token: string) => {
+  const fetchProjects = async () => {
     try {
       const response = await fetch("/api/linear/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiToken: token }),
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {
@@ -178,12 +167,12 @@ export default function PublicViewsPage() {
     }
   };
 
-  const fetchTeams = async (token: string) => {
+  const fetchTeams = async () => {
     try {
       const response = await fetch("/api/linear/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiToken: token }),
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {
@@ -380,7 +369,6 @@ export default function PublicViewsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            apiToken: linearToken,
             projectId: sourceProjectId || undefined,
             teamId: sourceTeamId || undefined,
           }),

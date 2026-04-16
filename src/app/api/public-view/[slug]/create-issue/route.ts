@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { decryptToken } from '@/lib/encryption';
+import { getLinearToken } from '@/lib/linear-token';
 
 const LINEAR_API_URL = 'https://api.linear.app/graphql';
 
@@ -190,21 +190,13 @@ export async function POST(
     }
 
     // Get the user's Linear token
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('linear_api_token')
-      .eq('id', viewData.user_id)
-      .single();
-
-    if (profileError || !profileData?.linear_api_token) {
+    const decryptedToken = await getLinearToken(viewData.user_id);
+    if (!decryptedToken) {
       return NextResponse.json(
         { error: 'Unable to create issue - Linear API token not found' },
         { status: 500 }
       );
     }
-
-    // Decrypt the token
-    const decryptedToken = decryptToken(profileData.linear_api_token);
 
     // Fetch team metadata directly from Linear API
     const teamMetadata = await fetchTeamMetadata(decryptedToken, viewData.team_id);

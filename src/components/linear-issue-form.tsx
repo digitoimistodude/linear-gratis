@@ -11,14 +11,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { LinearCustomerRequestManager } from "@/lib/linear"
 import { useAuth } from "@/contexts/auth-context"
 import { supabase } from "@/lib/supabase"
-import { decryptTokenClient } from "@/lib/client-encryption"
 import Link from "next/link"
 
 const formSchema = z.object({
-  apiToken: z.string().min(1, "Linear API token is required"),
   projectId: z.string().min(1, "Project ID is required"),
   customerName: z.string().min(1, "Customer name is required"),
   customerEmail: z.string().email("Valid email is required"),
@@ -55,7 +52,6 @@ export function LinearIssueForm() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      apiToken: "",
       projectId: "",
       customerName: "",
       customerEmail: "",
@@ -82,15 +78,8 @@ export function LinearIssueForm() {
         if (error && error.code !== 'PGRST116') {
           console.error('Error loading profile:', error)
         } else if (data?.linear_api_token) {
-          try {
-            const decryptedToken = await decryptTokenClient(data.linear_api_token)
-            setSavedToken(decryptedToken)
-            form.setValue('apiToken', decryptedToken)
-          } catch (error) {
-            console.error('Error decrypting token:', error)
-            // Token is corrupted, clear it
-            setSavedToken(null)
-          }
+          // Token is configured - server resolves it from session
+          setSavedToken("configured")
         }
       } catch (error) {
         console.error('Error loading profile:', error)
@@ -100,14 +89,9 @@ export function LinearIssueForm() {
     }
 
     loadProfile()
-  }, [user, form])
+  }, [user])
 
-  async function fetchProjects(apiToken: string) {
-    if (!apiToken.trim()) {
-      setProjects([])
-      return
-    }
-
+  async function fetchProjects() {
     setIsLoadingProjects(true)
     try {
       const response = await fetch('/api/linear/projects', {
@@ -115,7 +99,7 @@ export function LinearIssueForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ apiToken })
+        body: JSON.stringify({})
       })
 
       if (response.ok) {
@@ -132,51 +116,53 @@ export function LinearIssueForm() {
     }
   }
 
-  // Watch for API token changes
-  const apiToken = form.watch('apiToken')
+  // Fetch projects once token is confirmed configured
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchProjects(apiToken)
-    }, 500) // Debounce the API call
-
-    return () => clearTimeout(timeoutId)
-  }, [apiToken])
+    if (savedToken) {
+      fetchProjects()
+    }
+  }, [savedToken])
 
   async function onSubmit(values: FormData) {
     setIsSubmitting(true)
     setResult(null)
 
     try {
-      const linearManager = new LinearCustomerRequestManager(values.apiToken)
+      const response = await fetch('/api/linear/customer-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: values.projectId,
+          customerName: values.customerName,
+          customerEmail: values.customerEmail,
+          externalId: values.externalId || undefined,
+          issueTitle: values.issueTitle,
+          issueBody: values.issueBody,
+          attachmentUrl: values.attachmentUrl || undefined,
+        }),
+      })
 
-      const customerData = {
-        name: values.customerName,
-        email: values.customerEmail,
-        ...(values.externalId && { externalId: values.externalId }),
+      const data = await response.json() as {
+        success: boolean
+        error?: string
+        customer?: { id: string }
+        request?: { id: string }
       }
 
-      const requestData = {
-        title: values.issueTitle,
-        body: values.issueBody,
-        ...(values.attachmentUrl && { attachmentUrl: values.attachmentUrl }),
-      }
-
-      const response = await linearManager.createRequestWithCustomer(customerData, requestData, values.projectId)
-
-      if (response.success) {
+      if (data.success) {
         setResult({
           success: true,
           message: `Successfully created customer request!`,
           data: {
-            customer: response.customer,
-            request: response.request
+            customer: data.customer,
+            request: data.request
           }
         })
         form.reset()
       } else {
         setResult({
           success: false,
-          message: `Failed to create request: ${response.error || 'Unknown error'}`,
+          message: `Failed to create request: ${data.error || 'Unknown error'}`,
         })
       }
     } catch (error) {
@@ -218,30 +204,11 @@ export function LinearIssueForm() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="apiToken"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Linear API token</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder={savedToken ? "Using saved token from profile" : "Enter your Linear API token"}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {savedToken ? (
-                        <>Using your saved token. <Link href="/profile" className="text-primary hover:underline">Update in profile</Link></>
-                      ) : (
-                        <>Get your API token from Linear Settings → API. <Link href="/profile" className="text-primary hover:underline">Save in profile</Link> to avoid entering it each time.</>
-                      )}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!savedToken && (
+                <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-sm dark:bg-amber-950/20 dark:border-amber-800/30 dark:text-amber-400">
+                  Please <Link href="/profile" className="underline font-medium">save your Linear API token</Link> in your profile to use this form.
+                </div>
+              )}
 
               <FormField
                 control={form.control}
@@ -260,7 +227,7 @@ export function LinearIssueForm() {
                             isLoadingProjects
                               ? "Loading projects..."
                               : projects.length === 0
-                                ? "Enter API token to load projects"
+                                ? "No projects available"
                                 : "Select a project"
                           } />
                         </SelectTrigger>

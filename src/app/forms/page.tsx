@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/select";
 import { Navigation } from "@/components/navigation";
 import { supabase, CustomerRequestForm } from "@/lib/supabase";
-import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Link2 } from "lucide-react";
@@ -75,17 +74,10 @@ export default function FormsPage() {
           .order("created_at", { ascending: false }),
       ]);
 
-      // Handle profile
+      // Handle profile - check if token is configured (server resolves it)
       if (profileResult.data?.linear_api_token) {
-        try {
-          const decryptedToken = await decryptTokenClient(
-            profileResult.data.linear_api_token,
-          );
-          setLinearToken(decryptedToken);
-          await fetchProjects(decryptedToken);
-        } catch (error) {
-          console.error("Error decrypting token:", error);
-        }
+        setLinearToken("configured");
+        await fetchProjects();
       }
 
       // Handle forms
@@ -111,12 +103,12 @@ export default function FormsPage() {
     loadUserData();
   }, [user, authLoading, router, loadUserData]);
 
-  const fetchProjects = async (token: string) => {
+  const fetchProjects = async () => {
     try {
       const response = await fetch("/api/linear/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiToken: token }),
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { decryptToken } from '@/lib/encryption';
+import { getLinearToken } from '@/lib/linear-token';
 
 export type IssueComment = {
   id: string;
@@ -105,20 +105,13 @@ export async function GET(
       );
     }
 
-    const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('linear_api_token')
-      .eq('id', viewData.user_id)
-      .single();
-
-    if (profileError || !profileData?.linear_api_token) {
+    const decryptedToken = await getLinearToken(viewData.user_id);
+    if (!decryptedToken) {
       return NextResponse.json(
         { error: 'Unable to load data - Linear API token not found' },
         { status: 500 }
       );
     }
-
-    const decryptedToken = decryptToken(profileData.linear_api_token);
 
     // Gate comments and history via GraphQL @include. Keeps the query text
     // static (cacheable, readable) while view settings control the flags.

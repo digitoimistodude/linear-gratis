@@ -1,15 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { getLinearToken } from "@/lib/linear-token";
 
 export async function POST(request: NextRequest) {
   try {
-    const { apiToken, email } = (await request.json()) as {
-      apiToken: string;
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const apiToken = await getLinearToken(user.id);
+    if (!apiToken) {
+      return NextResponse.json(
+        { error: "Linear API token not configured" },
+        { status: 400 },
+      );
+    }
+
+    const { email } = (await request.json()) as {
       email: string;
     };
 
-    if (!apiToken || !email) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Missing required fields: apiToken, email" },
+        { error: "Missing required field: email" },
         { status: 400 },
       );
     }
