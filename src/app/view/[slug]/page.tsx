@@ -229,12 +229,15 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     }
   }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Apply branding when it loads
+  // Apply branding when it loads - view-level overrides take precedence
   useEffect(() => {
     if (branding) {
-      applyBrandingToPage(branding, view?.view_title)
+      const viewBranding = { ...branding };
+      if (view?.branding_logo_url) viewBranding.logo_url = view.branding_logo_url;
+      if (view?.branding_primary_color) viewBranding.primary_color = view.branding_primary_color;
+      applyBrandingToPage(viewBranding, view?.view_title)
     }
-  }, [branding, view?.view_title])
+  }, [branding, view?.view_title, view?.branding_logo_url, view?.branding_primary_color])
 
   const hasActiveFilters = () => {
     return filters.search ||
@@ -334,15 +337,15 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           {/* Left side - Brand logo or team name */}
           <div className="flex items-center gap-3 sm:gap-6 max-w-[50%] min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              {branding?.logo_url ? (
+              {(view.branding_logo_url || branding?.logo_url) ? (
                 // eslint-disable-next-line @next/next/no-img-element -- user-provided URL, domain not known at build time
                 <img
-                  src={branding.logo_url}
-                  alt={branding.brand_name || 'Logo'}
+                  src={view.branding_logo_url || branding?.logo_url || ''}
+                  alt={branding?.brand_name || 'Logo'}
                   style={{
                     width: 'auto',
                     height: 'auto',
-                    maxHeight: `${branding.logo_height || 40}px`,
+                    maxHeight: `${branding?.logo_height || 40}px`,
                     objectFit: 'contain',
                   }}
                   className="flex-shrink-0"

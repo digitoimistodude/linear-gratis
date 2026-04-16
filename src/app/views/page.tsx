@@ -69,6 +69,8 @@ export default function PublicViewsPage() {
   const [editingView, setEditingView] = useState<PublicView | null>(null);
   const [showEditView, setShowEditView] = useState(false);
   const [allowIssueCreation, setAllowIssueCreation] = useState(false);
+  const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
+  const [brandingPrimaryColor, setBrandingPrimaryColor] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
   const [showProjectUpdates, setShowProjectUpdates] = useState(false);
@@ -273,6 +275,8 @@ export default function PublicViewsPage() {
         password_hash: passwordHash,
         is_active: true,
         allow_issue_creation: allowIssueCreation,
+        branding_logo_url: brandingLogoUrl || null,
+        branding_primary_color: brandingPrimaryColor || null,
         show_project_updates: showProjectUpdates,
         excluded_issue_ids: excludedIssueIds,
         allow_customer_comments: allowCustomerComments,
@@ -358,6 +362,8 @@ export default function PublicViewsPage() {
     setPasswordProtected(false);
     setPassword("");
     setAllowIssueCreation(false);
+    setBrandingLogoUrl("");
+    setBrandingPrimaryColor("");
     setShowComments(false);
     setShowActivity(false);
     setShowProjectUpdates(false);
@@ -412,6 +418,8 @@ export default function PublicViewsPage() {
     setPasswordProtected(view.password_protected || false);
     setPassword("");
     setAllowIssueCreation(view.allow_issue_creation || false);
+    setBrandingLogoUrl(view.branding_logo_url || "");
+    setBrandingPrimaryColor(view.branding_primary_color || "");
     setShowComments(view.show_comments ?? false);
     setShowActivity(view.show_activity ?? false);
     setShowProjectUpdates(view.show_project_updates ?? false);
@@ -506,6 +514,8 @@ export default function PublicViewsPage() {
           allow_issue_creation: allowIssueCreation,
           show_descriptions: showDescriptions,
           show_labels: showLabels,
+          branding_logo_url: brandingLogoUrl || null,
+          branding_primary_color: brandingPrimaryColor || null,
           show_comments: showComments,
           show_activity: showActivity,
           show_project_updates: showProjectUpdates,
@@ -820,6 +830,37 @@ export default function PublicViewsPage() {
                     <p className="text-xs text-muted-foreground">
                       Optional description to provide context to viewers
                     </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="branding-logo-url">
+                        Logo URL (optional)
+                      </Label>
+                      <Input
+                        id="branding-logo-url"
+                        placeholder="https://example.com/logo.png"
+                        value={brandingLogoUrl}
+                        onChange={(e) => setBrandingLogoUrl(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Overrides the global branding logo for this view
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="branding-primary-color">
+                        Primary color (optional)
+                      </Label>
+                      <Input
+                        id="branding-primary-color"
+                        placeholder="#5e6ad2"
+                        value={brandingPrimaryColor}
+                        onChange={(e) => setBrandingPrimaryColor(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Overrides the global branding color for this view
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1195,6 +1236,38 @@ export default function PublicViewsPage() {
                       onChange={(e) => setViewDescription(e.target.value)}
                       rows={3}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-branding-logo-url">
+                        Logo URL (optional)
+                      </Label>
+                      <Input
+                        id="edit-branding-logo-url"
+                        placeholder="https://example.com/logo.png"
+                        value={brandingLogoUrl}
+                        onChange={(e) => setBrandingLogoUrl(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Overrides the global branding logo for this view
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-branding-primary-color">
+                        Primary color (optional)
+                      </Label>
+                      <Input
+                        id="edit-branding-primary-color"
+                        placeholder="#5e6ad2"
+                        value={brandingPrimaryColor}
+                        onChange={(e) => setBrandingPrimaryColor(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Overrides the global branding color for this view
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

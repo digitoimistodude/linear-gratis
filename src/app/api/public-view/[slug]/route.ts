@@ -99,6 +99,8 @@ export async function GET(
         allow_issue_creation: viewData.allow_issue_creation,
         allow_customer_comments: viewData.allow_customer_comments ?? false,
         show_sub_issues: viewData.show_sub_issues ?? true,
+        branding_logo_url: viewData.branding_logo_url || null,
+        branding_primary_color: viewData.branding_primary_color || null,
         created_at: viewData.created_at
       },
       issues: visibleIssues
@@ -223,6 +225,8 @@ export async function POST(
         allow_issue_creation: viewData.allow_issue_creation,
         allow_customer_comments: viewData.allow_customer_comments ?? false,
         show_sub_issues: viewData.show_sub_issues ?? true,
+        branding_logo_url: viewData.branding_logo_url || null,
+        branding_primary_color: viewData.branding_primary_color || null,
         created_at: viewData.created_at
       },
       issues: visibleIssues
