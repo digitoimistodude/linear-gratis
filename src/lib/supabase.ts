@@ -69,6 +69,8 @@ export type PublicView = {
   password_hash?: string
   expires_at?: string
   allow_issue_creation: boolean
+  branding_logo_url?: string
+  branding_primary_color?: string
   created_at: string
   updated_at: string
 }

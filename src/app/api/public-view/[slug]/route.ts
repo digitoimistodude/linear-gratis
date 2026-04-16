@@ -104,6 +104,8 @@ export async function GET(
         show_activity: viewData.show_activity ?? false,
         show_project_updates: viewData.show_project_updates ?? true,
         allow_issue_creation: viewData.allow_issue_creation,
+        branding_logo_url: viewData.branding_logo_url || null,
+        branding_primary_color: viewData.branding_primary_color || null,
         created_at: viewData.created_at
       },
       issues: visibleIssues
@@ -233,6 +235,8 @@ export async function POST(
         show_project_updates: viewData.show_project_updates ?? true,
         password_protected: viewData.password_protected,
         allow_issue_creation: viewData.allow_issue_creation,
+        branding_logo_url: viewData.branding_logo_url || null,
+        branding_primary_color: viewData.branding_primary_color || null,
         created_at: viewData.created_at
       },
       issues: visibleIssues
