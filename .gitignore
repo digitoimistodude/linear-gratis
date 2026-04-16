@@ -47,5 +47,8 @@ next-env.d.ts
 !.dev.vars.example
 !.env.example
 
+# local scripts (may contain credentials or internal data)
+/scripts/
+
 # opennext build output
 .open-next
