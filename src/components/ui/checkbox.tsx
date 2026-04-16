@@ -12,35 +12,9 @@ interface CheckboxProps {
 export function Checkbox({ checked, onChange, onClick, tabIndex = -1 }: CheckboxProps) {
   return (
     <div
-      style={{
-        position: 'relative',
-        display: 'flex',
-        flexShrink: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '16px',
-        height: '16px',
-        zIndex: 1,
-        opacity: 1,
-        boxSizing: 'border-box',
-        touchAction: 'pan-x pan-y',
-        fontFamily: 'var(--font-regular)',
-        fontSize: 'inherit',
-        fontWeight: 'inherit',
-        lineHeight: 'inherit',
-        verticalAlign: 'baseline',
-        border: 0,
-        margin: 0,
-        padding: 0,
-        cursor: 'var(--pointer, "default")',
-        userSelect: 'none',
-        color: 'lch(100 0 272)',
-        WebkitTapHighlightColor: 'transparent',
-        WebkitFontSmoothing: 'antialiased',
-        textRendering: 'optimizeLegibility',
-        WebkitTextSizeAdjust: '100%'
-      }}
+      className="relative flex flex-shrink-0 items-center justify-center w-4 h-4 cursor-pointer select-none"
       onClick={(e) => {
+        e.stopPropagation()
         onChange()
         onClick?.(e)
       }}
@@ -48,39 +22,17 @@ export function Checkbox({ checked, onChange, onClick, tabIndex = -1 }: Checkbox
       <input
         type="checkbox"
         checked={checked}
-        onChange={onChange}
-        onClick={onClick}
+        readOnly
         tabIndex={tabIndex}
+        className="appearance-none flex-shrink-0 h-3.5 w-3.5 rounded-[3px] border cursor-pointer transition-all duration-75 m-0 p-0"
         style={{
-          appearance: 'none',
-          backgroundColor: 'transparent',
-          flexShrink: 0,
-          height: '14px',
-          width: '14px',
-          padding: '2px',
-          verticalAlign: 'middle',
-          transition: '80ms ease-out',
-          fillOpacity: 0,
-          border: '1px solid lch(20.573 4.707 272)',
-          borderRadius: '3px',
-          backgroundPosition: '1px 2px',
-          boxShadow: 'none',
-          margin: '0px',
-          position: 'relative',
-          cursor: 'var(--pointer)',
-          fontFamily: 'var(--font-regular)',
           background: checked ? 'lch(47.918% 59.303 288.421)' : 'transparent',
-          borderColor: checked ? 'lch(47.918% 59.303 288.421)' : 'lch(20.573 4.707 272)'
+          borderColor: checked ? 'lch(47.918% 59.303 288.421)' : 'lch(20.573 4.707 272)',
         }}
       />
       {checked && (
         <svg
-          style={{
-            position: 'absolute',
-            width: '10px',
-            height: '10px',
-            pointerEvents: 'none'
-          }}
+          className="absolute w-2.5 h-2.5 pointer-events-none"
           viewBox="0 0 16 16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
