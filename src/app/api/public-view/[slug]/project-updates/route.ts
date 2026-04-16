@@ -38,14 +38,23 @@ export async function GET(
       )
     }
 
+    // Respect the view owner's choice to hide project updates entirely
+    if (view.show_project_updates === false) {
+      return NextResponse.json(
+        { error: 'Project updates are hidden for this view' },
+        { status: 403 }
+      )
+    }
+
     // Get the Linear token (workspace-shared, falling back to user's personal)
     const decryptedToken = await getLinearToken(view.user_id)
     if (!decryptedToken) {
       return NextResponse.json(
-        { error: 'Linear API token not found' },
+        { error: 'Unable to load data - Linear API token not found' },
         { status: 500 }
       )
     }
+
 
     // Fetch project updates from Linear
     const query = `
@@ -67,7 +76,6 @@ export async function GET(
                 name
                 displayName
                 avatarUrl
-                email
               }
               diffMarkdown
               isDiffHidden
@@ -120,7 +128,6 @@ export async function GET(
                 name: string
                 displayName: string
                 avatarUrl?: string
-                email: string
               }
               diffMarkdown?: string
               isDiffHidden: boolean

@@ -10,26 +10,15 @@ type ProjectNode = {
   createdAt: string
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    // Try to read token from body (backwards compat), otherwise resolve from session
-    let apiToken: string | null = null;
-    try {
-      const body = await request.json() as { apiToken?: string };
-      if (body.apiToken) apiToken = body.apiToken;
-    } catch {
-      // No body or invalid JSON — fall through to session resolution
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!apiToken) {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      apiToken = await getLinearToken(user.id);
-    }
-
+    const apiToken = await getLinearToken(user.id);
     if (!apiToken) {
       return NextResponse.json(
         { error: 'Linear API token not configured' },

@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getLinearToken } from "@/lib/linear-token";
 
 type RequestBody = {
-  apiToken?: string;
   customerData: {
     name: string;
     email: string;
@@ -22,8 +21,24 @@ type RequestBody = {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as RequestBody;
-    const { customerData, requestData, projectId } = body;
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const apiToken = await getLinearToken(user.id);
+    if (!apiToken) {
+      return NextResponse.json(
+        { error: "Linear API token not configured" },
+        { status: 400 },
+      );
+    }
+
+    const { customerData, requestData, projectId } =
+      (await request.json()) as RequestBody;
 
     if (!customerData || !requestData || !projectId) {
       return NextResponse.json(
@@ -31,25 +46,6 @@ export async function POST(request: NextRequest) {
           error:
             "Missing required fields: customerData, requestData, projectId",
         },
-        { status: 400 },
-      );
-    }
-
-    // Resolve API token: prefer body (backwards compat), otherwise resolve from session
-    let apiToken: string | null = body.apiToken || null;
-
-    if (!apiToken) {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      apiToken = await getLinearToken(user.id);
-    }
-
-    if (!apiToken) {
-      return NextResponse.json(
-        { error: "Linear API token not configured" },
         { status: 400 },
       );
     }

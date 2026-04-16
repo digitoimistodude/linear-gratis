@@ -383,7 +383,6 @@ export default function PublicViewsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            apiToken: linearToken,
             projectId: sourceProjectId || undefined,
             teamId: sourceTeamId || undefined,
           }),

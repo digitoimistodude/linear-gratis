@@ -11,7 +11,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { LinearCustomerRequestManager } from "@/lib/linear"
 import { useAuth } from "@/contexts/auth-context"
 import Link from "next/link"
 
@@ -117,36 +116,41 @@ export function LinearIssueForm() {
     setResult(null)
 
     try {
-      const linearManager = new LinearCustomerRequestManager()
+      const response = await fetch('/api/linear/customer-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: values.projectId,
+          customerName: values.customerName,
+          customerEmail: values.customerEmail,
+          externalId: values.externalId || undefined,
+          issueTitle: values.issueTitle,
+          issueBody: values.issueBody,
+          attachmentUrl: values.attachmentUrl || undefined,
+        }),
+      })
 
-      const customerData = {
-        name: values.customerName,
-        email: values.customerEmail,
-        ...(values.externalId && { externalId: values.externalId }),
+      const data = await response.json() as {
+        success: boolean
+        error?: string
+        customer?: { id: string }
+        request?: { id: string }
       }
 
-      const requestData = {
-        title: values.issueTitle,
-        body: values.issueBody,
-        ...(values.attachmentUrl && { attachmentUrl: values.attachmentUrl }),
-      }
-
-      const response = await linearManager.createRequestWithCustomer(customerData, requestData, values.projectId)
-
-      if (response.success) {
+      if (data.success) {
         setResult({
           success: true,
           message: `Successfully created customer request!`,
           data: {
-            customer: response.customer,
-            request: response.request
+            customer: data.customer,
+            request: data.request
           }
         })
         form.reset()
       } else {
         setResult({
           success: false,
-          message: `Failed to create request: ${response.error || 'Unknown error'}`,
+          message: `Failed to create request: ${data.error || 'Unknown error'}`,
         })
       }
     } catch (error) {

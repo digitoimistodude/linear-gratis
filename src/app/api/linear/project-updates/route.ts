@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { paginateLinearConnection, type LinearConnection } from '@/lib/linear';
+import { createClient } from '@/lib/supabase/server';
+import { getLinearToken } from '@/lib/linear-token';
 
 type ProjectUpdate = {
   id: string
@@ -33,11 +35,25 @@ type ProjectWithUpdates = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { apiToken, projectId } = await request.json() as { apiToken: string; projectId: string };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!apiToken || !projectId) {
+    const apiToken = await getLinearToken(user.id);
+    if (!apiToken) {
       return NextResponse.json(
-        { error: 'Missing required fields: apiToken, projectId' },
+        { error: 'Linear API token not configured' },
+        { status: 400 }
+      );
+    }
+
+    const { projectId } = await request.json() as { projectId: string };
+
+    if (!projectId) {
+      return NextResponse.json(
+        { error: 'Missing required field: projectId' },
         { status: 400 }
       );
     }

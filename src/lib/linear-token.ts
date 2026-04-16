@@ -7,7 +7,8 @@ import { decryptToken } from './encryption';
  * Prefers the workspace-shared token from `workspace_settings` if set,
  * otherwise falls back to the user's personal `linear_api_token` in `profiles`.
  *
- * Returns the decrypted plaintext token, or null if none is configured.
+ * Centralising token resolution here ensures every server-side caller goes
+ * through one auditable path and never trusts client-supplied tokens.
  */
 export async function getLinearToken(userId: string | null | undefined): Promise<string | null> {
   // Try workspace-shared token first
