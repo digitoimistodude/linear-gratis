@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { notFound } from 'next/navigation'
 import { KanbanBoard } from '@/components/kanban-board'
 import { FilterDropdown, FilterState, generateFilterOptions, FilterOptions } from '@/components/filter-dropdown'
@@ -229,15 +229,24 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     }
   }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Merge workspace branding with per-view overrides so both applyBrandingToPage
+  // and getBrandingStyles (inline styles on the outer div) see the same
+  // effective values. Without this, the div's inline --ring would shadow the
+  // override applied on :root.
+  const effectiveBranding = useMemo(() => {
+    if (!branding) return null;
+    const merged = { ...branding };
+    if (view?.branding_logo_url) merged.logo_url = view.branding_logo_url;
+    if (view?.branding_primary_color) merged.primary_color = view.branding_primary_color;
+    return merged;
+  }, [branding, view?.branding_logo_url, view?.branding_primary_color]);
+
   // Apply branding when it loads - view-level overrides take precedence
   useEffect(() => {
-    if (branding) {
-      const viewBranding = { ...branding };
-      if (view?.branding_logo_url) viewBranding.logo_url = view.branding_logo_url;
-      if (view?.branding_primary_color) viewBranding.primary_color = view.branding_primary_color;
-      applyBrandingToPage(viewBranding, view?.view_title)
+    if (effectiveBranding) {
+      applyBrandingToPage(effectiveBranding, view?.view_title)
     }
-  }, [branding, view?.view_title, view?.branding_logo_url, view?.branding_primary_color])
+  }, [effectiveBranding, view?.view_title])
 
   const hasActiveFilters = () => {
     return filters.search ||
@@ -330,7 +339,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background linear-gradient-bg flex flex-col" style={getBrandingStyles(branding)}>
+    <div className="min-h-screen bg-background linear-gradient-bg flex flex-col" style={getBrandingStyles(effectiveBranding)}>
       {/* Linear-style Header */}
       <header className="border-b border-border bg-card/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="flex items-center justify-between px-4 sm:px-6 py-3">
