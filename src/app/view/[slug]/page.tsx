@@ -310,6 +310,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
                   style={{
                     width: 'auto',
                     height: 'auto',
+                    minHeight: `${branding?.logo_height || 40}px`,
                     maxHeight: `${branding?.logo_height || 40}px`,
                     objectFit: 'contain',
                   }}
