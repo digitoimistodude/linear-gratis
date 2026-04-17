@@ -1,3 +1,7 @@
+### 0.3.9: 2026-04-17
+
+* Fix per-view branding primary color being shadowed by workspace color in inline styles on public view (`feature/view-branding`)
+
 ### 0.3.8: 2026-04-17
 
 * Rename view Logo URL label to Logo or Favicon URL (svg, png) and drop optional suffix from Primary color (`feature/view-branding`)
