@@ -374,6 +374,7 @@ export default function BrandingPage() {
                         src={branding.favicon_url}
                         alt="Favicon preview"
                         className="w-8 h-8"
+                        style={{ minHeight: '40px' }}
                       />
                     </div>
                   )}
