@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Copy } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
@@ -176,18 +176,9 @@ export function IssueDetailModal({
           <div className="flex items-center gap-3">
             {issue && (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(issue.identifier)
-                    toast.success(`Copied ${issue.identifier}`)
-                  }}
-                  className="text-sm font-mono text-muted-foreground font-semibold hover:text-foreground transition-colors cursor-copy"
-                  aria-label={`Copy ${issue.identifier}`}
-                  title="Click to copy"
-                >
+                <span className="text-sm font-mono text-muted-foreground font-semibold">
                   {issue.identifier}
-                </button>
+                </span>
                 <div className="flex items-center gap-2">
                   {getStateIcon(issue.state.type, issue.state.color)}
                   <span className="text-sm text-muted-foreground">{issue.state.name}</span>
@@ -195,13 +186,29 @@ export function IssueDetailModal({
               </>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-accent rounded-md transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5 text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-1">
+            {issue && (
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(issue.identifier)
+                  toast.success(`Copied ${issue.identifier}`)
+                }}
+                className="p-1.5 hover:bg-accent rounded-md transition-colors"
+                aria-label={`Copy ${issue.identifier}`}
+                title={`Copy ${issue.identifier}`}
+              >
+                <Copy className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-accent rounded-md transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5 text-muted-foreground" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

@@ -219,7 +219,7 @@ export function KanbanBoard({
                                         toast.success(`Copied ${issue.identifier}`)
                                       }
                                     }}
-                                    className="text-xs font-mono text-muted-foreground/80 tracking-wider font-semibold hover:text-foreground transition-colors cursor-copy"
+                                    className="text-xs font-mono text-muted-foreground/80 tracking-wider font-semibold hover:text-foreground transition-colors cursor-pointer"
                                     aria-label={`Copy ${issue.identifier}`}
                                     title="Click to copy"
                                   >
