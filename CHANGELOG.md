@@ -1,3 +1,7 @@
+### 0.3.2: 2026-04-17
+
+* Add copyable issue identifier on kanban card and detail modal (`feature/copyable-task-id`)
+
 ### 0.3.1: 2026-04-17
 
 * Fix React removeChild error and two-click navigation bug caused by branding favicon DOM manipulation in admin navigation (dude-specific change)
