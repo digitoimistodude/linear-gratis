@@ -1,3 +1,7 @@
+### 0.3.5: 2026-04-17
+
+* Use Linear's copy icon svg instead of lucide Copy for the detail modal copy button (`feature/copyable-task-id`)
+
 ### 0.3.4: 2026-04-17
 
 * Replace cursor-copy plus pointer on kanban card identifier with plain pointer and move copy action in detail modal to a dedicated Copy icon button next to the close button (`feature/copyable-task-id`)
