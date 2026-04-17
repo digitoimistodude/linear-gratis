@@ -26,6 +26,7 @@ import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Link2 } from "lucide-react";
+import { toast } from "sonner";
 
 type Project = {
   id: string;
@@ -85,17 +86,20 @@ export default function FormsPage() {
           await fetchProjects(decryptedToken);
         } catch (error) {
           console.error("Error decrypting token:", error);
+          toast.error("Failed to decrypt your Linear API token. Re-enter it in Profile.");
         }
       }
 
       // Handle forms
       if (formsResult.error) {
         console.error("Error loading forms:", formsResult.error);
+        toast.error(`Failed to load forms: ${formsResult.error.message}`);
       } else {
         setForms(formsResult.data || []);
       }
     } catch (error) {
       console.error("Error loading data:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load admin data");
     } finally {
       setLoading(false);
     }
@@ -122,9 +126,13 @@ export default function FormsPage() {
       if (response.ok) {
         const data = (await response.json()) as { projects?: Project[] };
         setProjects(data.projects || []);
+      } else {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        toast.error(`Failed to load Linear projects: ${data.error || response.statusText}`);
       }
     } catch (error) {
       console.error("Failed to fetch projects:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load Linear projects");
     }
   };
 

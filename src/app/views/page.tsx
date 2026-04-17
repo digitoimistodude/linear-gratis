@@ -27,6 +27,7 @@ import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Globe, Lock, Edit3 } from "lucide-react";
+import { toast } from "sonner";
 import bcrypt from "bcryptjs";
 
 type Project = {
@@ -135,17 +136,20 @@ export default function PublicViewsPage() {
           ]);
         } catch (error) {
           console.error("Error decrypting token:", error);
+          toast.error("Failed to decrypt your Linear API token. Re-enter it in Profile.");
         }
       }
 
       // Handle views
       if (viewsResult.error) {
         console.error("Error loading views:", viewsResult.error);
+        toast.error(`Failed to load views: ${viewsResult.error.message}`);
       } else {
         setViews(viewsResult.data || []);
       }
     } catch (error) {
       console.error("Error loading data:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load admin data");
     } finally {
       setLoading(false);
     }
@@ -172,9 +176,13 @@ export default function PublicViewsPage() {
       if (response.ok) {
         const data = (await response.json()) as { projects?: Project[] };
         setProjects(data.projects || []);
+      } else {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        toast.error(`Failed to load Linear projects: ${data.error || response.statusText}`);
       }
     } catch (error) {
       console.error("Failed to fetch projects:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load Linear projects");
     }
   };
 
@@ -189,9 +197,13 @@ export default function PublicViewsPage() {
       if (response.ok) {
         const data = (await response.json()) as { teams?: Team[] };
         setTeams(data.teams || []);
+      } else {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        toast.error(`Failed to load Linear teams: ${data.error || response.statusText}`);
       }
     } catch (error) {
       console.error("Failed to fetch teams:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load Linear teams");
     }
   };
 
