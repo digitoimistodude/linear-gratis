@@ -318,7 +318,7 @@ export default function PublicFormPage() {
                   name="externalId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Reference ID (optional)</FormLabel>
+                      <FormLabel>Reference ID</FormLabel>
                       <FormControl>
                         <Input placeholder="Your internal reference ID" {...field} />
                       </FormControl>
@@ -364,7 +364,7 @@ export default function PublicFormPage() {
                   name="attachmentUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Attachment URL (optional)</FormLabel>
+                      <FormLabel>Attachment URL</FormLabel>
                       <FormControl>
                         <Input
                           type="url"

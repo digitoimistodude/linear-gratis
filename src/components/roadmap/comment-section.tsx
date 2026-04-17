@@ -289,7 +289,7 @@ export function CommentSection({
             <div>
               <input
                 type="email"
-                placeholder={requireEmail ? 'Your email (required)' : 'Your email (optional)'}
+                placeholder={requireEmail ? 'Your email (required)' : 'Your email'}
                 value={authorEmail}
                 onChange={(e) => setAuthorEmail(e.target.value)}
                 disabled={submitting}

@@ -783,7 +783,7 @@ export default function PublicViewsPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="view-description">
-                      Description (optional)
+                      Description
                     </Label>
                     <Textarea
                       id="view-description"
@@ -1085,7 +1085,7 @@ export default function PublicViewsPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="edit-view-description">
-                      Description (optional)
+                      Description
                     </Label>
                     <Textarea
                       id="edit-view-description"
