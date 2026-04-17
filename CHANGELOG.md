@@ -1,3 +1,7 @@
+### 0.3.6: 2026-04-17
+
+* Fix favicon preview not rendering for svg sources by adding min-height (`feature/dynamic-favicon`)
+
 ### 0.3.5: 2026-04-17
 
 * Use Linear's copy icon svg instead of lucide Copy for the detail modal copy button (`feature/copyable-task-id`)
