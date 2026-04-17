@@ -809,7 +809,7 @@ export default function PublicViewsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="branding-logo-url">
-                        Logo URL (optional)
+                        Logo or Favicon URL (svg, png)
                       </Label>
                       <Input
                         id="branding-logo-url"
@@ -824,7 +824,7 @@ export default function PublicViewsPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="branding-primary-color">
-                        Primary color (optional)
+                        Primary color
                       </Label>
                       <Input
                         id="branding-primary-color"
@@ -1140,7 +1140,7 @@ export default function PublicViewsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="edit-branding-logo-url">
-                        Logo URL (optional)
+                        Logo or Favicon URL (svg, png)
                       </Label>
                       <Input
                         id="edit-branding-logo-url"
@@ -1155,7 +1155,7 @@ export default function PublicViewsPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="edit-branding-primary-color">
-                        Primary color (optional)
+                        Primary color
                       </Label>
                       <Input
                         id="edit-branding-primary-color"
