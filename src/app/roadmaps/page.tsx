@@ -26,6 +26,7 @@ import { supabase, Roadmap } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Globe, Lock, Plus, Map } from "lucide-react";
+import { toast } from "sonner";
 
 type Project = {
   id: string;
@@ -83,15 +84,21 @@ export default function RoadmapsPage() {
           setLinearToken("configured");
           await fetchProjects();
         }
+      } else {
+        toast.error("Failed to check Linear token status");
       }
 
       // Handle roadmaps
       if (roadmapsResult.ok) {
         const data = await roadmapsResult.json() as { roadmaps?: Roadmap[] };
         setRoadmaps(data.roadmaps || []);
+      } else {
+        const data = (await roadmapsResult.json().catch(() => ({}))) as { error?: string };
+        toast.error(`Failed to load roadmaps: ${data.error || roadmapsResult.statusText}`);
       }
     } catch (error) {
       console.error("Error loading data:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load admin data");
     } finally {
       setLoading(false);
     }
@@ -118,9 +125,13 @@ export default function RoadmapsPage() {
       if (response.ok) {
         const data = (await response.json()) as { projects?: Project[] };
         setProjects(data.projects || []);
+      } else {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        toast.error(`Failed to load Linear projects: ${data.error || response.statusText}`);
       }
     } catch (error) {
       console.error("Failed to fetch projects:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to load Linear projects");
     }
   };
 

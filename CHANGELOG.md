@@ -1,3 +1,7 @@
+### 0.3.3: 2026-04-17
+
+* Surface admin load and fetch failures as visible toasts on views, forms, and roadmaps pages (`feature/api-error-display`)
+
 ### 0.3.2: 2026-04-17
 
 * Add copyable issue identifier on kanban card and detail modal (`feature/copyable-task-id`)
