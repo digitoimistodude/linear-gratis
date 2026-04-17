@@ -4,6 +4,7 @@ import { LinearIssue } from '@/app/api/linear/issues/route'
 import { FilterState } from '@/components/filter-dropdown'
 import { PriorityIcon, EstimateIcon } from '@/components/priority-icon'
 import { UserAvatar } from '@/components/user-avatar'
+import { toast } from 'sonner'
 
 // Shared Tailwind classes for the small metadata badges on a kanban card
 // (priority, estimate, label). Using theme tokens so the badges adapt to
@@ -208,7 +209,26 @@ export function KanbanBoard({
                               {/* Top row: Issue ID, Status Icon, and Assignee */}
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-mono text-muted-foreground/80 tracking-wider font-semibold">
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      navigator.clipboard.writeText(issue.identifier)
+                                      toast.success(`Copied ${issue.identifier}`)
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        navigator.clipboard.writeText(issue.identifier)
+                                        toast.success(`Copied ${issue.identifier}`)
+                                      }
+                                    }}
+                                    className="text-xs font-mono text-muted-foreground/80 tracking-wider font-semibold hover:text-foreground transition-colors cursor-copy"
+                                    aria-label={`Copy ${issue.identifier}`}
+                                    title="Click to copy"
+                                  >
                                     {issue.identifier}
                                   </span>
                                   <div className="flex items-center gap-1">
