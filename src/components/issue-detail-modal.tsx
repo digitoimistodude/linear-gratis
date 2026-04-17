@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { toast } from 'sonner'
 import { IssueDetail } from '@/app/api/public-view/[slug]/issue/[issueId]/route'
 import { PriorityIcon, EstimateIcon } from '@/components/priority-icon'
 import { UserAvatar } from '@/components/user-avatar'
@@ -175,9 +176,18 @@ export function IssueDetailModal({
           <div className="flex items-center gap-3">
             {issue && (
               <>
-                <span className="text-sm font-mono text-muted-foreground font-semibold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(issue.identifier)
+                    toast.success(`Copied ${issue.identifier}`)
+                  }}
+                  className="text-sm font-mono text-muted-foreground font-semibold hover:text-foreground transition-colors cursor-copy"
+                  aria-label={`Copy ${issue.identifier}`}
+                  title="Click to copy"
+                >
                   {issue.identifier}
-                </span>
+                </button>
                 <div className="flex items-center gap-2">
                   {getStateIcon(issue.state.type, issue.state.color)}
                   <span className="text-sm text-muted-foreground">{issue.state.name}</span>
