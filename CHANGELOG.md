@@ -1,3 +1,8 @@
+### 0.3.1: 2026-04-17
+
+* Fix React removeChild error and two-click navigation bug caused by branding favicon DOM manipulation in admin navigation (dude-specific change)
+* Prevent home page content flash before redirecting authenticated users to public views (dude-specific change)
+
 ### 0.3.0: 2026-03-18
 
 * Add customer commenting on public view issues with Linear attachment sync (`feature/customer-comments`), Ref: DEV-825

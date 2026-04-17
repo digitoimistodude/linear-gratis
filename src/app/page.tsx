@@ -309,7 +309,7 @@ export default function Home() {
     );
   }
 
-  if (hasLinearToken === null) {
+  if (hasLinearToken === null || hasLinearToken === true) {
     return (
       <div className="min-h-screen gradient-bg">
         <Navigation />

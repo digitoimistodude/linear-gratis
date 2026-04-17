@@ -24,24 +24,6 @@ export function Navigation() {
           if (!text) return
           const data = JSON.parse(text) as { branding: BrandingSettings | null }
           setBranding(data.branding)
-
-          // Apply branding favicon - remove all existing icon links and inject a fresh one
-          if (data.branding?.favicon_url) {
-            const existingIcons = document.head.querySelectorAll(
-              'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
-            )
-            existingIcons.forEach(el => el.parentNode?.removeChild(el))
-
-            const favicon = document.createElement('link')
-            favicon.rel = 'icon'
-            favicon.href = data.branding.favicon_url
-            document.head.appendChild(favicon)
-
-            const appleIcon = document.createElement('link')
-            appleIcon.rel = 'apple-touch-icon'
-            appleIcon.href = data.branding.favicon_url
-            document.head.appendChild(appleIcon)
-          }
         }
       } catch (err) {
         console.error('Error loading branding:', err)
