@@ -1,3 +1,7 @@
+### 0.3.7: 2026-04-17
+
+* Fix view logo not rendering for svg sources by adding min-height matching logo_height (`feature/view-branding`)
+
 ### 0.3.6: 2026-04-17
 
 * Fix favicon preview not rendering for svg sources by adding min-height (`feature/dynamic-favicon`)
