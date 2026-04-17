@@ -286,7 +286,7 @@ export function LinearIssueForm() {
                 name="externalId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>External ID (optional)</FormLabel>
+                    <FormLabel>External ID</FormLabel>
                     <FormControl>
                       <Input placeholder="customer_123" {...field} />
                     </FormControl>
@@ -335,7 +335,7 @@ export function LinearIssueForm() {
                 name="attachmentUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Attachment URL (optional)</FormLabel>
+                    <FormLabel>Attachment URL</FormLabel>
                     <FormControl>
                       <Input
                         type="url"

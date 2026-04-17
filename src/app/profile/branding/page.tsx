@@ -472,7 +472,7 @@ export default function BrandingPage() {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="heading-font-family">Heading font family (optional)</Label>
+                <Label htmlFor="heading-font-family">Heading font family</Label>
                 <Input
                   id="heading-font-family"
                   placeholder="Leave empty to use body font"

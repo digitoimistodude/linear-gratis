@@ -380,7 +380,7 @@ export default function RoadmapsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description (optional)</Label>
+                    <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
                       value={roadmapDescription}

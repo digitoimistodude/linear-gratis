@@ -506,7 +506,7 @@ export default function FormsPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="form-description">
-                      Instructions (optional)
+                      Instructions
                     </Label>
                     <Textarea
                       id="form-description"
