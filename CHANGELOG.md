@@ -2,6 +2,7 @@
 
 * Fix React removeChild error and two-click navigation bug caused by branding favicon DOM manipulation in admin navigation (dude-specific change)
 * Prevent home page content flash before redirecting authenticated users to public views (dude-specific change)
+* Remove Problem/Solution section from logged-out landing page (dude-specific change)
 
 ### 0.3.0: 2026-03-18
 

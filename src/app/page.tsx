@@ -17,7 +17,6 @@ import {
   Github,
   MessageSquare,
   Share2,
-  Zap,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -126,64 +125,6 @@ export default function Home() {
               </ProductPreview>
             </div>
 
-            {/* Problem/Solution */}
-            <div className="grid md:grid-cols-2 gap-8 mb-16">
-              <Card className="border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20">
-                <CardHeader>
-                  <CardTitle className="text-red-800 dark:text-red-400 flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    The problem
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>
-                      Clients constantly ask &quot;what&apos;s the status?&quot; - wasting hours on status update emails
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>Customer feedback scattered across Slack, email, and support tools</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>Manual copy-pasting from messages into Linear is tedious</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>Can&apos;t afford Linear seats for every client and stakeholder</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
-                <CardHeader>
-                  <CardTitle className="text-green-800 dark:text-green-400 flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    The solution
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>Share live Linear boards - clients see real-time progress without seats</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>Feedback forms automatically create Linear issues with full context</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>Password-protect sensitive views for client privacy</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p>Zero manual work - everything is automated and real-time</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
           </div>
         </section>
 
