@@ -1,3 +1,7 @@
+### 0.3.4: 2026-04-17
+
+* Replace cursor-copy plus pointer on kanban card identifier with plain pointer and move copy action in detail modal to a dedicated Copy icon button next to the close button (`feature/copyable-task-id`)
+
 ### 0.3.3: 2026-04-17
 
 * Surface admin load and fetch failures as visible toasts on views, forms, and roadmaps pages (`feature/api-error-display`)
