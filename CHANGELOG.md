@@ -1,3 +1,8 @@
+### 0.3.8: 2026-04-17
+
+* Rename view Logo URL label to Logo or Favicon URL (svg, png) and drop optional suffix from Primary color (`feature/view-branding`)
+* Drop optional suffix from form labels across admin and public forms in favour of required asterisks (`feature/remove-optional-labels`)
+
 ### 0.3.7: 2026-04-17
 
 * Fix view logo not rendering for svg sources by adding min-height matching logo_height (`feature/view-branding`)
