@@ -52,6 +52,13 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   const [defaultStateName, setDefaultStateName] = useState<string | undefined>(undefined)
   const filterButtonRef = useRef<HTMLButtonElement>(null)
 
+  // Strip labels from the filter dropdown when the view has labels hidden.
+  // Without this, excluded-label filter pills would still render and leak
+  // label metadata even though labels are turned off on the cards.
+  const visibleFilterOptions = useMemo<FilterOptions>(() => (
+    view?.show_labels === false ? { ...filterOptions, labels: [] } : filterOptions
+  ), [filterOptions, view?.show_labels])
+
   // Load branding settings for this view's owner
   const { branding } = useBrandingSettings(view?.user_id || null)
 
@@ -440,7 +447,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
               onClose={() => setShowFilterDropdown(false)}
               filters={filters}
               onFiltersChange={setFilters}
-              filterOptions={filterOptions}
+              filterOptions={visibleFilterOptions}
               triggerRef={filterButtonRef}
             />
 
