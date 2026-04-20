@@ -1,3 +1,7 @@
+### 0.3.10: 2026-04-20
+
+* Hide labels section in public view filter dropdown when view has show labels disabled (`feature/toggle-descriptions-labels`)
+
 ### 0.3.9: 2026-04-17
 
 * Fix per-view branding primary color being shadowed by workspace color in inline styles on public view (`feature/view-branding`)
