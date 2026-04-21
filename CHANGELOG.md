@@ -1,3 +1,7 @@
+### 0.4.4: 2026-04-21
+
+* Fix public description override not rendering on views with show descriptions disabled (`feature/per-issue-description-override`)
+
 ### 0.4.3: 2026-04-21
 
 * Add per-issue public description override that replaces the Linear description on a public view, editable inline by the view owner (`feature/per-issue-description-override`)
