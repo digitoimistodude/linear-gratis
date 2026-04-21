@@ -175,6 +175,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
         priority: issueData.priority,
         assigneeId: issueData.assigneeId,
         labelIds: issueData.labelIds,
+        projectId: issueData.projectId,
       }),
     })
 
@@ -318,7 +319,12 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
                     <span className="text-sm">👤</span>
                   </div>
                   <h2 className="text-base sm:text-lg font-medium tracking-tight truncate">
-                    {branding?.brand_name || view.project_name || view.team_name || 'Public View'}
+                    {branding?.brand_name
+                      || view.team_name
+                      || (view.project_names && view.project_names.length > 1
+                        ? view.project_names.join(' · ')
+                        : view.project_names?.[0] ?? view.project_name)
+                      || 'Public View'}
                   </h2>
                 </>
               )}
@@ -340,7 +346,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
               </div>
             )}
 
-            {view.project_id && view.show_project_updates !== false && (
+            {((view.project_ids && view.project_ids.length > 0) || view.project_id) && view.show_project_updates !== false && (
               <button
                 onClick={() => setShowProjectUpdates(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
@@ -537,6 +543,16 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
         projectName={view?.project_name}
         teamId={view?.team_id}
         projectId={view?.project_id}
+        projects={
+          view?.project_ids && view.project_ids.length > 0
+            ? view.project_ids.map((id, i) => ({
+                id,
+                name: view.project_names?.[i] ?? id,
+              }))
+            : view?.project_id
+              ? [{ id: view.project_id, name: view.project_name ?? view.project_id }]
+              : []
+        }
         apiToken="dummy"
         viewSlug={slug}
         defaultStateName={defaultStateName}
@@ -556,11 +572,21 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       )}
 
       {/* Project Updates Modal */}
-      {view?.project_id && (
+      {((view?.project_ids && view.project_ids.length > 0) || view?.project_id) && (
         <ProjectUpdatesModal
           isOpen={showProjectUpdates}
           onClose={() => setShowProjectUpdates(false)}
           viewSlug={slug}
+          projects={
+            view.project_ids && view.project_ids.length > 0
+              ? view.project_ids.map((id, i) => ({
+                  id,
+                  name: view.project_names?.[i] ?? id,
+                }))
+              : view.project_id
+                ? [{ id: view.project_id, name: view.project_name ?? view.project_id }]
+                : []
+          }
         />
       )}
     </div>

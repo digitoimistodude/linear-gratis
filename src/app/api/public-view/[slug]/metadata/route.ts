@@ -48,13 +48,23 @@ export async function GET(
     // Decrypt the token and fetch metadata
     const decryptedToken = decryptToken(profileData.linear_api_token);
 
+    // Multi-project views: modal passes the picked projectId via query string.
+    // Fall back to the first configured project for legacy single-project views.
+    const requestedProjectId = request.nextUrl.searchParams.get('projectId');
+    const allowedProjectIds: string[] = viewData.project_ids?.length
+      ? viewData.project_ids
+      : viewData.project_id ? [viewData.project_id] : [];
+    const projectId = requestedProjectId && allowedProjectIds.includes(requestedProjectId)
+      ? requestedProjectId
+      : allowedProjectIds[0];
+
     const metadataResponse = await fetch(`${request.nextUrl.origin}/api/linear/metadata`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         apiToken: decryptedToken,
         teamId: viewData.team_id,
-        projectId: viewData.project_id,
+        projectId,
       })
     });
 

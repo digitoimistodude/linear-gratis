@@ -11,6 +11,8 @@ interface IssueCreateRequest {
   priority?: number;
   assigneeId?: string;
   labelIds?: string[];
+  /** For multi-project views: the project the customer picked in the modal. */
+  projectId?: string;
 }
 
 interface WorkflowState {
@@ -229,6 +231,24 @@ export async function POST(
       }
     }
 
+    // Resolve the project the new issue should land in. Multi-project views
+    // require the customer to pick one via the modal; validate it's allowed.
+    const allowedProjectIds: string[] = viewData.project_ids?.length
+      ? viewData.project_ids
+      : viewData.project_id ? [viewData.project_id] : [];
+    let resolvedProjectId: string | undefined;
+    if (allowedProjectIds.length > 1) {
+      if (!issueData.projectId || !allowedProjectIds.includes(issueData.projectId)) {
+        return NextResponse.json(
+          { error: 'Please pick one of this view\'s projects for the new issue' },
+          { status: 400 }
+        );
+      }
+      resolvedProjectId = issueData.projectId;
+    } else {
+      resolvedProjectId = allowedProjectIds[0];
+    }
+
     // Create the issue with enforced restrictions
     // Note: priority and assigneeId are intentionally not passed for public views
     const result = await createLinearIssue(decryptedToken, {
@@ -236,7 +256,7 @@ export async function POST(
       description: issueData.description,
       stateId: finalStateId, // Enforced triage/unstarted state
       priority: 0, // Default to no priority for public views
-      projectId: viewData.project_id,
+      projectId: resolvedProjectId,
       teamId: viewData.team_id,
       labelIds: issueData.labelIds,
     });

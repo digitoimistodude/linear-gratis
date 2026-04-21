@@ -39,6 +39,7 @@ export type LinearTeam = {
 export type RequestBody = {
   apiToken: string;
   projectId?: string;
+  projectIds?: string[];
   teamId?: string;
   statuses?: string[];
 };
@@ -61,7 +62,7 @@ type IssueNode = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { apiToken, projectId, teamId, statuses } =
+    const { apiToken, projectId, projectIds, teamId, statuses } =
       (await request.json()) as RequestBody;
 
     if (!apiToken) {
@@ -71,9 +72,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!projectId && !teamId) {
+    const effectiveProjectIds =
+      projectIds && projectIds.length > 0
+        ? projectIds
+        : projectId
+          ? [projectId]
+          : [];
+
+    if (effectiveProjectIds.length === 0 && !teamId) {
       return NextResponse.json(
-        { error: "Either projectId or teamId must be provided" },
+        { error: "Either projectIds or teamId must be provided" },
         { status: 400 },
       );
     }
@@ -82,8 +90,11 @@ export async function POST(request: NextRequest) {
     // user-supplied values into the query text. Linear's IssueFilter input
     // type handles the shape.
     const filter: Record<string, unknown> = {};
-    if (projectId) {
-      filter.project = { id: { eq: projectId } };
+    if (effectiveProjectIds.length > 0) {
+      filter.project =
+        effectiveProjectIds.length === 1
+          ? { id: { eq: effectiveProjectIds[0] } }
+          : { or: effectiveProjectIds.map((id) => ({ id: { eq: id } })) };
     } else if (teamId) {
       filter.team = { id: { eq: teamId } };
     }
