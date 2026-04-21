@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Copy, Check, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Copy, Check } from 'lucide-react'
 
 // Recommended Linear webhook event selection. The backend broadcasts all of
 // these; enabling a subset still works, you just get fewer live updates.
@@ -103,23 +103,29 @@ export default function WebhooksSettingsPage() {
 
         {/* Status card */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              {health === 'configured' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-              {(health === 'missing-secret' || health === 'error') && <AlertCircle className="h-5 w-5 text-orange-600" />}
-              Status
-            </CardTitle>
-            <CardDescription>
-              {health === 'configured' && 'Endpoint is reachable and a signing secret is configured.'}
-              {health === 'missing-secret' && 'Endpoint is reachable but no signing secret is configured on the server. Incoming webhooks will be rejected.'}
-              {health === 'error' && 'Could not reach the webhook endpoint.'}
-              {health === 'unknown' && 'Checking endpoint...'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" onClick={checkHealth} disabled={checking}>
-              {checking ? 'Checking...' : 'Re-check'}
-            </Button>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    health === 'configured'
+                      ? 'bg-green-500'
+                      : health === 'unknown'
+                        ? 'bg-muted-foreground'
+                        : 'bg-orange-500'
+                  }`}
+                />
+                <span className="text-sm text-foreground">
+                  {health === 'configured' && 'Configured - endpoint reachable, signing secret set'}
+                  {health === 'missing-secret' && 'Not configured - endpoint reachable but signing secret is missing'}
+                  {health === 'error' && 'Unreachable - could not contact the webhook endpoint'}
+                  {health === 'unknown' && 'Checking endpoint...'}
+                </span>
+              </div>
+              <Button variant="outline" size="sm" onClick={checkHealth} disabled={checking}>
+                {checking ? 'Checking...' : 'Re-check'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
