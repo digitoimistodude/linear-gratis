@@ -91,11 +91,9 @@ export async function GET(
     const overrides = new Map<string, string>(
       (overrideRows ?? []).map((row) => [row.issue_id, row.public_description])
     );
-    const visibleIssues = overrides.size > 0
-      ? filteredIssues.map((issue) => overrides.has(issue.id)
-          ? { ...issue, description: overrides.get(issue.id) }
-          : issue)
-      : filteredIssues;
+    const visibleIssues = filteredIssues.map((issue) => overrides.has(issue.id)
+      ? { ...issue, description: overrides.get(issue.id), has_override: true }
+      : { ...issue, has_override: false });
 
     return NextResponse.json({
       success: true,

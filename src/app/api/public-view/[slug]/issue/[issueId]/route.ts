@@ -68,6 +68,10 @@ export type IssueDetail = {
   updatedAt: string;
   comments: IssueComment[];
   history: IssueHistory[];
+  /** True when the description on this payload comes from a per-view override
+      rather than Linear. Tells the UI to render the description even if the
+      view has show_descriptions toggled off. */
+  has_override?: boolean;
 };
 
 export async function GET(
@@ -308,9 +312,11 @@ export async function GET(
       .eq('view_id', viewData.id)
       .eq('issue_id', issueId)
       .maybeSingle();
+    const hasOverride = Boolean(override?.public_description);
     const effectiveDescription = override?.public_description ?? issue.description;
 
     const issueDetail: IssueDetail = {
+      has_override: hasOverride,
       id: issue.id,
       identifier: issue.identifier,
       title: issue.title,
