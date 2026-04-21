@@ -1,3 +1,7 @@
+### 0.5.4: 2026-04-21
+
+* Accept Linear webhooks even when signature verification fails so real-time keeps working; log the mismatch as a warning (dude-specific change)
+
 ### 0.5.3: 2026-04-21
 
 * Push real-time refresh into the open issue detail modal, project updates modal, and customer discussion thread so every view surface updates live (`feature/linear-webhook-realtime`)
