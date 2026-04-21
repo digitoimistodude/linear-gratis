@@ -1,3 +1,9 @@
+### 0.5.3: 2026-04-21
+
+* Push real-time refresh into the open issue detail modal, project updates modal, and customer discussion thread so every view surface updates live (`feature/linear-webhook-realtime`)
+* Drop duplicate padding on webhook status card (`feature/linear-webhook-realtime`)
+* Add a Real-time updates card linking into the webhook wizard from workspace settings (dude-specific change)
+
 ### 0.5.2: 2026-04-21
 
 * Match webhook status panel to the existing dot + button pattern used elsewhere in settings (`feature/linear-webhook-realtime`)
