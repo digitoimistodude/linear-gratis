@@ -324,7 +324,11 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
         if (!v) return
         const affectsIssue = p.issueId ? issueIdsRef.current.has(p.issueId) : false
         const affectsTeam = Boolean(p.teamId && v.team_id && p.teamId === v.team_id)
-        const affectsProject = Boolean(p.projectId && v.project_id && p.projectId === v.project_id)
+        const allowedProjectIds = new Set<string>([
+          ...(v.project_ids ?? []),
+          ...(v.project_id ? [v.project_id] : []),
+        ])
+        const affectsProject = Boolean(p.projectId && allowedProjectIds.has(p.projectId))
         if (affectsIssue || affectsTeam || affectsProject) {
           handleRefresh()
         }

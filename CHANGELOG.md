@@ -1,3 +1,7 @@
+### 0.5.0: 2026-04-21
+
+* Push real-time view updates via Linear webhook relayed through Supabase Realtime, with setup wizard at `/settings/webhooks` (`feature/linear-webhook-realtime`), Ref: DEV-871
+
 ### 0.4.4: 2026-04-21
 
 * Fix public description override not rendering on views with show descriptions disabled (`feature/per-issue-description-override`)
