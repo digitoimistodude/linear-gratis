@@ -50,6 +50,10 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   const [showProjectUpdates, setShowProjectUpdates] = useState(false)
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
   const [defaultStateName, setDefaultStateName] = useState<string | undefined>(undefined)
+  // Incremented on every Realtime event that affects this view. Passed to
+  // IssueDetailModal and ProjectUpdatesModal so open modals refetch in sync
+  // with the kanban list.
+  const [modalReloadKey, setModalReloadKey] = useState(0)
   const filterButtonRef = useRef<HTMLButtonElement>(null)
 
   // Load branding settings for this view's owner
@@ -163,6 +167,9 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
         const affectsProject = Boolean(p.projectId && v.project_id && p.projectId === v.project_id)
         if (affectsIssue || affectsTeam || affectsProject) {
           handleRefresh()
+          // Also re-sync any open modals (issue detail, project updates) so
+          // their internal state matches the kanban.
+          setModalReloadKey((k) => k + 1)
         }
       })
       .subscribe()
@@ -585,6 +592,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           showComments={view?.show_comments}
           showActivity={view?.show_activity}
           showDescriptions={view?.show_descriptions}
+          reloadKey={modalReloadKey}
         />
       )}
 
@@ -594,6 +602,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           isOpen={showProjectUpdates}
           onClose={() => setShowProjectUpdates(false)}
           viewSlug={slug}
+          reloadKey={modalReloadKey}
         />
       )}
     </div>

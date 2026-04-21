@@ -16,6 +16,10 @@ interface IssueDetailModalProps {
   showComments?: boolean
   showActivity?: boolean
   showDescriptions?: boolean
+  /** Incremented by the parent when a Realtime event affects the currently
+      open issue. Bumping triggers a refetch so Linear-side changes appear
+      live without the viewer having to reopen the modal. */
+  reloadKey?: number
 }
 
 const getStateIcon = (stateType: string, color: string) => {
@@ -71,6 +75,7 @@ export function IssueDetailModal({
   showComments = false,
   showActivity = false,
   showDescriptions = true,
+  reloadKey = 0,
 }: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -81,7 +86,7 @@ export function IssueDetailModal({
     if (isOpen && issueId) {
       loadIssue()
     }
-  }, [isOpen, issueId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, issueId, reloadKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadIssue = async () => {
     setLoading(true)

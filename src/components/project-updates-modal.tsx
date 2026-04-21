@@ -42,9 +42,12 @@ interface ProjectUpdatesModalProps {
   isOpen: boolean
   onClose: () => void
   viewSlug: string
+  /** Bumped by the parent on every Realtime event affecting this view so the
+      updates list refetches live without re-opening the modal. */
+  reloadKey?: number
 }
 
-export function ProjectUpdatesModal({ isOpen, onClose, viewSlug }: ProjectUpdatesModalProps) {
+export function ProjectUpdatesModal({ isOpen, onClose, viewSlug, reloadKey = 0 }: ProjectUpdatesModalProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ProjectUpdateData | null>(null)
@@ -53,7 +56,7 @@ export function ProjectUpdatesModal({ isOpen, onClose, viewSlug }: ProjectUpdate
     if (isOpen) {
       fetchProjectUpdates()
     }
-  }, [isOpen, viewSlug]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, viewSlug, reloadKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProjectUpdates = async () => {
     try {
