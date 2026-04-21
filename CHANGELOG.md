@@ -1,3 +1,7 @@
+### 0.5.1: 2026-04-21
+
+* Expand recommended webhook events to include Projects, Project labels, and Issue attachments, and rename Reactions to Emoji reactions in the wizard (`feature/linear-webhook-realtime`)
+
 ### 0.5.0: 2026-04-21
 
 * Push real-time view updates via Linear webhook relayed through Supabase Realtime, with setup wizard at `/settings/webhooks` (`feature/linear-webhook-realtime`), Ref: DEV-871
