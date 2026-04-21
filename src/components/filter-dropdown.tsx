@@ -12,6 +12,7 @@ export type FilterState = {
   priorities: number[]
   labels: string[]
   creators: string[]
+  projects: string[]
 }
 
 export type FilterOptions = {
@@ -21,6 +22,7 @@ export type FilterOptions = {
   priorities: Array<{ value: number; label: string }>
   labels: Array<{ id: string; name: string; color: string }>
   creators: Array<{ id: string; name: string }>
+  projects: Array<{ id: string; name: string }>
 }
 
 interface FilterDropdownProps {
@@ -174,6 +176,7 @@ export function FilterDropdown({
       priorities: [],
       labels: [],
       creators: [],
+      projects: [],
     })
     setSearch('')
   }
@@ -183,7 +186,8 @@ export function FilterDropdown({
     filters.assignees.length > 0 ||
     filters.priorities.length > 0 ||
     filters.labels.length > 0 ||
-    filters.creators.length > 0
+    filters.creators.length > 0 ||
+    filters.projects.length > 0
 
   if (!isOpen) return null
 
@@ -347,6 +351,30 @@ export function FilterDropdown({
                     <path d="M5.5 8a1 1 0 1 1 2 0 1 1 0 0 1-2 0Z"></path>
                   </svg>
                   <span className="text-sm font-medium text-foreground">Labels</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  ▶
+                </div>
+              </div>
+            </li>
+          )}
+
+          {/* Projects filter (only shown when issues span multiple projects) */}
+          {filterOptions.projects.length > 1 && (
+            <li
+              role="option"
+              data-list-row="true"
+              aria-selected={hoverSections.has('projects')}
+              className="relative flex cursor-pointer select-none items-center px-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent"
+              onMouseEnter={(e) => handleSectionMouseEnter('projects', e)}
+              onMouseLeave={() => handleSectionMouseLeave('projects')}
+            >
+              <div className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-muted-foreground" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M2.75 1.5A1.25 1.25 0 0 0 1.5 2.75v10.5a1.25 1.25 0 0 0 1.25 1.25h10.5a1.25 1.25 0 0 0 1.25-1.25V2.75a1.25 1.25 0 0 0-1.25-1.25H2.75ZM3 3h10v10H3V3Zm2 2v6h2V5H5Zm4 1v5h2V6H9Z" />
+                  </svg>
+                  <span className="text-sm font-medium text-foreground">Projects</span>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   ▶
@@ -553,6 +581,36 @@ export function FilterDropdown({
                   </div>
                 </li>
               ))}
+
+              {/* Projects submenu */}
+              {activeSubmenu === 'projects' && filterOptions.projects.map((project) => (
+                <li
+                  key={project.id}
+                  role="option"
+                  data-list-row="true"
+                  data-focused="false"
+                  aria-disabled="false"
+                  aria-selected="false"
+                  aria-checked={filters.projects.includes(project.id)}
+                  className="relative flex cursor-pointer select-none items-center py-1 px-2 text-sm outline-none hover:bg-accent focus:bg-accent rounded"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleFilter('projects', project.id)
+                  }}
+                >
+                  <div className="flex items-center justify-center w-6 h-6 flex-shrink-0 mr-2">
+                    <Checkbox
+                      checked={filters.projects.includes(project.id)}
+                      onChange={() => toggleFilter('projects', project.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      tabIndex={-1}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between flex-1 min-w-0">
+                    <span className="text-sm font-medium text-foreground truncate">{project.name}</span>
+                  </div>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -607,6 +665,14 @@ export function generateFilterOptions(issues: LinearIssue[]): FilterOptions {
     ).values()
   )
 
+  const projects = Array.from(
+    new Map(
+      issues
+        .filter(issue => issue.project)
+        .map(issue => [issue.project!.id, { id: issue.project!.id, name: issue.project!.name }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name))
+
   const creators = assignees
 
   return {
@@ -616,5 +682,6 @@ export function generateFilterOptions(issues: LinearIssue[]): FilterOptions {
     priorities,
     labels,
     creators,
+    projects,
   }
 }

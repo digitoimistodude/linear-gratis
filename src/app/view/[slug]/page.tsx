@@ -37,6 +37,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     priorities: [],
     labels: [],
     creators: [],
+    projects: [],
   })
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     statuses: [],
@@ -44,6 +45,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     priorities: [],
     labels: [],
     creators: [],
+    projects: [],
   })
   const [showIssueModal, setShowIssueModal] = useState(false)
   const [showIssueDetail, setShowIssueDetail] = useState(false)
@@ -208,7 +210,8 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       filters.assignees.length > 0 ||
       filters.priorities.length > 0 ||
       filters.labels.length > 0 ||
-      filters.creators.length > 0
+      filters.creators.length > 0 ||
+      filters.projects.length > 0
   }
 
   if (loading) {
@@ -433,6 +436,11 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
                 {filters.labels.length > 0 && (
                   <span className="px-2 py-1 bg-primary/10 text-primary rounded-full">
                     {filters.labels.length} label{filters.labels.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {filters.projects.length > 0 && (
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-full">
+                    {filters.projects.length} project{filters.projects.length !== 1 ? 's' : ''}
                   </span>
                 )}
               </div>

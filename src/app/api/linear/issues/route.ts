@@ -26,6 +26,10 @@ export type LinearIssue = {
     name: string;
     color: string;
   }>;
+  project?: {
+    id: string;
+    name: string;
+  };
   createdAt: string;
   updatedAt: string;
 };
@@ -56,6 +60,7 @@ type IssueNode = {
   state: { id: string; name: string; color: string; type: string };
   assignee?: { id: string; name: string; avatarUrl?: string };
   labels: { nodes: Array<{ id: string; name: string; color: string }> };
+  project?: { id: string; name: string };
   createdAt: string;
   updatedAt: string;
 };
@@ -137,6 +142,10 @@ export async function POST(request: NextRequest) {
                 color
               }
             }
+            project {
+              id
+              name
+            }
             createdAt
             updatedAt
           }
@@ -162,6 +171,7 @@ export async function POST(request: NextRequest) {
 
     const issues: LinearIssue[] = result.nodes.map((issue) => ({
       id: issue.id,
+      project: issue.project,
       identifier: issue.identifier,
       title: issue.title,
       description: issue.description,

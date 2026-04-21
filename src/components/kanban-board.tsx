@@ -96,6 +96,13 @@ export function KanbanBoard({
       }
     }
 
+    // Project filter - only include issues whose project is in the selected list
+    if (filters.projects.length > 0) {
+      if (!issue.project || !filters.projects.includes(issue.project.id)) {
+        return false
+      }
+    }
+
     // Creator filter (placeholder - would need additional API data)
     if (filters.creators.length > 0) {
       // For now, we'll skip this filter since we don't have creator data
