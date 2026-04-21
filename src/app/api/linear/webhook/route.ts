@@ -74,8 +74,12 @@ export async function POST(request: NextRequest) {
     if (!safeEqual(signature, expected)) {
       const secretTail = secret.slice(-6);
       const secretHead = secret.slice(0, 8);
+      const view = new Uint8Array(rawBytes);
+      const head = Array.from(view.slice(0, 24)).map((b) => b.toString(16).padStart(2, '0')).join(' ');
+      const tail = Array.from(view.slice(Math.max(0, view.length - 24))).map((b) => b.toString(16).padStart(2, '0')).join(' ');
+      const contentType = request.headers.get('content-type') ?? 'none';
       console.error(
-        `Signature mismatch: got=${signature.slice(0, 16)}..., expected=${expected.slice(0, 16)}..., bodyLen=${rawBytes.byteLength}, secret=${secretHead}...${secretTail} (len ${secret.length})`,
+        `Signature mismatch: got=${signature.slice(0, 16)}..., expected=${expected.slice(0, 16)}..., bodyLen=${rawBytes.byteLength}, secret=${secretHead}...${secretTail} (len ${secret.length}), ct=${contentType}, head=[${head}], tail=[${tail}]`,
       );
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
