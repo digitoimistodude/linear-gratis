@@ -138,20 +138,30 @@ export async function fetchLinearIssues(
   apiToken: string,
   options: {
     projectId?: string;
+    projectIds?: string[];
     teamId?: string;
     statuses?: string[];
   }
 ): Promise<{ success: true; issues: LinearIssue[] } | { success: false; error: string }> {
   try {
-    const { projectId, teamId, statuses } = options;
+    const { projectId, projectIds, teamId, statuses } = options;
 
-    if (!projectId && !teamId) {
-      return { success: false, error: 'Either projectId or teamId must be provided' };
+    // Coerce legacy single projectId into the array form.
+    const effectiveProjectIds = projectIds && projectIds.length > 0
+      ? projectIds
+      : projectId
+        ? [projectId]
+        : [];
+
+    if (effectiveProjectIds.length === 0 && !teamId) {
+      return { success: false, error: 'Either projectIds or teamId must be provided' };
     }
 
     const filter: Record<string, unknown> = {};
-    if (projectId) {
-      filter.project = { id: { eq: projectId } };
+    if (effectiveProjectIds.length > 0) {
+      filter.project = effectiveProjectIds.length === 1
+        ? { id: { eq: effectiveProjectIds[0] } }
+        : { or: effectiveProjectIds.map((id) => ({ id: { eq: id } })) };
     } else if (teamId) {
       filter.team = { id: { eq: teamId } };
     }

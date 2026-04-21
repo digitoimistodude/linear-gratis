@@ -30,8 +30,14 @@ export async function GET(
       )
     }
 
-    // Check if this view has a project
-    if (!view.project_id) {
+    // Resolve which project to fetch updates for. Multi-project views pass
+    // the chosen projectId via the query string; single-project views fall back
+    // to the first configured project.
+    const allowedProjectIds: string[] = view.project_ids?.length
+      ? view.project_ids
+      : view.project_id ? [view.project_id] : []
+
+    if (allowedProjectIds.length === 0) {
       return NextResponse.json(
         { error: 'This view is not associated with a project' },
         { status: 400 }
@@ -45,6 +51,11 @@ export async function GET(
         { status: 403 }
       )
     }
+
+    const requestedProjectId = request.nextUrl.searchParams.get('projectId')
+    const projectId = requestedProjectId && allowedProjectIds.includes(requestedProjectId)
+      ? requestedProjectId
+      : allowedProjectIds[0]
 
     // Get the Linear token (workspace-shared, falling back to user's personal)
     const decryptedToken = await getLinearToken(view.user_id)
@@ -99,7 +110,7 @@ export async function GET(
       },
       body: JSON.stringify({
         query,
-        variables: { projectId: view.project_id }
+        variables: { projectId }
       })
     })
 

@@ -4,7 +4,7 @@ import { getLinearToken } from '@/lib/linear-token';
 import { fetchLinearMetadata } from '@/lib/linear-metadata';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
@@ -36,9 +36,19 @@ export async function GET(
       );
     }
 
+    // Multi-project views: modal passes the picked projectId via query string.
+    // Fall back to the first configured project for legacy single-project views.
+    const requestedProjectId = request.nextUrl.searchParams.get('projectId');
+    const allowedProjectIds: string[] = viewData.project_ids?.length
+      ? viewData.project_ids
+      : viewData.project_id ? [viewData.project_id] : [];
+    const projectId = requestedProjectId && allowedProjectIds.includes(requestedProjectId)
+      ? requestedProjectId
+      : allowedProjectIds[0];
+
     const result = await fetchLinearMetadata(apiToken, {
       teamId: viewData.team_id,
-      projectId: viewData.project_id,
+      projectId,
     });
 
     if (!result.success) {

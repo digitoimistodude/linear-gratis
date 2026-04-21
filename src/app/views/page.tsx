@@ -60,7 +60,7 @@ export default function PublicViewsPage() {
   // Form state
   const [viewName, setViewName] = useState("");
   const [viewSlug, setViewSlug] = useState("");
-  const [selectedProject, setSelectedProject] = useState("");
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [selectedTeam, setSelectedTeam] = useState("");
   const [viewTitle, setViewTitle] = useState("");
   const [viewDescription, setViewDescription] = useState("");
@@ -113,6 +113,14 @@ export default function PublicViewsPage() {
       prev.includes(issueId)
         ? prev.filter((id) => id !== issueId)
         : [...prev, issueId],
+    );
+  }, []);
+
+  const toggleProjectSelection = useCallback((projectId: string) => {
+    setSelectedProjectIds((prev) =>
+      prev.includes(projectId)
+        ? prev.filter((id) => id !== projectId)
+        : [...prev, projectId],
     );
   }, []);
 
@@ -231,23 +239,34 @@ export default function PublicViewsPage() {
 
     try {
       let sourceData: {
-        project_id?: string;
-        project_name?: string;
-        team_id?: string;
-        team_name?: string;
+        project_id?: string | null;
+        project_name?: string | null;
+        project_ids?: string[];
+        project_names?: string[];
+        team_id?: string | null;
+        team_name?: string | null;
       } = {};
 
       if (sourceType === "project") {
-        const selectedProjectData = projects.find(
-          (p) => p.id === selectedProject,
+        if (selectedProjectIds.length === 0) {
+          setMessage({ type: "error", text: "Please select at least one project" });
+          return;
+        }
+        const selectedProjectData = selectedProjectIds.map((id) =>
+          projects.find((p) => p.id === id),
         );
-        if (!selectedProjectData) {
-          setMessage({ type: "error", text: "Please select a project" });
+        if (selectedProjectData.some((p) => !p)) {
+          setMessage({ type: "error", text: "One or more selected projects are invalid" });
           return;
         }
         sourceData = {
-          project_id: selectedProject,
-          project_name: selectedProjectData.name,
+          project_ids: selectedProjectIds,
+          project_names: selectedProjectData.map((p) => p!.name),
+          // Mirror first element into legacy columns for back-compat
+          project_id: selectedProjectIds[0],
+          project_name: selectedProjectData[0]!.name,
+          team_id: null,
+          team_name: null,
         };
       } else {
         const selectedTeamData = teams.find((t) => t.id === selectedTeam);
@@ -258,6 +277,10 @@ export default function PublicViewsPage() {
         sourceData = {
           team_id: selectedTeam,
           team_name: selectedTeamData.name,
+          project_ids: [],
+          project_names: [],
+          project_id: null,
+          project_name: null,
         };
       }
 
@@ -367,7 +390,7 @@ export default function PublicViewsPage() {
   const resetForm = () => {
     setViewName("");
     setViewSlug("");
-    setSelectedProject("");
+    setSelectedProjectIds([]);
     setSelectedTeam("");
     setViewTitle("");
     setViewDescription("");
@@ -393,8 +416,9 @@ export default function PublicViewsPage() {
   };
 
   const fetchPickerIssues = useCallback(
-    async (sourceProjectId?: string, sourceTeamId?: string) => {
-      if (!linearToken || (!sourceProjectId && !sourceTeamId)) return;
+    async (sourceProjectIds?: string[], sourceTeamId?: string) => {
+      const hasProjects = sourceProjectIds && sourceProjectIds.length > 0;
+      if (!linearToken || (!hasProjects && !sourceTeamId)) return;
 
       setLoadingIssues(true);
       try {
@@ -402,7 +426,7 @@ export default function PublicViewsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            projectId: sourceProjectId || undefined,
+            projectIds: hasProjects ? sourceProjectIds : undefined,
             teamId: sourceTeamId || undefined,
           }),
         });
@@ -442,22 +466,25 @@ export default function PublicViewsPage() {
     setAllowCustomerComments(view.allow_customer_comments ?? false);
     setShowSubIssues(view.show_sub_issues ?? true);
     setIssueFilter("");
+    const existingProjectIds = view.project_ids?.length
+      ? view.project_ids
+      : view.project_id ? [view.project_id] : [];
 
     // Set source type and selection based on existing view
-    if (view.project_id) {
+    if (existingProjectIds.length > 0) {
       setSourceType("project");
-      setSelectedProject(view.project_id);
+      setSelectedProjectIds(existingProjectIds);
       setSelectedTeam("");
-      fetchPickerIssues(view.project_id, undefined);
+      fetchPickerIssues(existingProjectIds, undefined);
     } else if (view.team_id) {
       setSourceType("team");
       setSelectedTeam(view.team_id);
-      setSelectedProject("");
+      setSelectedProjectIds([]);
       fetchPickerIssues(undefined, view.team_id);
     } else {
       // No project or team set - default to project
       setSourceType("project");
-      setSelectedProject("");
+      setSelectedProjectIds([]);
       setSelectedTeam("");
     }
 
@@ -476,20 +503,31 @@ export default function PublicViewsPage() {
       let sourceData: {
         project_id?: string | null;
         project_name?: string | null;
+        project_ids?: string[];
+        project_names?: string[];
         team_id?: string | null;
         team_name?: string | null;
       } = {};
 
       if (sourceType === "project") {
-        const selectedProjectData = projects.find((p) => p.id === selectedProject);
-        if (!selectedProjectData) {
-          setMessage({ type: "error", text: "Please select a project" });
+        if (selectedProjectIds.length === 0) {
+          setMessage({ type: "error", text: "Please select at least one project" });
+          setSubmitting(false);
+          return;
+        }
+        const selectedProjectData = selectedProjectIds.map((id) =>
+          projects.find((p) => p.id === id),
+        );
+        if (selectedProjectData.some((p) => !p)) {
+          setMessage({ type: "error", text: "One or more selected projects are invalid" });
           setSubmitting(false);
           return;
         }
         sourceData = {
-          project_id: selectedProject,
-          project_name: selectedProjectData.name,
+          project_ids: selectedProjectIds,
+          project_names: selectedProjectData.map((p) => p!.name),
+          project_id: selectedProjectIds[0],
+          project_name: selectedProjectData[0]!.name,
           team_id: null,
           team_name: null,
         };
@@ -503,6 +541,8 @@ export default function PublicViewsPage() {
         sourceData = {
           team_id: selectedTeam,
           team_name: selectedTeamData.name,
+          project_ids: [],
+          project_names: [],
           project_id: null,
           project_name: null,
         };
@@ -766,22 +806,30 @@ export default function PublicViewsPage() {
 
                   {sourceType === "project" ? (
                     <div className="space-y-2">
-                      <Label htmlFor="project">Linear project *</Label>
-                      <Select
-                        value={selectedProject}
-                        onValueChange={setSelectedProject}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose which project to share" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {projects.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
-                              {project.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Linear projects *</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Pick one or more projects. Issues from every selected project appear in this view.
+                      </p>
+                      <div className="border border-border rounded-md max-h-64 overflow-y-auto divide-y divide-border">
+                        {projects.length === 0 ? (
+                          <div className="p-3 text-sm text-muted-foreground">
+                            No projects found in your Linear workspace.
+                          </div>
+                        ) : (
+                          projects.map((project) => (
+                            <label
+                              key={project.id}
+                              className="flex items-center gap-2 p-2 hover:bg-accent/50 cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={selectedProjectIds.includes(project.id)}
+                                onChange={() => toggleProjectSelection(project.id)}
+                              />
+                              <span className="text-sm">{project.name}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1087,7 +1135,7 @@ export default function PublicViewsPage() {
                     submitting ||
                     !viewName ||
                     !viewSlug ||
-                    (!selectedProject && !selectedTeam) ||
+                    (selectedProjectIds.length === 0 && !selectedTeam) ||
                     !viewTitle ||
                     (passwordProtected && !password.trim())
                   }
@@ -1179,22 +1227,30 @@ export default function PublicViewsPage() {
 
                   {sourceType === "project" ? (
                     <div className="space-y-2">
-                      <Label htmlFor="edit-project">Linear project *</Label>
-                      <Select
-                        value={selectedProject}
-                        onValueChange={setSelectedProject}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose which project to share" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {projects.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
-                              {project.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Linear projects *</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Pick one or more projects. Issues from every selected project appear in this view.
+                      </p>
+                      <div className="border border-border rounded-md max-h-64 overflow-y-auto divide-y divide-border">
+                        {projects.length === 0 ? (
+                          <div className="p-3 text-sm text-muted-foreground">
+                            No projects found in your Linear workspace.
+                          </div>
+                        ) : (
+                          projects.map((project) => (
+                            <label
+                              key={project.id}
+                              className="flex items-center gap-2 p-2 hover:bg-accent/50 cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={selectedProjectIds.includes(project.id)}
+                                onChange={() => toggleProjectSelection(project.id)}
+                              />
+                              <span className="text-sm">{project.name}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1639,7 +1695,10 @@ export default function PublicViewsPage() {
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="font-semibold text-lg">{view.name}</h3>
                           <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                            {view.project_name || view.team_name}
+                            {view.team_name
+                              ?? (view.project_names && view.project_names.length > 1
+                                ? `${view.project_names.length} projects`
+                                : view.project_names?.[0] ?? view.project_name)}
                           </span>
                           {view.is_active && (
                             <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full flex items-center gap-1">

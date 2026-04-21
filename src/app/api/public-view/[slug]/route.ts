@@ -59,8 +59,12 @@ export async function GET(
       );
     }
 
+    const projectIds: string[] = viewData.project_ids?.length
+      ? viewData.project_ids
+      : viewData.project_id ? [viewData.project_id] : [];
+
     const issuesResult = await fetchLinearIssues(decryptedToken, {
-      projectId: viewData.project_id || undefined,
+      projectIds: projectIds.length > 0 ? projectIds : undefined,
       teamId: viewData.team_id || undefined,
       statuses: viewData.allowed_statuses?.length > 0 ? viewData.allowed_statuses : undefined,
     });
@@ -87,6 +91,8 @@ export async function GET(
         description: viewData.description,
         project_id: viewData.project_id,
         project_name: viewData.project_name,
+        project_ids: viewData.project_ids ?? [],
+        project_names: viewData.project_names ?? [],
         team_id: viewData.team_id,
         team_name: viewData.team_name,
         show_assignees: viewData.show_assignees,
@@ -186,8 +192,12 @@ export async function POST(
       );
     }
 
+    const projectIds: string[] = viewData.project_ids?.length
+      ? viewData.project_ids
+      : viewData.project_id ? [viewData.project_id] : [];
+
     const issuesResult = await fetchLinearIssues(decryptedToken, {
-      projectId: viewData.project_id || undefined,
+      projectIds: projectIds.length > 0 ? projectIds : undefined,
       teamId: viewData.team_id || undefined,
       statuses: viewData.allowed_statuses?.length > 0 ? viewData.allowed_statuses : undefined,
     });
@@ -212,6 +222,8 @@ export async function POST(
         description: viewData.description,
         project_id: viewData.project_id,
         project_name: viewData.project_name,
+        project_ids: viewData.project_ids ?? [],
+        project_names: viewData.project_names ?? [],
         team_id: viewData.team_id,
         team_name: viewData.team_name,
         show_assignees: viewData.show_assignees,

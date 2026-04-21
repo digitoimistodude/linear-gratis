@@ -13,6 +13,9 @@ interface IssueCreationModalProps {
   projectName?: string
   teamId?: string
   projectId?: string
+  /** For multi-project views: when length > 1 the modal renders a required
+      project picker. Visitor must pick before the form can be submitted. */
+  projects?: Array<{ id: string; name: string }>
   apiToken?: string
   viewSlug?: string
   defaultStateName?: string
@@ -136,16 +139,21 @@ export function IssueCreationModal({
   projectName,
   teamId,
   projectId,
+  projects = [],
   viewSlug,
   defaultStateName
 }: IssueCreationModalProps) {
+  const multiProject = projects.length > 1
+  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(
+    multiProject ? undefined : (projects[0]?.id ?? projectId)
+  )
   const [formData, setFormData] = useState<IssueFormData>({
     title: '',
     description: '',
     priority: 0,
     labelIds: [],
     teamId,
-    projectId,
+    projectId: multiProject ? undefined : (projects[0]?.id ?? projectId),
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -203,10 +211,16 @@ export function IssueCreationModal({
 
   const loadMetadata = useCallback(async () => {
     if (!viewSlug) return
+    // For multi-project views, wait until the visitor picks a project before
+    // fetching metadata (labels/states depend on the team that owns the project).
+    if (multiProject && !selectedProjectId) return
 
     setLoadingMetadata(true)
     try {
-      const response = await fetch(`/api/public-view/${viewSlug}/metadata`)
+      const metadataUrl = selectedProjectId
+        ? `/api/public-view/${viewSlug}/metadata?projectId=${encodeURIComponent(selectedProjectId)}`
+        : `/api/public-view/${viewSlug}/metadata`
+      const response = await fetch(metadataUrl)
 
       const data = await response.json() as { success?: boolean; metadata?: Metadata }
       if (data.success && data.metadata) {
@@ -241,7 +255,7 @@ export function IssueCreationModal({
     } finally {
       setLoadingMetadata(false)
     }
-  }, [viewSlug, defaultStateName])
+  }, [viewSlug, defaultStateName, selectedProjectId, multiProject])
 
   useEffect(() => {
     if (isOpen && viewSlug) {
@@ -263,12 +277,18 @@ export function IssueCreationModal({
       return
     }
 
+    if (multiProject && !selectedProjectId) {
+      setError('Please pick a project for this issue')
+      return
+    }
+
     setError(null)
     setIsSubmitting(true)
 
     try {
       const submitData = {
         ...formData,
+        projectId: selectedProjectId ?? formData.projectId,
         stateId: selectedState?.id,
         assigneeId: selectedAssignee?.id,
         labelIds: selectedLabels.map(label => label.id),
@@ -357,6 +377,24 @@ export function IssueCreationModal({
                 <span className="font-medium text-sm">{teamName || projectName || 'Digital Nachos'}</span>
               </div>
 
+              {multiProject && (
+                <div className="ml-auto flex items-center gap-2">
+                  <label htmlFor="issue-project-picker" className="text-xs text-muted-foreground">
+                    Project *
+                  </label>
+                  <select
+                    id="issue-project-picker"
+                    value={selectedProjectId ?? ''}
+                    onChange={(e) => setSelectedProjectId(e.target.value || undefined)}
+                    className="text-sm bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value="">Choose project…</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Error message */}

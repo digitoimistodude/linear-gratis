@@ -1,3 +1,7 @@
+### 0.4.0: 2026-04-21
+
+* Allow a public view to show issues from multiple Linear projects, with picker UX on project updates and issue creation (`feature/multi-project-views`), Ref: DEV-826
+
 ### 0.3.10: 2026-04-20
 
 * Hide labels section in public view filter dropdown when view has show labels disabled (`feature/toggle-descriptions-labels`)

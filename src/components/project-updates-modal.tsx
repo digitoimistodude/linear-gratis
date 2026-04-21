@@ -42,25 +42,45 @@ interface ProjectUpdatesModalProps {
   isOpen: boolean
   onClose: () => void
   viewSlug: string
+  /** List of project id+name pairs the view is bound to. When length > 1, the
+      modal renders a picker bar so the visitor can choose which project's
+      updates to view. */
+  projects?: Array<{ id: string; name: string }>
 }
 
-export function ProjectUpdatesModal({ isOpen, onClose, viewSlug }: ProjectUpdatesModalProps) {
+export function ProjectUpdatesModal({ isOpen, onClose, viewSlug, projects = [] }: ProjectUpdatesModalProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ProjectUpdateData | null>(null)
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    // Default pick: first project. Reset when projects list changes.
+    if (projects.length > 0) {
+      setSelectedProjectId((current) =>
+        current && projects.some((p) => p.id === current) ? current : projects[0].id,
+      )
+    } else {
+      setSelectedProjectId(null)
+    }
+  }, [isOpen, projects])
 
   useEffect(() => {
     if (isOpen) {
       fetchProjectUpdates()
     }
-  }, [isOpen, viewSlug]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, viewSlug, selectedProjectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProjectUpdates = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/public-view/${viewSlug}/project-updates`)
+      const url = selectedProjectId
+        ? `/api/public-view/${viewSlug}/project-updates?projectId=${encodeURIComponent(selectedProjectId)}`
+        : `/api/public-view/${viewSlug}/project-updates`
+      const response = await fetch(url)
       const result = await response.json() as { success?: boolean; error?: string; project?: ProjectUpdateData['project']; updates?: ProjectUpdate[] }
 
       if (!response.ok || !result.success) {
@@ -150,14 +170,29 @@ export function ProjectUpdatesModal({ isOpen, onClose, viewSlug }: ProjectUpdate
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[lch(14.74%_3.54_272)]">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[lch(14.74%_3.54_272)] gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <svg className="" width="16" height="16" viewBox="0 0 16 16" role="img" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <use href="#Project"></use>
             </svg>
-            <h2 className="text-lg font-medium text-[lch(100%_0_272)]">
-              {data?.project.name || 'Project'} updates
-            </h2>
+            {projects.length > 1 ? (
+              <select
+                value={selectedProjectId ?? ''}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                className="bg-transparent text-lg font-medium text-[lch(100%_0_272)] border border-[lch(14.74%_3.54_272)] rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 max-w-xs"
+                aria-label="Pick a project"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-[lch(4.8%_0.7_272)]">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <h2 className="text-lg font-medium text-[lch(100%_0_272)] truncate">
+                {data?.project.name || 'Project'} updates
+              </h2>
+            )}
           </div>
           <button
             onClick={onClose}

@@ -49,10 +49,14 @@ export type PublicView = {
   user_id: string
   name: string
   slug: string
+  /** @deprecated write mirror of project_ids[0] — read from project_ids */
   project_id?: string
   team_id?: string
+  /** @deprecated write mirror of project_names[0] — read from project_names */
   project_name?: string
   team_name?: string
+  project_ids: string[]
+  project_names: string[]
   view_title: string
   description?: string
   is_active: boolean
