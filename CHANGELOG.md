@@ -1,3 +1,7 @@
+### 0.4.2: 2026-04-21
+
+* Persist public view filters in URL and localStorage, remember password across reloads (`feature/persist-view-state`)
+
 ### 0.4.1: 2026-04-21
 
 * Add Projects section to public view filter dropdown, active when issues span multiple projects (`feature/multi-project-views`), Ref: DEV-826
