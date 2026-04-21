@@ -103,7 +103,7 @@ export default function WebhooksSettingsPage() {
 
         {/* Status card */}
         <Card className="mb-6">
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div
