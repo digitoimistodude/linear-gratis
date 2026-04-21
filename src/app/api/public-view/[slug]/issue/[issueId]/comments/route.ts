@@ -167,18 +167,34 @@ export async function POST(
 
     const comment = newComment as Pick<ViewComment, 'id' | 'author_name' | 'content' | 'created_at' | 'is_approved'>;
 
-    // Broadcast to other viewers of the same view so their discussion panes
-    // update live. Approved comments only - pending ones shouldn't surface.
+    // Broadcast via the Realtime HTTP API so it works from Cloudflare Workers
+    // without needing an established WebSocket connection.
     if (comment.is_approved) {
       try {
-        await supabaseAdmin.channel('view-comments').send({
-          type: 'broadcast',
-          event: 'new',
-          payload: {
-            viewSlug: view.slug,
-            issueId,
-          },
-        });
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (supabaseUrl && serviceKey) {
+          await fetch(`${supabaseUrl}/realtime/v1/api/broadcast`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: serviceKey,
+              Authorization: `Bearer ${serviceKey}`,
+            },
+            body: JSON.stringify({
+              messages: [
+                {
+                  topic: 'view-comments',
+                  event: 'new',
+                  payload: {
+                    viewSlug: view.slug,
+                    issueId,
+                  },
+                },
+              ],
+            }),
+          });
+        }
       } catch (broadcastError) {
         console.error('Failed to broadcast view comment:', broadcastError);
       }

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
 
 // Events we care about broadcasting to connected clients. Linear fires many
 // event types; we forward the ones that change what a public view renders
@@ -101,20 +100,56 @@ export async function POST(request: NextRequest) {
       ?? payload.data?.project?.id
       ?? payload.data?.projectId;
 
-    // Supabase Realtime broadcast. Any subscriber on the `linear-updates`
-    // channel receives this. The browser client filters by view membership.
-    await supabaseAdmin.channel('linear-updates').send({
-      type: 'broadcast',
-      event: 'update',
-      payload: {
-        action: payload.action,
-        type: payload.type,
-        issueId,
-        teamId,
-        projectId,
+    // Broadcast via Supabase Realtime's HTTP API. This is the server-to-client
+    // path designed for stateless environments like Cloudflare Workers - the
+    // JS client's channel.send() requires an established WebSocket which is
+    // unreliable from short-lived request handlers.
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceKey) {
+      console.error('Webhook: Supabase URL or service role key missing');
+      return NextResponse.json(
+        { error: 'Server not configured for Realtime broadcast' },
+        { status: 503 },
+      );
+    }
+
+    const broadcastResponse = await fetch(`${supabaseUrl}/realtime/v1/api/broadcast`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
       },
+      body: JSON.stringify({
+        messages: [
+          {
+            topic: 'linear-updates',
+            event: 'update',
+            payload: {
+              action: payload.action,
+              type: payload.type,
+              issueId,
+              teamId,
+              projectId,
+            },
+          },
+        ],
+      }),
     });
 
+    if (!broadcastResponse.ok) {
+      const errText = await broadcastResponse.text();
+      console.error('Webhook broadcast failed:', broadcastResponse.status, errText);
+      return NextResponse.json(
+        { success: false, forwarded: false, error: `Broadcast failed: ${broadcastResponse.status}` },
+        { status: 500 },
+      );
+    }
+
+    console.log(
+      `Webhook forwarded: type=${payload.type} action=${payload.action} issueId=${issueId} teamId=${teamId} projectId=${projectId}`,
+    );
     return NextResponse.json({ success: true, forwarded: true });
   } catch (error) {
     console.error('Linear webhook error:', error);
