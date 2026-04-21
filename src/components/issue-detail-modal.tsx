@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Pencil } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
@@ -20,6 +20,11 @@ interface IssueDetailModalProps {
   showLabels?: boolean
   showDescriptions?: boolean
   allowCustomerComments?: boolean
+  /** When true, the modal renders the per-issue public description editor. */
+  isOwner?: boolean
+  /** Called after an override is saved or removed, so the parent view can
+      refetch issues and show the new public description on the kanban. */
+  onOverrideChange?: () => void
 }
 
 const getStateIcon = (stateType: string, color: string) => {
@@ -77,11 +82,70 @@ export function IssueDetailModal({
   showLabels = true,
   showDescriptions = true,
   allowCustomerComments = false,
+  isOwner = false,
+  onOverrideChange,
 }: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'activity' | 'comments' | 'discussion'>(allowCustomerComments ? 'discussion' : showActivity ? 'activity' : 'comments')
+
+  // Override editor state. Only visible when `isOwner` is true. The editor
+  // shows the current override (or the Linear description as a placeholder)
+  // and lets the owner save a new override or remove it.
+  const [isEditingOverride, setIsEditingOverride] = useState(false)
+  const [overrideDraft, setOverrideDraft] = useState('')
+  const [hasOverride, setHasOverride] = useState(false)
+  const [savingOverride, setSavingOverride] = useState(false)
+  const [overrideError, setOverrideError] = useState<string | null>(null)
+
+  // Fetch the existing override (if any) whenever the modal opens for an owner.
+  useEffect(() => {
+    if (!isOpen || !isOwner || !issueId) {
+      setIsEditingOverride(false)
+      setOverrideDraft('')
+      setHasOverride(false)
+      setOverrideError(null)
+      return
+    }
+    fetch(`/api/public-view/${viewSlug}/issue/${issueId}/override`)
+      .then(async (res) => res.ok ? await res.json() as { override?: { public_description: string } | null } : null)
+      .then((data) => {
+        const existing = data?.override?.public_description ?? ''
+        setHasOverride(Boolean(existing))
+        setOverrideDraft(existing)
+      })
+      .catch((err) => console.error('Failed to load override:', err))
+  }, [isOpen, isOwner, issueId, viewSlug])
+
+  const saveOverride = async (description: string | null) => {
+    setSavingOverride(true)
+    setOverrideError(null)
+    try {
+      const response = await fetch(`/api/public-view/${viewSlug}/issue/${issueId}/override`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description }),
+      })
+      const data = await response.json() as { success?: boolean; error?: string; override?: { public_description: string } | null }
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save override')
+      }
+      const saved = data.override?.public_description ?? ''
+      setHasOverride(Boolean(saved))
+      setOverrideDraft(saved)
+      setIsEditingOverride(false)
+      // Refresh the issue in the modal so the rendered description reflects
+      // the new override. Also notify the parent view so the kanban card
+      // snippet can update.
+      await loadIssue()
+      onOverrideChange?.()
+    } catch (err) {
+      setOverrideError(err instanceof Error ? err.message : 'Unknown error')
+    } finally {
+      setSavingOverride(false)
+    }
+  }
 
   useEffect(() => {
     if (isOpen && issueId) {
@@ -301,11 +365,84 @@ export function IssueDetailModal({
                 ))}
               </div>
 
-              {/* Description */}
-              {showDescriptions && issue.description && (
+              {/* Description header + owner override editor. The header renders
+                  whenever either (a) a description is visible or (b) the
+                  owner is logged in and can add an override - even on issues
+                  with no Linear description. */}
+              {((showDescriptions && issue.description) || isOwner) ? (
                 <div className="mb-8">
-                  <h3 className="text-sm font-medium text-foreground mb-3">Description</h3>
-                  <div className="prose prose-sm max-w-none text-foreground/90 markdown-content">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-foreground">
+                      Description
+                      {hasOverride && (
+                        <span className="ml-2 text-xs font-normal text-muted-foreground">
+                          (public override)
+                        </span>
+                      )}
+                    </h3>
+                    {isOwner && !isEditingOverride && (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingOverride(true)}
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        title={hasOverride ? 'Edit the public description override' : 'Replace the Linear description on this view'}
+                      >
+                        <Pencil className="h-3 w-3" />
+                        {hasOverride ? 'Edit override' : 'Override for public view'}
+                      </button>
+                    )}
+                  </div>
+
+                  {isOwner && isEditingOverride ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={overrideDraft}
+                        onChange={(e) => setOverrideDraft(e.target.value)}
+                        rows={8}
+                        maxLength={20000}
+                        placeholder="Public description (Markdown). Replaces the Linear description on this view only."
+                        className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors resize-y font-mono"
+                      />
+                      {overrideError && (
+                        <div className="text-xs text-destructive">{overrideError}</div>
+                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {hasOverride && (
+                          <button
+                            type="button"
+                            onClick={() => saveOverride(null)}
+                            disabled={savingOverride}
+                            className="px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-md transition-colors disabled:opacity-50"
+                          >
+                            Remove override
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingOverride(false)
+                            setOverrideError(null)
+                          }}
+                          disabled={savingOverride}
+                          className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground rounded-md transition-colors disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => saveOverride(overrideDraft)}
+                          disabled={savingOverride || overrideDraft.trim().length === 0}
+                          className="px-3 py-1.5 text-xs font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {savingOverride ? 'Saving...' : 'Save override'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Rendered description - hidden while actively editing the override */}
+                  {showDescriptions && issue.description && !(isOwner && isEditingOverride) && (
+                    <div className="prose prose-sm max-w-none text-foreground/90 markdown-content">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
@@ -388,9 +525,10 @@ export function IssueDetailModal({
                     >
                       {issue.description}
                     </ReactMarkdown>
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              ) : null}
 
               {/* Activity/Comments/Discussion Tabs - only shown when enabled in view settings */}
               {(showComments || showActivity || allowCustomerComments) && (

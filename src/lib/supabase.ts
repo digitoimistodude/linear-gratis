@@ -95,6 +95,15 @@ export type ViewComment = {
   updated_at: string
 }
 
+export type ViewIssueDescriptionOverride = {
+  id: string
+  view_id: string
+  issue_id: string
+  public_description: string
+  created_at: string
+  updated_at: string
+}
+
 export type BrandingSettings = {
   id: string
   user_id: string

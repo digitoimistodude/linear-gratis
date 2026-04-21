@@ -301,11 +301,20 @@ export async function GET(
 
     const issue = result.data.issue;
 
+    // Substitute the Linear description with the per-view override if present.
+    const { data: override } = await supabaseAdmin
+      .from('view_issue_description_overrides')
+      .select('public_description')
+      .eq('view_id', viewData.id)
+      .eq('issue_id', issueId)
+      .maybeSingle();
+    const effectiveDescription = override?.public_description ?? issue.description;
+
     const issueDetail: IssueDetail = {
       id: issue.id,
       identifier: issue.identifier,
       title: issue.title,
-      description: issue.description,
+      description: effectiveDescription,
       priority: issue.priority,
       priorityLabel: issue.priorityLabel,
       estimate: issue.estimate,

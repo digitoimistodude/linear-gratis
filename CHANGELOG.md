@@ -1,3 +1,7 @@
+### 0.4.3: 2026-04-21
+
+* Add per-issue public description override that replaces the Linear description on a public view, editable inline by the view owner (`feature/per-issue-description-override`)
+
 ### 0.4.2: 2026-04-21
 
 * Persist public view filters in URL and localStorage, remember password across reloads (`feature/persist-view-state`)
