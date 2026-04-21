@@ -302,6 +302,39 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     }
   }
 
+  // Keep latest view/issue state in refs so the Realtime broadcast handler
+  // (subscribed once per view) can evaluate membership with fresh data
+  // without having to re-subscribe on every refetch.
+  const viewRef = useRef<PublicView | null>(null)
+  const issueIdsRef = useRef<Set<string>>(new Set())
+  useEffect(() => { viewRef.current = view }, [view])
+  useEffect(() => { issueIdsRef.current = new Set(issues.map((i) => i.id)) }, [issues])
+
+  // Subscribe to Linear webhook broadcasts relayed through Supabase Realtime.
+  // Whenever an event arrives that could affect this view (new or changed
+  // issue in our team/project, or a comment/label/reaction on an issue we
+  // already show), refetch the view data. This replaces polling.
+  useEffect(() => {
+    if (!view?.id) return
+    const channel = supabase.channel('linear-updates')
+    channel
+      .on('broadcast', { event: 'update' }, ({ payload }) => {
+        const p = payload as { issueId?: string; teamId?: string; projectId?: string }
+        const v = viewRef.current
+        if (!v) return
+        const affectsIssue = p.issueId ? issueIdsRef.current.has(p.issueId) : false
+        const affectsTeam = Boolean(p.teamId && v.team_id && p.teamId === v.team_id)
+        const affectsProject = Boolean(p.projectId && v.project_id && p.projectId === v.project_id)
+        if (affectsIssue || affectsTeam || affectsProject) {
+          handleRefresh()
+        }
+      })
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [view?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleCreateIssue = (columnName?: string) => {
     setDefaultStateName(columnName)
     setShowIssueModal(true)
