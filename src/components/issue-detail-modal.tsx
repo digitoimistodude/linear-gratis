@@ -329,11 +329,12 @@ export function IssueDetailModal({
                 ))}
               </div>
 
-              {/* Description header + owner override editor. The header renders
-                  whenever either (a) a description is visible or (b) the
-                  owner is logged in and can add an override - even on issues
-                  with no Linear description. */}
-              {((showDescriptions && issue.description) || isOwner) ? (
+              {/* Description header + owner override editor. Renders when:
+                  (a) a Linear description is allowed and present,
+                  (b) an override is set (show-descriptions toggle is bypassed -
+                      setting an override is an explicit public intent), or
+                  (c) the owner is logged in and can add an override. */}
+              {((showDescriptions && issue.description) || issue.has_override || isOwner) ? (
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-foreground">
@@ -404,8 +405,10 @@ export function IssueDetailModal({
                     </div>
                   ) : null}
 
-                  {/* Rendered description - hidden while actively editing the override */}
-                  {showDescriptions && issue.description && !(isOwner && isEditingOverride) && (
+                  {/* Rendered description - hidden while actively editing the override.
+                      Renders when show_descriptions is on OR when an override
+                      is set (override bypasses the toggle). */}
+                  {(showDescriptions || issue.has_override) && issue.description && !(isOwner && isEditingOverride) && (
                     <div className="prose prose-sm max-w-none text-foreground/90 markdown-content">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}

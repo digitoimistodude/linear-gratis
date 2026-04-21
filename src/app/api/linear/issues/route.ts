@@ -28,6 +28,9 @@ export type LinearIssue = {
   }>;
   createdAt: string;
   updatedAt: string;
+  /** Set by the public-view API when the description came from a per-view
+      override rather than Linear. UI uses this to bypass show_descriptions. */
+  has_override?: boolean;
 };
 
 export type LinearTeam = {
