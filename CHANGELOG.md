@@ -1,3 +1,7 @@
+### 0.4.1: 2026-04-21
+
+* Add Projects section to public view filter dropdown, active when issues span multiple projects (`feature/multi-project-views`), Ref: DEV-826
+
 ### 0.4.0: 2026-04-21
 
 * Allow a public view to show issues from multiple Linear projects, with picker UX on project updates and issue creation (`feature/multi-project-views`), Ref: DEV-826
