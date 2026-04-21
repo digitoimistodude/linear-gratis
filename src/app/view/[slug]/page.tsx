@@ -7,7 +7,7 @@ import { FilterDropdown, FilterState, generateFilterOptions, FilterOptions } fro
 import { IssueCreationModal } from '@/components/issue-creation-modal'
 import { IssueDetailModal } from '@/components/issue-detail-modal'
 import { ProjectUpdatesModal } from '@/components/project-updates-modal'
-import { PublicView } from '@/lib/supabase'
+import { PublicView, supabase } from '@/lib/supabase'
 import { LinearIssue } from '@/app/api/linear/issues/route'
 import { RefreshCw, Lock } from 'lucide-react'
 import { useBrandingSettings, applyBrandingToPage, getBrandingStyles } from '@/hooks/use-branding'
@@ -50,7 +50,26 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   const [showProjectUpdates, setShowProjectUpdates] = useState(false)
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
   const [defaultStateName, setDefaultStateName] = useState<string | undefined>(undefined)
+  const [isOwner, setIsOwner] = useState(false)
   const filterButtonRef = useRef<HTMLButtonElement>(null)
+
+  // Detect whether the current viewer is logged in as the view owner so the
+  // IssueDetailModal can render owner-only controls (per-issue public
+  // description override editor). Public visitors remain unauthenticated.
+  useEffect(() => {
+    let cancelled = false
+    if (!view?.user_id) {
+      setIsOwner(false)
+      return
+    }
+    supabase.auth.getUser().then(({ data }) => {
+      if (cancelled) return
+      setIsOwner(Boolean(data.user?.id && data.user.id === view.user_id))
+    }).catch(() => {
+      if (!cancelled) setIsOwner(false)
+    })
+    return () => { cancelled = true }
+  }, [view?.user_id])
 
   // Load branding settings for this view's owner
   const { branding } = useBrandingSettings(view?.user_id || null)
@@ -552,6 +571,8 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           showComments={view?.show_comments}
           showActivity={view?.show_activity}
           showDescriptions={view?.show_descriptions}
+          isOwner={isOwner}
+          onOverrideChange={handleRefresh}
         />
       )}
 

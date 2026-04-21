@@ -79,9 +79,26 @@ export async function GET(
     // Strip out any issues the view owner has excluded. Filtering happens
     // server-side so excluded IDs never leave the server.
     const excludedIds = new Set<string>(viewData.excluded_issue_ids ?? []);
-    const visibleIssues = excludedIds.size > 0
+    const filteredIssues = excludedIds.size > 0
       ? issuesResult.issues.filter((issue) => !excludedIds.has(issue.id))
       : issuesResult.issues;
+
+    // Apply per-issue public description overrides. When an override exists
+    // for (view, issue), it fully replaces the Linear description in the
+    // public payload - the original never reaches the client.
+    const { data: overrideRows } = await supabaseAdmin
+      .from('view_issue_description_overrides')
+      .select('issue_id, public_description')
+      .eq('view_id', viewData.id)
+      .in('issue_id', filteredIssues.map((issue) => issue.id));
+    const overrides = new Map<string, string>(
+      (overrideRows ?? []).map((row) => [row.issue_id, row.public_description])
+    );
+    const visibleIssues = overrides.size > 0
+      ? filteredIssues.map((issue) => overrides.has(issue.id)
+          ? { ...issue, description: overrides.get(issue.id) }
+          : issue)
+      : filteredIssues;
 
     return NextResponse.json({
       success: true,
