@@ -28,9 +28,7 @@ type WebhookBody = {
   };
 };
 
-// Compute HMAC-SHA256 hex of a payload using the signing secret. Uses Web
-// Crypto because Cloudflare Workers doesn't expose Node's crypto module.
-async function signHex(secret: string, raw: string): Promise<string> {
+async function signHex(secret: string, bytes: ArrayBuffer): Promise<string> {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',
@@ -39,7 +37,7 @@ async function signHex(secret: string, raw: string): Promise<string> {
     false,
     ['sign'],
   );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(raw));
+  const sig = await crypto.subtle.sign('HMAC', key, bytes);
   return Array.from(new Uint8Array(sig))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
@@ -71,16 +69,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
     }
 
-    const rawBody = await request.text();
-    const expected = await signHex(secret, rawBody);
+    const rawBytes = await request.arrayBuffer();
+    const expected = await signHex(secret, rawBytes);
     if (!safeEqual(signature, expected)) {
       console.error(
-        `Signature mismatch: got len=${signature.length} prefix=${signature.slice(0, 8)}..., expected len=${expected.length} prefix=${expected.slice(0, 8)}..., bodyLen=${rawBody.length}, secretLen=${secret.length}`,
+        `Signature mismatch: got len=${signature.length} prefix=${signature.slice(0, 8)}..., expected len=${expected.length} prefix=${expected.slice(0, 8)}..., bodyLen=${rawBytes.byteLength}, secretLen=${secret.length}`,
       );
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
-    const payload = JSON.parse(rawBody) as WebhookBody;
+    const payload = JSON.parse(new TextDecoder().decode(rawBytes)) as WebhookBody;
 
     if (!payload.type || !FORWARDED_TYPES.has(payload.type)) {
       // Acknowledge but don't broadcast - keeps the webhook happy without
