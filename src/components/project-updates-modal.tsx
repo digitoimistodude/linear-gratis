@@ -46,9 +46,12 @@ interface ProjectUpdatesModalProps {
       modal renders a picker bar so the visitor can choose which project's
       updates to view. */
   projects?: Array<{ id: string; name: string }>
+  /** Bumped by the parent on every Realtime event affecting this view so the
+      updates list refetches live without re-opening the modal. */
+  reloadKey?: number
 }
 
-export function ProjectUpdatesModal({ isOpen, onClose, viewSlug, projects = [] }: ProjectUpdatesModalProps) {
+export function ProjectUpdatesModal({ isOpen, onClose, viewSlug, projects = [], reloadKey = 0 }: ProjectUpdatesModalProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ProjectUpdateData | null>(null)
@@ -70,7 +73,7 @@ export function ProjectUpdatesModal({ isOpen, onClose, viewSlug, projects = [] }
     if (isOpen) {
       fetchProjectUpdates()
     }
-  }, [isOpen, viewSlug, selectedProjectId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, viewSlug, selectedProjectId, reloadKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProjectUpdates = async () => {
     try {

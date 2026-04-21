@@ -25,6 +25,10 @@ interface IssueDetailModalProps {
   /** Called after an override is saved or removed, so the parent view can
       refetch issues and show the new public description on the kanban. */
   onOverrideChange?: () => void
+  /** Incremented by the parent when a Realtime event affects the currently
+      open issue. Bumping triggers a refetch so Linear-side changes appear
+      live without the viewer having to reopen the modal. */
+  reloadKey?: number
 }
 
 const getStateIcon = (stateType: string, color: string) => {
@@ -84,6 +88,7 @@ export function IssueDetailModal({
   allowCustomerComments = false,
   isOwner = false,
   onOverrideChange,
+  reloadKey = 0,
 }: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -151,7 +156,7 @@ export function IssueDetailModal({
     if (isOpen && issueId) {
       loadIssue()
     }
-  }, [isOpen, issueId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, issueId, reloadKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadIssue = async () => {
     setLoading(true)

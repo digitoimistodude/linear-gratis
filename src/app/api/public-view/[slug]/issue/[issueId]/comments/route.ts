@@ -167,6 +167,23 @@ export async function POST(
 
     const comment = newComment as Pick<ViewComment, 'id' | 'author_name' | 'content' | 'created_at' | 'is_approved'>;
 
+    // Broadcast to other viewers of the same view so their discussion panes
+    // update live. Approved comments only - pending ones shouldn't surface.
+    if (comment.is_approved) {
+      try {
+        await supabaseAdmin.channel('view-comments').send({
+          type: 'broadcast',
+          event: 'new',
+          payload: {
+            viewSlug: view.slug,
+            issueId,
+          },
+        });
+      } catch (broadcastError) {
+        console.error('Failed to broadcast view comment:', broadcastError);
+      }
+    }
+
     // Sync comment to Linear
     try {
       const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';

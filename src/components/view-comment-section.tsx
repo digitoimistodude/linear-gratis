@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, User } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 interface Comment {
   id: string
@@ -40,26 +41,50 @@ export function ViewCommentSection({
     if (savedName) setAuthorName(savedName)
   }, [])
 
-  useEffect(() => {
-    const fetchComments = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch(
-          `/api/public-view/${viewSlug}/issue/${issueId}/comments`
-        )
-        if (response.ok) {
-          const data = await response.json() as { comments: Comment[] }
-          setComments(data.comments || [])
-        }
-      } catch (err) {
-        console.error('Error fetching comments:', err)
-      } finally {
-        setLoading(false)
+  const fetchComments = useCallback(async (showSpinner = true) => {
+    try {
+      if (showSpinner) setLoading(true)
+      const response = await fetch(
+        `/api/public-view/${viewSlug}/issue/${issueId}/comments`,
+      )
+      if (response.ok) {
+        const data = await response.json() as { comments: Comment[] }
+        // Preserve any locally-optimistic or failed comments that haven't
+        // been persisted yet, merging them on top of the server list.
+        setComments((prev) => {
+          const pending = prev.filter((c) => c.isPending || c.isFailed)
+          const ids = new Set(pending.map((c) => c.id))
+          const server = (data.comments || []).filter((c) => !ids.has(c.id))
+          return [...server, ...pending]
+        })
       }
+    } catch (err) {
+      console.error('Error fetching comments:', err)
+    } finally {
+      if (showSpinner) setLoading(false)
     }
-
-    fetchComments()
   }, [viewSlug, issueId])
+
+  useEffect(() => {
+    fetchComments()
+  }, [fetchComments])
+
+  // Subscribe to the Realtime 'view-comments' channel so discussion panes
+  // update live when another visitor posts a comment on this same view/issue.
+  useEffect(() => {
+    const channel = supabase.channel('view-comments')
+    channel
+      .on('broadcast', { event: 'new' }, ({ payload }) => {
+        const p = payload as { viewSlug?: string; issueId?: string }
+        if (p.viewSlug === viewSlug && p.issueId === issueId) {
+          fetchComments(false)
+        }
+      })
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [viewSlug, issueId, fetchComments])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

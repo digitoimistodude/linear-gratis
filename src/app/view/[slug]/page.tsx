@@ -95,6 +95,9 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
   const [defaultStateName, setDefaultStateName] = useState<string | undefined>(undefined)
   const [isOwner, setIsOwner] = useState(false)
+  // Incremented on every Realtime event that affects this view. Passed to
+  // IssueDetailModal so an open modal refetches in sync with the kanban.
+  const [modalReloadKey, setModalReloadKey] = useState(0)
   const filterButtonRef = useRef<HTMLButtonElement>(null)
 
   // Strip labels from the filter dropdown when the view has labels hidden.
@@ -331,6 +334,11 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
         const affectsProject = Boolean(p.projectId && allowedProjectIds.has(p.projectId))
         if (affectsIssue || affectsTeam || affectsProject) {
           handleRefresh()
+          // Bump the modal reload key whether or not the affected issue is
+          // the one currently open - cheap to refetch, and makes comments/
+          // activity/project updates on the open issue appear without the
+          // viewer needing to reopen the modal.
+          setModalReloadKey((k) => k + 1)
         }
       })
       .subscribe()
@@ -792,12 +800,14 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           allowCustomerComments={view?.allow_customer_comments}
           isOwner={isOwner}
           onOverrideChange={handleRefresh}
+          reloadKey={modalReloadKey}
         />
       )}
 
       {/* Project Updates Modal */}
       {((view?.project_ids && view.project_ids.length > 0) || view?.project_id) && (
         <ProjectUpdatesModal
+          reloadKey={modalReloadKey}
           isOpen={showProjectUpdates}
           onClose={() => setShowProjectUpdates(false)}
           viewSlug={slug}
