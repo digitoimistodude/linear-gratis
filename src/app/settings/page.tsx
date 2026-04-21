@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Navigation } from '@/components/navigation'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { Webhook, ChevronRight } from 'lucide-react'
 
 export default function SettingsPage() {
   return (
@@ -413,6 +415,30 @@ function SettingsContent() {
             )}
           </CardContent>
         </Card>
+
+        {/* Real-time updates - links into the webhook setup wizard. */}
+        <Link href="/settings/webhooks" className="block group">
+          <Card className="transition-colors hover:bg-accent/40 cursor-pointer">
+            <CardContent>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                    <Webhook className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <CardTitle className="text-base font-semibold">
+                      Real-time updates
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Configure the Linear webhook so public views update instantly when issues change. Step-by-step wizard inside.
+                    </CardDescription>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   )
