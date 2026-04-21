@@ -1,3 +1,7 @@
+### 0.5.2: 2026-04-21
+
+* Match webhook status panel to the existing dot + button pattern used elsewhere in settings (`feature/linear-webhook-realtime`)
+
 ### 0.5.1: 2026-04-21
 
 * Expand recommended webhook events to include Projects, Project labels, and Issue attachments, and rename Reactions to Emoji reactions in the wizard (`feature/linear-webhook-realtime`)
