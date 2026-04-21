@@ -16,8 +16,11 @@ const RECOMMENDED_EVENTS = [
   { value: 'Issue', label: 'Issues', description: 'Status changes, priority, assignee, title updates' },
   { value: 'Comment', label: 'Comments', description: 'New / edited / removed comments' },
   { value: 'IssueLabel', label: 'Issue labels', description: 'Label added or removed on an issue' },
-  { value: 'Reaction', label: 'Reactions', description: 'Emoji reactions on issues and comments' },
+  { value: 'Reaction', label: 'Emoji reactions', description: 'Emoji reactions on issues and comments' },
   { value: 'ProjectUpdate', label: 'Project updates', description: 'Project status writeups' },
+  { value: 'Project', label: 'Projects', description: 'Project name, state, or archive changes' },
+  { value: 'ProjectLabel', label: 'Project labels', description: 'Project-scoped label changes (future-proof)' },
+  { value: 'Attachment', label: 'Issue attachments', description: 'Attachments added or removed (future-proof)' },
 ]
 
 type HealthState = 'unknown' | 'configured' | 'missing-secret' | 'error'

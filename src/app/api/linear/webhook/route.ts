@@ -2,13 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
 // Events we care about broadcasting to connected clients. Linear fires many
-// event types; we forward the ones that change what a public view renders.
+// event types; we forward the ones that change what a public view renders
+// plus a few we don't render yet but want ready for future features.
 const FORWARDED_TYPES = new Set([
   'Issue',
   'Comment',
   'IssueLabel',
   'Reaction',
   'ProjectUpdate',
+  'Project',
+  'ProjectLabel',
+  'Attachment',
 ]);
 
 type WebhookBody = {
