@@ -74,6 +74,9 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     const expected = await signHex(secret, rawBody);
     if (!safeEqual(signature, expected)) {
+      console.error(
+        `Signature mismatch: got len=${signature.length} prefix=${signature.slice(0, 8)}..., expected len=${expected.length} prefix=${expected.slice(0, 8)}..., bodyLen=${rawBody.length}, secretLen=${secret.length}`,
+      );
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
