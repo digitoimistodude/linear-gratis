@@ -18,6 +18,51 @@ interface PublicViewPageProps {
   }>
 }
 
+const EMPTY_FILTERS: FilterState = {
+  search: '',
+  statuses: [],
+  assignees: [],
+  priorities: [],
+  labels: [],
+  creators: [],
+}
+
+// Parse a comma-separated query param like `?statuses=Backlog,In Progress`.
+// Empty or missing params map to empty arrays.
+const parseList = (value: string | null): string[] =>
+  value ? value.split(',').filter(Boolean) : []
+
+const filtersFromSearchParams = (params: URLSearchParams): FilterState => ({
+  search: params.get('q') ?? '',
+  statuses: parseList(params.get('statuses')),
+  assignees: parseList(params.get('assignees')),
+  priorities: parseList(params.get('priorities')).map(Number).filter((n) => !Number.isNaN(n)),
+  labels: parseList(params.get('labels')),
+  creators: parseList(params.get('creators')),
+})
+
+const filtersToSearchParams = (filters: FilterState): URLSearchParams => {
+  const params = new URLSearchParams()
+  if (filters.search) params.set('q', filters.search)
+  if (filters.statuses.length) params.set('statuses', filters.statuses.join(','))
+  if (filters.assignees.length) params.set('assignees', filters.assignees.join(','))
+  if (filters.priorities.length) params.set('priorities', filters.priorities.join(','))
+  if (filters.labels.length) params.set('labels', filters.labels.join(','))
+  if (filters.creators.length) params.set('creators', filters.creators.join(','))
+  return params
+}
+
+const filtersAreEmpty = (filters: FilterState): boolean =>
+  !filters.search &&
+  filters.statuses.length === 0 &&
+  filters.assignees.length === 0 &&
+  filters.priorities.length === 0 &&
+  filters.labels.length === 0 &&
+  filters.creators.length === 0
+
+const storageKey = (slug: string, kind: 'filters' | 'password') =>
+  `public-view-${kind}:${slug}`
+
 export default function PublicViewPage({ params }: PublicViewPageProps) {
   const [view, setView] = useState<PublicView | null>(null)
   const [issues, setIssues] = useState<LinearIssue[]>([])
@@ -30,14 +75,8 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   const [authenticating, setAuthenticating] = useState(false)
   const [slug, setSlug] = useState<string>('')
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
-  const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    statuses: [],
-    assignees: [],
-    priorities: [],
-    labels: [],
-    creators: [],
-  })
+  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS)
+  const filtersHydrated = useRef(false)
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     statuses: [],
     assignees: [],
@@ -63,6 +102,53 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     initParams()
   }, [params])
 
+  // Hydrate filter state once per slug: URL query params win, falling back to
+  // localStorage, then to an empty filter set. Deferred until slug resolves so
+  // we have a stable storage key.
+  useEffect(() => {
+    if (!slug || filtersHydrated.current) return
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const fromUrl = filtersFromSearchParams(urlParams)
+      if (!filtersAreEmpty(fromUrl)) {
+        setFilters(fromUrl)
+      } else {
+        const stored = window.localStorage.getItem(storageKey(slug, 'filters'))
+        if (stored) {
+          const parsed = JSON.parse(stored) as Partial<FilterState>
+          setFilters({ ...EMPTY_FILTERS, ...parsed })
+        }
+      }
+    } catch (err) {
+      console.error('Failed to hydrate filters:', err)
+    } finally {
+      filtersHydrated.current = true
+    }
+  }, [slug])
+
+  // Persist filter state to URL (shareable) and localStorage (remembered).
+  // Skipped until after initial hydration so we don't overwrite URL params
+  // with empty state on mount.
+  useEffect(() => {
+    if (!slug || !filtersHydrated.current) return
+    try {
+      const search = filtersToSearchParams(filters).toString()
+      const newUrl = search
+        ? `${window.location.pathname}?${search}`
+        : window.location.pathname
+      if (newUrl !== window.location.pathname + window.location.search) {
+        window.history.replaceState(null, '', newUrl)
+      }
+      if (filtersAreEmpty(filters)) {
+        window.localStorage.removeItem(storageKey(slug, 'filters'))
+      } else {
+        window.localStorage.setItem(storageKey(slug, 'filters'), JSON.stringify(filters))
+      }
+    } catch (err) {
+      console.error('Failed to persist filters:', err)
+    }
+  }, [filters, slug])
+
   const loadView = async (providedPassword?: string) => {
     if (!slug) return
 
@@ -83,6 +169,15 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           setRequiresPassword(true)
           setView(null)
           setIssues([])
+          // Stored password was wrong or expired - clear it so the visitor can
+          // re-enter without the auto-submit loop.
+          if (providedPassword) {
+            try {
+              window.localStorage.removeItem(storageKey(slug, 'password'))
+            } catch {
+              // localStorage unavailable - non-fatal
+            }
+          }
           return
         } else if (response.status === 404) {
           notFound()
@@ -99,6 +194,16 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       setFilterOptions(generateFilterOptions(issuesData))
       setLastUpdated(new Date())
       setRequiresPassword(false)
+
+      // Remember the successful password so the visitor isn't prompted again
+      // on refresh / new tab.
+      if (providedPassword) {
+        try {
+          window.localStorage.setItem(storageKey(slug, 'password'), providedPassword)
+        } catch {
+          // localStorage unavailable - non-fatal
+        }
+      }
 
     } catch (err) {
       console.error('Error loading view:', err)
@@ -189,9 +294,14 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   }
 
   useEffect(() => {
-    if (slug) {
-      loadView()
+    if (!slug) return
+    let savedPassword: string | null = null
+    try {
+      savedPassword = window.localStorage.getItem(storageKey(slug, 'password'))
+    } catch {
+      // localStorage unavailable - fall through to unauthenticated load
     }
+    loadView(savedPassword || undefined)
   }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Apply branding when it loads
