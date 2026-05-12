@@ -1,3 +1,10 @@
+### 0.6.1: 2026-05-12
+
+* Omit stateId on customer issue create when team has triage enabled so Linear auto-routes new issues into the triage queue (`feature/customer-issue-triage-routing`)
+* Remove non-functional Display button from public view header (`fix/remove-non-functional-display-button`)
+* Remove non-functional Insights icon from public view header (`fix/remove-non-functional-stats-insights`)
+* Cache `/api/linear/issues` responses in KV for 60 seconds, keyed by workspace token hash and filters (`feature/cache-linear-issues-kv`)
+
 ### 0.6.0: 2026-05-12
 
 * Cache Linear projects and teams in Cloudflare KV for 10 minutes per user, dropping CPU pressure on every `/views` render and preventing Worker exceeded-resource (1102) errors (`feature/linear-cache-kv`)
