@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { paginateLinearConnection, type LinearConnection } from "@/lib/linear";
+import { getCached, setCached, sha256Hex } from "@/lib/linear-cache";
 
 export type LinearIssue = {
   id: string;
@@ -76,6 +77,18 @@ export async function POST(request: NextRequest) {
         { error: "Either projectId or teamId must be provided" },
         { status: 400 },
       );
+    }
+
+    // Hashed token keeps the cache key off the wire/log surface while still
+    // partitioning entries per workspace.
+    const tokenHash = (await sha256Hex(apiToken)).slice(0, 16);
+    const statusKey = statuses && statuses.length > 0
+      ? statuses.slice().sort().join(",")
+      : "";
+    const cacheKey = `issues:${tokenHash}:${projectId ?? ""}:${teamId ?? ""}:${statusKey}`;
+    const cached = await getCached<LinearIssue[]>(cacheKey);
+    if (cached) {
+      return NextResponse.json({ success: true, issues: cached, cached: true });
     }
 
     // Build the filter as a typed variable rather than string-interpolating
@@ -165,6 +178,7 @@ export async function POST(request: NextRequest) {
       updatedAt: issue.updatedAt,
     }));
 
+    await setCached(cacheKey, issues);
     return NextResponse.json({
       success: true,
       issues,
