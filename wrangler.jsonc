@@ -17,6 +17,12 @@
   "observability": {
     "enabled": true,
   },
+  "kv_namespaces": [
+    {
+      "binding": "LINEAR_CACHE",
+      "id": "f202452cf782491bb7f46269b2773be6",
+    },
+  ],
   "routes": [
     {
       "pattern": "linear.dude.fi",

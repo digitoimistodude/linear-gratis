@@ -48,6 +48,8 @@ export default function PublicViewsPage() {
   const [views, setViews] = useState<PublicView[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [sourcesFetched, setSourcesFetched] = useState(false);
+  const [sourcesLoading, setSourcesLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showCreateView, setShowCreateView] = useState(false);
@@ -142,7 +144,6 @@ export default function PublicViewsPage() {
         const { hasToken } = (await tokenStatusRes.json()) as { hasToken: boolean };
         if (hasToken) {
           setLinearToken("configured");
-          await Promise.all([fetchProjects(), fetchTeams()]);
         }
       } else {
         toast.error("Failed to check Linear token status");
@@ -172,6 +173,18 @@ export default function PublicViewsPage() {
     }
     loadUserData();
   }, [user, authLoading, router, loadUserData]);
+
+  const ensureSourcesLoaded = useCallback(async () => {
+    if (sourcesFetched || sourcesLoading || !linearToken) return;
+    setSourcesLoading(true);
+    try {
+      await Promise.all([fetchProjects(), fetchTeams()]);
+      setSourcesFetched(true);
+    } finally {
+      setSourcesLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sourcesFetched, sourcesLoading, linearToken]);
 
   const fetchProjects = async () => {
     try {
@@ -493,6 +506,7 @@ export default function PublicViewsPage() {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    void ensureSourcesLoaded();
   };
 
   const updateView = async () => {
@@ -687,8 +701,9 @@ export default function PublicViewsPage() {
                   setShowCreateView(true);
                   setShowEditView(false);
                   setEditingView(null);
+                  void ensureSourcesLoaded();
                 }}
-                disabled={projects.length === 0 && teams.length === 0}
+                disabled={!linearToken}
                 size="lg"
                 className="h-12 px-8 font-semibold"
               >
@@ -731,7 +746,7 @@ export default function PublicViewsPage() {
           </div>
         )}
 
-        {projects.length === 0 && teams.length === 0 && (
+        {sourcesFetched && projects.length === 0 && teams.length === 0 && (
           <Card className="mb-6">
             <CardContent>
               <p className="text-center text-gray-600">
@@ -830,7 +845,7 @@ export default function PublicViewsPage() {
                       <div className="border border-border rounded-md max-h-64 overflow-y-auto divide-y divide-border">
                         {projects.length === 0 ? (
                           <div className="p-3 text-sm text-muted-foreground">
-                            No projects found in your Linear workspace.
+                            {sourcesLoading ? 'Loading projects…' : 'No projects found in your Linear workspace.'}
                           </div>
                         ) : (
                           projects.map((project) => (
@@ -1251,7 +1266,7 @@ export default function PublicViewsPage() {
                       <div className="border border-border rounded-md max-h-64 overflow-y-auto divide-y divide-border">
                         {projects.length === 0 ? (
                           <div className="p-3 text-sm text-muted-foreground">
-                            No projects found in your Linear workspace.
+                            {sourcesLoading ? 'Loading projects…' : 'No projects found in your Linear workspace.'}
                           </div>
                         ) : (
                           projects.map((project) => (
@@ -1668,8 +1683,9 @@ export default function PublicViewsPage() {
                     setShowCreateView(true);
                     setShowEditView(false);
                     setEditingView(null);
+                    void ensureSourcesLoaded();
                   }}
-                  disabled={projects.length === 0 && teams.length === 0}
+                  disabled={!linearToken}
                 >
                   Create your first view
                 </Button>
@@ -1690,8 +1706,9 @@ export default function PublicViewsPage() {
                       setShowCreateView(true);
                       setShowEditView(false);
                       setEditingView(null);
+                      void ensureSourcesLoaded();
                     }}
-                    disabled={projects.length === 0 && teams.length === 0}
+                    disabled={!linearToken}
                     size="sm"
                   >
                     Create new view

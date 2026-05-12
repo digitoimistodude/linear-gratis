@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getLinearToken } from '@/lib/linear-token';
 import { paginateLinearConnection, type LinearConnection } from '@/lib/linear';
+import { getCached, setCached } from '@/lib/linear-cache';
 
 export type Team = {
   id: string
@@ -26,6 +27,12 @@ export async function POST(_request: NextRequest) {
         { error: 'Linear API token not configured' },
         { status: 400 }
       );
+    }
+
+    const cacheKey = `teams:${user.id}`;
+    const cached = await getCached<Team[]>(cacheKey);
+    if (cached) {
+      return NextResponse.json({ success: true, teams: cached, cached: true });
     }
 
     const query = `
@@ -65,6 +72,7 @@ export async function POST(_request: NextRequest) {
       }))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
+    await setCached(cacheKey, teams);
     return NextResponse.json({ success: true, teams });
 
   } catch (error) {

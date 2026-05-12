@@ -1,3 +1,8 @@
+### 0.6.0: 2026-05-12
+
+* Cache Linear projects and teams in Cloudflare KV for 10 minutes per user, dropping CPU pressure on every `/views` render and preventing Worker exceeded-resource (1102) errors (`feature/linear-cache-kv`)
+* Lazy-load Linear projects and teams - they no longer fetch on `/views` mount, only when the create or edit view form opens (`feature/linear-cache-kv`)
+
 ### 0.5.5: 2026-05-12
 
 * Rebrand all user-facing `linear.gratis` mentions to `linear.dude.fi` (dude-specific change)
