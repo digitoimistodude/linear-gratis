@@ -254,9 +254,9 @@ export function KanbanBoard({
                               {/* Parent indicator for sub-issues */}
                               {issue.parent && (
                                 <div className="flex items-center gap-1 mb-1">
-                                  <svg className="w-3 h-3 text-muted-foreground" viewBox="0 0 16 16" fill="currentColor">
+                                  <svg className="w-3 h-3 text-muted-foreground" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M4 3v6.5a2.5 2.5 0 0 0 2.5 2.5H12" />
-                                    <path d="M4 3L2 5l2 2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M9.5 9.5L12 12l-2.5 2.5" />
                                   </svg>
                                   <span className="text-xs text-muted-foreground truncate">{issue.parent.identifier}</span>
                                 </div>
