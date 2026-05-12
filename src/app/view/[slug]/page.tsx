@@ -601,9 +601,6 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
             >
               <RefreshCw className={`h-4 w-4 text-muted-foreground ${refreshing ? 'animate-spin' : ''}`} />
             </button>
-
-            {/* Stats/Insights button hidden until implemented (DEV-844) */}
-            {/* Display button hidden until implemented (DEV-843) */}
           </div>
         </div>
 
