@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, Users, Building, Zap, Heart, Target, Briefcase } from 'lucide-react'
 
 export const metadata: Metadata = createMetadata({
-  title: 'Linear use cases: SaaS, agencies, startups & more | linear.gratis',
+  title: 'Linear use cases: SaaS, agencies, startups & more | linear.dude.fi',
   description: 'Discover how different industries use Linear for customer feedback and project management. Templates, workflows, and best practices for every team.',
   keywords: [
     'Linear use cases',
@@ -17,7 +17,7 @@ export const metadata: Metadata = createMetadata({
     'Linear for startups',
     'Linear workflows',
     'customer feedback use cases',
-    'linear.gratis',
+    'linear.dude.fi',
   ],
   canonical: '/use-cases',
 })
@@ -39,7 +39,7 @@ export default function UseCasesPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-xl font-semibold">
-              linear.gratis
+              linear.dude.fi
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/comparison" className="text-sm text-muted-foreground hover:text-foreground">
@@ -70,7 +70,7 @@ export default function UseCasesPage() {
               Linear for every industry
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Discover how different teams use linear.gratis to collect customer feedback,
+              Discover how different teams use linear.dude.fi to collect customer feedback,
               manage projects, and build better products. Free templates and workflows included.
             </p>
           </div>
@@ -149,7 +149,7 @@ export default function UseCasesPage() {
         <div className="max-w-4xl mx-auto mb-12">
           <Card className="border-border/50 bg-gradient-to-br from-primary/5 to-purple-500/5 border-primary/20">
             <CardHeader>
-              <CardTitle>What all industries get with linear.gratis</CardTitle>
+              <CardTitle>What all industries get with linear.dude.fi</CardTitle>
               <CardDescription>
                 Core features that work for every team and use case
               </CardDescription>

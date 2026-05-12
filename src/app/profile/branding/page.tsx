@@ -514,7 +514,7 @@ export default function BrandingPage() {
                   }
                 />
                 <Label className="cursor-pointer">
-                  Show &quot;Powered by linear.gratis&quot; in footer
+                  Show &quot;Powered by linear.dude.fi&quot; in footer
                 </Label>
               </div>
             </CardContent>

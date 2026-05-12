@@ -28,11 +28,11 @@ export default function ComparisonPage() {
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent leading-tight">
             Why choose
             <br />
-            <span className="text-primary">linear.gratis?</span>
+            <span className="text-primary">linear.dude.fi?</span>
           </h1>
 
           <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-            Compare linear.gratis with SteelSync and Lindie. See why free and open source wins for most teams.
+            Compare linear.dude.fi with SteelSync and Lindie. See why free and open source wins for most teams.
           </p>
 
           <Badge variant="secondary" className="mb-8 px-4 py-2 bg-primary/10 text-primary border-primary/20">
@@ -47,7 +47,7 @@ export default function ComparisonPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-3 gap-8">
 
-            {/* linear.gratis */}
+            {/* linear.dude.fi */}
             <Card className="border-primary/50 bg-gradient-to-b from-primary/5 to-background shadow-xl relative">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <Badge className="bg-primary text-primary-foreground px-4 py-1">
@@ -56,7 +56,7 @@ export default function ComparisonPage() {
                 </Badge>
               </div>
               <CardHeader className="text-center pt-8">
-                <CardTitle className="text-2xl mb-2">linear.gratis</CardTitle>
+                <CardTitle className="text-2xl mb-2">linear.dude.fi</CardTitle>
                 <CardDescription className="text-lg">Free forever</CardDescription>
                 <div className="text-4xl font-bold text-primary mt-4">$0</div>
                 <p className="text-sm text-muted-foreground">per month, always</p>
@@ -199,10 +199,10 @@ export default function ComparisonPage() {
         </div>
       </section>
 
-      {/* Why linear.gratis wins */}
+      {/* Why linear.dude.fi wins */}
       <section className="container mx-auto px-6 py-16">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Why linear.gratis wins for most teams</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Why linear.dude.fi wins for most teams</h2>
 
           <div className="grid md:grid-cols-2 gap-8">
             <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
@@ -230,7 +230,7 @@ export default function ComparisonPage() {
                 <Users className="h-10 w-10 text-purple-600 mb-4" />
                 <CardTitle>Perfect for small teams</CardTitle>
                 <CardDescription>
-                  Solo developers and startups shouldn&apos;t pay enterprise prices for basic feedback collection. linear.gratis levels the playing field.
+                  Solo developers and startups shouldn&apos;t pay enterprise prices for basic feedback collection. linear.dude.fi levels the playing field.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -253,7 +253,7 @@ export default function ComparisonPage() {
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-8">When to consider alternatives</h2>
           <p className="text-center text-muted-foreground mb-12">
-            Honesty first: linear.gratis isn&apos;t perfect for everyone. Here&apos;s when you might need something else.
+            Honesty first: linear.dude.fi isn&apos;t perfect for everyone. Here&apos;s when you might need something else.
           </p>
 
           <div className="space-y-6">
@@ -285,7 +285,7 @@ export default function ComparisonPage() {
               <CardContent className="p-6">
                 <h3 className="font-semibold mb-2 flex items-center gap-2">
                   <Heart className="h-5 w-5 text-green-600" />
-                  Choose linear.gratis if...
+                  Choose linear.dude.fi if...
                 </h3>
                 <p className="text-muted-foreground">
                   You want to collect client feedback in Linear without barriers, prefer open source solutions, or you&apos;re tired of paying for basic features that should be free.
@@ -301,7 +301,7 @@ export default function ComparisonPage() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to try the free alternative?</h2>
           <p className="text-muted-foreground mb-8">
-            Join hundreds of developers who&apos;ve chosen linear.gratis for their Linear feedback collection.
+            Join hundreds of developers who&apos;ve chosen linear.dude.fi for their Linear feedback collection.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

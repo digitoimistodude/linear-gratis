@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: UseCasePageProps): Promise<Me
 
   if (!useCase) {
     return {
-      title: 'Use case not found | linear.gratis'
+      title: 'Use case not found | linear.dude.fi'
     }
   }
 
@@ -60,7 +60,7 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <Link href="/" className="text-xl font-semibold">
-                linear.gratis
+                linear.dude.fi
               </Link>
               <div className="flex items-center gap-4">
                 <Link href="/use-cases" className="text-sm text-muted-foreground hover:text-foreground">
@@ -143,7 +143,7 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
                     Linear solutions
                   </CardTitle>
                   <CardDescription>
-                    How linear.gratis solves these problems
+                    How linear.dude.fi solves these problems
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -169,7 +169,7 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
                   Benefits for {useCase.name}
                 </CardTitle>
                 <CardDescription>
-                  What teams achieve with linear.gratis
+                  What teams achieve with linear.dude.fi
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -190,7 +190,7 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold mb-4">Common workflows</h2>
               <p className="text-muted-foreground">
-                How {useCase.name.toLowerCase()} typically use linear.gratis
+                How {useCase.name.toLowerCase()} typically use linear.dude.fi
               </p>
             </div>
 
@@ -259,7 +259,7 @@ export default async function UseCasePage({ params }: UseCasePageProps) {
               <CardHeader>
                 <CardTitle>Popular integrations for {useCase.name}</CardTitle>
                 <CardDescription>
-                  Tools that work well with linear.gratis
+                  Tools that work well with linear.dude.fi
                 </CardDescription>
               </CardHeader>
               <CardContent>

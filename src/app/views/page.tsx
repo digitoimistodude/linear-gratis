@@ -490,6 +490,9 @@ export default function PublicViewsPage() {
 
     setShowEditView(true);
     setShowCreateView(false);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const updateView = async () => {
@@ -515,9 +518,20 @@ export default function PublicViewsPage() {
           setSubmitting(false);
           return;
         }
-        const selectedProjectData = selectedProjectIds.map((id) =>
-          projects.find((p) => p.id === id),
+        // Fall back to the existing view's names when the projects list failed to
+        // load — otherwise edits get blocked anytime the Linear API is unreachable.
+        const existingNameById = new Map(
+          (editingView.project_ids ?? []).map((id, i) => [id, editingView.project_names?.[i] ?? '']),
         );
+        if (editingView.project_id && editingView.project_name && !existingNameById.has(editingView.project_id)) {
+          existingNameById.set(editingView.project_id, editingView.project_name);
+        }
+        const selectedProjectData = selectedProjectIds.map((id) => {
+          const fromList = projects.find((p) => p.id === id);
+          if (fromList) return fromList;
+          const fallbackName = existingNameById.get(id);
+          return fallbackName ? { id, name: fallbackName } : undefined;
+        });
         if (selectedProjectData.some((p) => !p)) {
           setMessage({ type: "error", text: "One or more selected projects are invalid" });
           setSubmitting(false);
@@ -532,7 +546,10 @@ export default function PublicViewsPage() {
           team_name: null,
         };
       } else {
-        const selectedTeamData = teams.find((t) => t.id === selectedTeam);
+        const selectedTeamData = teams.find((t) => t.id === selectedTeam)
+          ?? (editingView.team_id === selectedTeam && editingView.team_name
+            ? { id: selectedTeam, name: editingView.team_name }
+            : undefined);
         if (!selectedTeamData) {
           setMessage({ type: "error", text: "Please select a team" });
           setSubmitting(false);

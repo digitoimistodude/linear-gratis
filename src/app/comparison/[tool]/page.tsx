@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: ComparisonPageProps): Promise
 
   if (!tool) {
     return {
-      title: 'Tool not found | linear.gratis'
+      title: 'Tool not found | linear.dude.fi'
     }
   }
 
@@ -86,14 +86,14 @@ export default async function ComparisonPage({ params }: ComparisonPageProps) {
         <div className="container mx-auto px-6 py-12">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl font-bold mb-4">
-              {tool.name} vs linear.gratis
+              {tool.name} vs linear.dude.fi
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Compare {tool.name} and linear.gratis for Linear customer feedback collection.
+              Compare {tool.name} and linear.dude.fi for Linear customer feedback collection.
             </p>
             <Button asChild size="lg">
               <Link href="/login">
-                Start free with linear.gratis
+                Start free with linear.dude.fi
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

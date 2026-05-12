@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, Settings, Zap, Users, Target, FileText } from 'lucide-react'
 
 export const metadata: Metadata = createMetadata({
-  title: 'Linear form templates: Bug reports, feedback & more | linear.gratis',
+  title: 'Linear form templates: Bug reports, feedback & more | linear.dude.fi',
   description: 'Free Linear form templates for bug reports, feature requests, customer feedback, and support tickets. Ready-to-use templates with Linear integration.',
   keywords: [
     'Linear templates',
@@ -17,7 +17,7 @@ export const metadata: Metadata = createMetadata({
     'feature request template',
     'customer feedback template',
     'support ticket template',
-    'linear.gratis',
+    'linear.dude.fi',
   ],
   canonical: '/templates',
 })
@@ -56,7 +56,7 @@ export default function TemplatesPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-xl font-semibold">
-              linear.gratis
+              linear.dude.fi
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/use-cases" className="text-sm text-muted-foreground hover:text-foreground">

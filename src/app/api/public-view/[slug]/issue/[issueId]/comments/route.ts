@@ -202,7 +202,7 @@ export async function POST(
 
     // Sync comment to Linear
     try {
-      const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
+      const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.dude.fi';
       const urlSuffix = issueIdentifier || issueId;
       const viewUrl = `https://${appDomain}/view/${view.slug}/${urlSuffix}`;
 

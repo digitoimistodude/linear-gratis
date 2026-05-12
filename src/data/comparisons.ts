@@ -119,10 +119,10 @@ export const comparisonTools: Record<string, ComparisonTool> = {
 }
 
 export const linearGratis: ComparisonTool = {
-  name: 'linear.gratis',
+  name: 'linear.dude.fi',
   slug: 'linear-gratis',
   tagline: 'Free Linear customer feedback forms',
-  website: 'https://linear.gratis',
+  website: 'https://linear.dude.fi',
   pricing: {
     free: true,
     startingPrice: 'Free forever',
@@ -162,5 +162,5 @@ export const linearGratis: ComparisonTool = {
     'Open source advocates'
   ],
   founded: '2024',
-  description: 'linear.gratis is a completely free, open source alternative to paid Linear feedback tools, offering unlimited customer feedback forms, public Linear views, and roadmaps.'
+  description: 'linear.dude.fi is a completely free, open source alternative to paid Linear feedback tools, offering unlimited customer feedback forms, public Linear views, and roadmaps.'
 }

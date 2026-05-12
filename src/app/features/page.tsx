@@ -445,7 +445,7 @@ export default function FeaturesPage() {
           </h1>
 
           <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-            Detailed feature-by-feature comparison of linear.gratis vs SteelSync vs Lindie for Linear feedback collection.
+            Detailed feature-by-feature comparison of linear.dude.fi vs SteelSync vs Lindie for Linear feedback collection.
           </p>
         </div>
       </section>
@@ -464,7 +464,7 @@ export default function FeaturesPage() {
                   <div className="p-6 text-center border-r border-border bg-gradient-to-br from-primary/5 to-primary/10">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-full font-bold text-sm">
                       <Star className="h-4 w-4" />
-                      linear.gratis
+                      linear.dude.fi
                     </div>
                     <div className="mt-2">
                       <div className="text-2xl font-bold text-primary">$0</div>
@@ -564,7 +564,7 @@ export default function FeaturesPage() {
       {/* Summary Section */}
       <section className="container mx-auto px-6 py-16 bg-muted/20">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">The linear.gratis advantage</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">The linear.dude.fi advantage</h2>
 
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowRight, Clock, Star, Zap, Users, Code2, Globe } from 'lucide-react'
 
 export const metadata: Metadata = createMetadata({
-  title: 'Linear integrations: Slack, GitHub, Notion & more | linear.gratis',
+  title: 'Linear integrations: Slack, GitHub, Notion & more | linear.dude.fi',
   description: 'Complete guides for integrating Linear with popular tools. Slack, GitHub, Notion, Zapier, Discord, Teams, webhooks, and API documentation.',
   keywords: [
     'Linear integrations',
@@ -18,7 +18,7 @@ export const metadata: Metadata = createMetadata({
     'Linear API',
     'Linear webhooks',
     'Linear Zapier',
-    'linear.gratis',
+    'linear.dude.fi',
   ],
   canonical: '/integrations',
 })
@@ -56,7 +56,7 @@ export default function IntegrationsPage() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-xl font-semibold">
-              linear.gratis
+              linear.dude.fi
             </Link>
             <div className="flex items-center gap-4">
               <Link href="/use-cases" className="text-sm text-muted-foreground hover:text-foreground">
@@ -327,7 +327,7 @@ export default function IntegrationsPage() {
                 Ready to supercharge your Linear workflow?
               </h2>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Start with linear.gratis and connect your favourite tools. Most integrations
+                Start with linear.dude.fi and connect your favourite tools. Most integrations
                 work out of the box with your existing Linear setup.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

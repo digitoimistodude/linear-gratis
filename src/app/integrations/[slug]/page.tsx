@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: IntegrationPageProps): Promis
 
   if (!integration) {
     return {
-      title: 'Integration not found | linear.gratis'
+      title: 'Integration not found | linear.dude.fi'
     }
   }
 
@@ -82,7 +82,7 @@ export default async function IntegrationPage({ params }: IntegrationPageProps) 
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <Link href="/" className="text-xl font-semibold">
-                linear.gratis
+                linear.dude.fi
               </Link>
               <div className="flex items-center gap-4">
                 <Link href="/integrations" className="text-sm text-muted-foreground hover:text-foreground">
@@ -380,7 +380,7 @@ export default async function IntegrationPage({ params }: IntegrationPageProps) 
                   Ready to integrate {integration.name}?
                 </h2>
                 <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                  Start with linear.gratis and connect your {integration.name} workflow.
+                  Start with linear.dude.fi and connect your {integration.name} workflow.
                   Free setup, no limits, ready in minutes.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">

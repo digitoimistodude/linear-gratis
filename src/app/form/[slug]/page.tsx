@@ -416,12 +416,12 @@ export default function PublicFormPage() {
                 <p>
                   Powered by{' '}
                   <a
-                    href="https://linear.gratis"
+                    href="https://linear.dude.fi"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
                   >
-                    linear.gratis
+                    linear.dude.fi
                   </a>
                 </p>
               )}

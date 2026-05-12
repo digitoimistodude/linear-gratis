@@ -18,7 +18,7 @@ export interface SeoData {
 }
 
 export function generateMetadata(seoData: SeoData): Metadata {
-  const baseUrl = 'https://linear.gratis'
+  const baseUrl = 'https://linear.dude.fi'
 
   return {
     title: seoData.title,
@@ -43,7 +43,7 @@ export function generateMetadata(seoData: SeoData): Metadata {
       description: seoData.openGraph?.description || seoData.description,
       type: seoData.openGraph?.type || 'website',
       url: seoData.canonical ? `${baseUrl}${seoData.canonical}` : baseUrl,
-      siteName: 'linear.gratis',
+      siteName: 'linear.dude.fi',
       images: seoData.openGraph?.images || [`${baseUrl}/og-image.png`],
     },
     twitter: {
@@ -58,9 +58,9 @@ export function generateMetadata(seoData: SeoData): Metadata {
 
 // Comparison page metadata
 export function generateComparisonMetadata(toolName: string): SeoData {
-  const title = `${toolName} vs Linear: Complete comparison 2025 | linear.gratis`
-  const description = `Compare ${toolName} and Linear for issue tracking and customer feedback. Features, pricing, pros & cons. Free Linear alternative at linear.gratis.`
-  const ogImageUrl = `/api/og?type=comparison&title=${encodeURIComponent(`${toolName} vs linear.gratis`)}&subtitle=${encodeURIComponent(`Compare features, pricing, and capabilities`)}&category=${encodeURIComponent('Tool Comparison')}`
+  const title = `${toolName} vs Linear: Complete comparison 2025 | linear.dude.fi`
+  const description = `Compare ${toolName} and Linear for issue tracking and customer feedback. Features, pricing, pros & cons. Free Linear alternative at linear.dude.fi.`
+  const ogImageUrl = `/api/og?type=comparison&title=${encodeURIComponent(`${toolName} vs linear.dude.fi`)}&subtitle=${encodeURIComponent(`Compare features, pricing, and capabilities`)}&category=${encodeURIComponent('Tool Comparison')}`
 
   return {
     title,
@@ -71,7 +71,7 @@ export function generateComparisonMetadata(toolName: string): SeoData {
       `Linear alternative`,
       `issue tracking comparison`,
       `customer feedback tools`,
-      'linear.gratis',
+      'linear.dude.fi',
       'free Linear',
     ],
     canonical: `/comparison/${toolName.toLowerCase()}`,
@@ -86,8 +86,8 @@ export function generateComparisonMetadata(toolName: string): SeoData {
 
 // Use case page metadata
 export function generateUseCaseMetadata(industry: string): SeoData {
-  const title = `Linear for ${industry}: Complete setup guide 2025 | linear.gratis`
-  const description = `How to use Linear for ${industry} teams. Templates, workflows, and best practices. Get started with free Linear forms at linear.gratis.`
+  const title = `Linear for ${industry}: Complete setup guide 2025 | linear.dude.fi`
+  const description = `How to use Linear for ${industry} teams. Templates, workflows, and best practices. Get started with free Linear forms at linear.dude.fi.`
   const ogImageUrl = `/api/og?type=use-case&title=${encodeURIComponent(`Linear for ${industry}`)}&subtitle=${encodeURIComponent(`Templates, workflows, and best practices`)}&category=${encodeURIComponent('Use Case Guide')}`
 
   return {
@@ -98,7 +98,7 @@ export function generateUseCaseMetadata(industry: string): SeoData {
       `${industry} project management`,
       `${industry} issue tracking`,
       `Linear workflows ${industry}`,
-      'linear.gratis',
+      'linear.dude.fi',
       'Linear templates',
     ],
     canonical: `/use-cases/${industry.toLowerCase()}`,
@@ -113,8 +113,8 @@ export function generateUseCaseMetadata(industry: string): SeoData {
 
 // Integration guide metadata
 export function generateIntegrationMetadata(toolName: string): SeoData {
-  const title = `Linear + ${toolName} integration: Complete guide 2025 | linear.gratis`
-  const description = `Connect Linear with ${toolName}. Step-by-step integration guide, automation ideas, and best practices. Start with linear.gratis.`
+  const title = `Linear + ${toolName} integration: Complete guide 2025 | linear.dude.fi`
+  const description = `Connect Linear with ${toolName}. Step-by-step integration guide, automation ideas, and best practices. Start with linear.dude.fi.`
   const ogImageUrl = `/api/og?type=integration&title=${encodeURIComponent(`Linear + ${toolName}`)}&subtitle=${encodeURIComponent(`Complete integration guide and setup`)}&category=${encodeURIComponent('Integration Guide')}`
 
   return {
@@ -125,7 +125,7 @@ export function generateIntegrationMetadata(toolName: string): SeoData {
       `${toolName} Linear`,
       'Linear integrations',
       'Linear automation',
-      'linear.gratis',
+      'linear.dude.fi',
       `connect Linear ${toolName}`,
     ],
     canonical: `/integrations/${toolName.toLowerCase()}`,
@@ -140,8 +140,8 @@ export function generateIntegrationMetadata(toolName: string): SeoData {
 
 // Template page metadata
 export function generateTemplateMetadata(templateType: string): SeoData {
-  const title = `${templateType} template for Linear: Free forms | linear.gratis`
-  const description = `Free ${templateType} template for Linear. Pre-built forms and workflows. Get started instantly with linear.gratis.`
+  const title = `${templateType} template for Linear: Free forms | linear.dude.fi`
+  const description = `Free ${templateType} template for Linear. Pre-built forms and workflows. Get started instantly with linear.dude.fi.`
   const ogImageUrl = `/api/og?type=template&title=${encodeURIComponent(`${templateType} Template`)}&subtitle=${encodeURIComponent(`Ready-to-use Linear form template`)}&category=${encodeURIComponent('Form Template')}`
 
   return {
@@ -152,7 +152,7 @@ export function generateTemplateMetadata(templateType: string): SeoData {
       `Linear ${templateType}`,
       'Linear templates',
       'Linear forms',
-      'linear.gratis',
+      'linear.dude.fi',
       'free Linear templates',
     ],
     canonical: `/templates/${templateType.toLowerCase().replace(/\s+/g, '-')}`,

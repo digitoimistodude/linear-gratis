@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: TemplatePageProps): Promise<M
 
   if (!template) {
     return {
-      title: 'Template not found | linear.gratis'
+      title: 'Template not found | linear.dude.fi'
     }
   }
 
@@ -83,7 +83,7 @@ export default async function TemplatePage({ params }: TemplatePageProps) {
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <Link href="/" className="text-xl font-semibold">
-                linear.gratis
+                linear.dude.fi
               </Link>
               <div className="flex items-center gap-4">
                 <Link href="/templates" className="text-sm text-muted-foreground hover:text-foreground">

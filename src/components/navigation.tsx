@@ -72,7 +72,7 @@ export function Navigation() {
 
     return (
       <Link href="/" className="text-base font-semibold hover:text-primary transition-colors duration-200">
-        linear.gratis
+        linear.dude.fi
       </Link>
     )
   }
@@ -81,7 +81,7 @@ export function Navigation() {
     return (
       <nav className="border-b border-border/50 bg-card/80 backdrop-blur-sm px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-semibold">linear.gratis</h1>
+          <h1 className="text-xl font-semibold">linear.dude.fi</h1>
           <div className="text-sm text-muted-foreground">Loading...</div>
         </div>
       </nav>

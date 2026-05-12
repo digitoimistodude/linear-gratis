@@ -12,10 +12,10 @@ export function generateOrganizationSchema(): StructuredData {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'linear.gratis',
+    name: 'linear.dude.fi',
     alternateName: 'Linear Gratis',
-    url: 'https://linear.gratis',
-    logo: 'https://linear.gratis/logo.png',
+    url: 'https://linear.dude.fi',
+    logo: 'https://linear.dude.fi/logo.png',
     description: 'Free Linear customer feedback forms and public views. Open source alternative to SteelSync and Lindie.',
     foundingDate: '2024',
     sameAs: [
@@ -24,7 +24,7 @@ export function generateOrganizationSchema(): StructuredData {
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'Customer Service',
-      url: 'https://linear.gratis/contact'
+      url: 'https://linear.dude.fi/contact'
     }
   }
 }
@@ -34,14 +34,14 @@ export function generateWebsiteSchema(): StructuredData {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'linear.gratis',
-    url: 'https://linear.gratis',
+    name: 'linear.dude.fi',
+    url: 'https://linear.dude.fi',
     description: 'Free Linear customer feedback forms. Open source alternative to paid Linear integrations.',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: 'https://linear.gratis/search?q={search_term_string}'
+        urlTemplate: 'https://linear.dude.fi/search?q={search_term_string}'
       },
       'query-input': 'required name=search_term_string'
     }
@@ -53,7 +53,7 @@ export function generateSoftwareApplicationSchema(): StructuredData {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'linear.gratis',
+    name: 'linear.dude.fi',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web Browser',
     offers: {
@@ -71,7 +71,7 @@ export function generateSoftwareApplicationSchema(): StructuredData {
       'No user limits',
       'Open source'
     ],
-    screenshot: 'https://linear.gratis/screenshot.png',
+    screenshot: 'https://linear.dude.fi/screenshot.png',
     softwareVersion: '1.0',
     datePublished: '2024-01-01',
     author: {
@@ -87,34 +87,34 @@ export function generateComparisonArticleSchema(tool: ComparisonTool): Structure
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${tool.name} vs linear.gratis: Complete comparison 2025`,
-    description: `Compare ${tool.name} and linear.gratis for Linear customer feedback collection. Features, pricing, pros & cons analysis.`,
+    headline: `${tool.name} vs linear.dude.fi: Complete comparison 2025`,
+    description: `Compare ${tool.name} and linear.dude.fi for Linear customer feedback collection. Features, pricing, pros & cons analysis.`,
     author: {
       '@type': 'Organization',
-      name: 'linear.gratis'
+      name: 'linear.dude.fi'
     },
     publisher: {
       '@type': 'Organization',
-      name: 'linear.gratis',
+      name: 'linear.dude.fi',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://linear.gratis/logo.png'
+        url: 'https://linear.dude.fi/logo.png'
       }
     },
     datePublished: '2024-01-01',
     dateModified: new Date().toISOString(),
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://linear.gratis/comparison/${tool.slug}`
+      '@id': `https://linear.dude.fi/comparison/${tool.slug}`
     },
-    image: `https://linear.gratis/og-comparison-${tool.slug}.png`,
+    image: `https://linear.dude.fi/og-comparison-${tool.slug}.png`,
     articleSection: 'Tool Comparison',
     keywords: [
       `${tool.name} vs Linear`,
       `${tool.name} alternative`,
       'Linear feedback tools',
       'customer feedback comparison',
-      'linear.gratis'
+      'linear.dude.fi'
     ]
   }
 }
@@ -146,14 +146,14 @@ export function generateProductComparisonSchema(tool: ComparisonTool): Structure
         '@type': 'Review',
         author: {
           '@type': 'Organization',
-          name: 'linear.gratis'
+          name: 'linear.dude.fi'
         },
         reviewRating: {
           '@type': 'Rating',
           ratingValue: '4',
           bestRating: '5'
         },
-        reviewBody: `${tool.name} is ${tool.bestFor[0]?.toLowerCase() || 'a good choice for teams'} but consider linear.gratis for a free alternative.`
+        reviewBody: `${tool.name} is ${tool.bestFor[0]?.toLowerCase() || 'a good choice for teams'} but consider linear.dude.fi for a free alternative.`
       }
     ]
   }
@@ -167,18 +167,18 @@ export function generateFAQSchema(tool: ComparisonTool): StructuredData {
     mainEntity: [
       {
         '@type': 'Question',
-        name: `Is ${tool.name} better than linear.gratis?`,
+        name: `Is ${tool.name} better than linear.dude.fi?`,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `${tool.name} ${tool.pros[0]?.toLowerCase() || 'has its strengths'}, but linear.gratis is completely free and open source, making it ideal for budget-conscious teams.`
+          text: `${tool.name} ${tool.pros[0]?.toLowerCase() || 'has its strengths'}, but linear.dude.fi is completely free and open source, making it ideal for budget-conscious teams.`
         }
       },
       {
         '@type': 'Question',
-        name: `How much does ${tool.name} cost compared to linear.gratis?`,
+        name: `How much does ${tool.name} cost compared to linear.dude.fi?`,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `${tool.name} costs ${tool.pricing.startingPrice} while linear.gratis is completely free forever with no hidden costs or limits.`
+          text: `${tool.name} costs ${tool.pricing.startingPrice} while linear.dude.fi is completely free forever with no hidden costs or limits.`
         }
       },
       {
@@ -186,7 +186,7 @@ export function generateFAQSchema(tool: ComparisonTool): StructuredData {
         name: 'What are the main differences?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `The main differences are pricing (${tool.name}: ${tool.pricing.startingPrice}, linear.gratis: free), features, and target audience. linear.gratis focuses on Linear integration specifically.`
+          text: `The main differences are pricing (${tool.name}: ${tool.pricing.startingPrice}, linear.dude.fi: free), features, and target audience. linear.dude.fi focuses on Linear integration specifically.`
         }
       }
     ]
@@ -197,7 +197,7 @@ export function generateFAQSchema(tool: ComparisonTool): StructuredData {
 export function generateBreadcrumbSchema(path: string): StructuredData {
   const pathSegments = path.split('/').filter(Boolean)
   const breadcrumbs = [
-    { name: 'Home', url: 'https://linear.gratis' }
+    { name: 'Home', url: 'https://linear.dude.fi' }
   ]
 
   let currentPath = ''
@@ -213,7 +213,7 @@ export function generateBreadcrumbSchema(path: string): StructuredData {
 
     breadcrumbs.push({
       name,
-      url: `https://linear.gratis${currentPath}`
+      url: `https://linear.dude.fi${currentPath}`
     })
   })
 

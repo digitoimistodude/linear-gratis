@@ -39,7 +39,7 @@ export async function POST(
     let domain = initialDomain;
 
     try {
-      const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
+      const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.dude.fi';
 
       // If no Cloudflare hostname ID, something went wrong during creation - try to create now
       if (!domain.cloudflare_hostname_id) {

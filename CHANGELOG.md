@@ -1,3 +1,9 @@
+### 0.5.5: 2026-05-12
+
+* Rebrand all user-facing `linear.gratis` mentions to `linear.dude.fi` (dude-specific change)
+* Fix edit view save failing with "One or more selected projects are invalid" when the Linear projects fetch had errored - fall back to the existing view's project/team names so editing keeps working offline (`fix/edit-view-resilient-to-linear-failure`)
+* Scroll to top when opening the edit view form so the form is actually visible (`fix/edit-view-resilient-to-linear-failure`)
+
 ### 0.5.4: 2026-04-21
 
 * Accept Linear webhooks even when signature verification fails so real-time keeps working; log the mismatch as a warning (dude-specific change)

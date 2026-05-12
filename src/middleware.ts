@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
 
   // Check if this is a custom domain (not the main domain)
   const mainDomains = [
-    'linear.gratis',
+    'linear.dude.fi',
     'localhost:3000',
     'localhost',
     'workers.dev', // Cloudflare Workers dev domains

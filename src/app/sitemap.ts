@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import { comparisonTools } from '@/data/comparisons'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://linear.gratis'
+  const baseUrl = 'https://linear.dude.fi'
 
   // Static pages
   const staticPages = [

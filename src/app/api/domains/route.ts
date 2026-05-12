@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build DNS records from Cloudflare's response
-    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.dude.fi';
     const dns_records: Array<{ type: string; name: string; value: string; purpose: string }> = [
       {
         type: 'CNAME',

@@ -745,12 +745,12 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
                 <p className="text-xs text-muted-foreground">
                   {branding?.footer_text ? 'Powered by ' : 'Create your own at '}
                   <a
-                    href="https://linear.gratis"
+                    href="https://linear.dude.fi"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline transition-colors"
                   >
-                    linear.gratis
+                    linear.dude.fi
                   </a>
                 </p>
               )}

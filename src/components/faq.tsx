@@ -16,7 +16,7 @@ const faqs = [
       'You create a personal API token in Linear\'s settings. We use it to read your projects and issues. The token only has read access unless you enable issue creation on your public views.',
   },
   {
-    question: 'What happens if linear.gratis shuts down?',
+    question: 'What happens if linear.dude.fi shuts down?',
     answer:
       'We\'re fully open source. You can self-host the entire platform, and your data stays in your Linear workspace. There\'s no lock-in – your Linear data is always yours.',
   },

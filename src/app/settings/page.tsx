@@ -358,7 +358,7 @@ function SettingsContent() {
           <CardHeader>
             <CardTitle>Shared Linear API token</CardTitle>
             <CardDescription>
-              Set a workspace-wide Linear API token so all team members can use linear.gratis without configuring their own personal token. When set, this token is used instead of per-user tokens for all Linear API calls (fetching issues, creating issues, syncing comments, etc).
+              Set a workspace-wide Linear API token so all team members can use linear.dude.fi without configuring their own personal token. When set, this token is used instead of per-user tokens for all Linear API calls (fetching issues, creating issues, syncing comments, etc).
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -391,7 +391,7 @@ function SettingsContent() {
                       </a>
                     </li>
                     <li>Click &quot;Create personal API key&quot;</li>
-                    <li>Give it a name (e.g. &quot;linear.gratis shared&quot;)</li>
+                    <li>Give it a name (e.g. &quot;linear.dude.fi shared&quot;)</li>
                     <li>Copy the token and paste it below</li>
                   </ol>
                 </div>

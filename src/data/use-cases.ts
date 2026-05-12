@@ -95,7 +95,7 @@ export const useCases: Record<string, UseCase> = {
     successStory: {
       company: 'TechFlow SaaS',
       result: '60% faster feature delivery and 45% increase in customer satisfaction',
-      quote: 'linear.gratis transformed how we collect and act on customer feedback. Our customers love the transparency.'
+      quote: 'linear.dude.fi transformed how we collect and act on customer feedback. Our customers love the transparency.'
     }
   },
   agencies: {
@@ -185,7 +185,7 @@ export const useCases: Record<string, UseCase> = {
       'Difficulty prioritising features with limited resources'
     ],
     solutions: [
-      'Free Linear feedback collection with linear.gratis',
+      'Free Linear feedback collection with linear.dude.fi',
       'User-facing feedback forms and feature voting',
       'Public roadmap sharing for user engagement',
       'Rapid feedback-to-development cycles',
@@ -241,7 +241,7 @@ export const useCases: Record<string, UseCase> = {
     successStory: {
       company: 'InnovateNow Startup',
       result: 'Achieved product-market fit 40% faster with structured user feedback',
-      quote: 'linear.gratis was essential for our early feedback collection. We built exactly what our users needed.'
+      quote: 'linear.dude.fi was essential for our early feedback collection. We built exactly what our users needed.'
     }
   },
   ecommerce: {
@@ -387,7 +387,7 @@ export const useCases: Record<string, UseCase> = {
     successStory: {
       company: 'Strategy Plus Consulting',
       result: '40% improvement in client satisfaction scores and 25% faster project delivery',
-      quote: 'linear.gratis transformed our client communication. Projects run smoother and clients are happier.'
+      quote: 'linear.dude.fi transformed our client communication. Projects run smoother and clients are happier.'
     }
   },
   nonprofits: {
@@ -404,7 +404,7 @@ export const useCases: Record<string, UseCase> = {
       'Lack of transparency in program development'
     ],
     solutions: [
-      'Free community feedback collection with linear.gratis',
+      'Free community feedback collection with linear.dude.fi',
       'Public program dashboards for transparency',
       'Structured stakeholder engagement processes',
       'Community-driven program improvement',
@@ -460,7 +460,7 @@ export const useCases: Record<string, UseCase> = {
     successStory: {
       company: 'Community Impact Nonprofit',
       result: '60% increase in community engagement and 45% improvement in program effectiveness',
-      quote: 'linear.gratis helped us listen to our community better and build programs they actually need.'
+      quote: 'linear.dude.fi helped us listen to our community better and build programs they actually need.'
     }
   }
 }

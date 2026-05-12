@@ -8,7 +8,7 @@ interface ProductPreviewProps {
   url?: string
 }
 
-export function ProductPreview({ children, className, url = 'linear.gratis/view/your-project' }: ProductPreviewProps) {
+export function ProductPreview({ children, className, url = 'linear.dude.fi/view/your-project' }: ProductPreviewProps) {
   return (
     <div
       className={cn(

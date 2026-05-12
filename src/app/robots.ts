@@ -24,6 +24,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/',
       },
     ],
-    sitemap: 'https://linear.gratis/sitemap.xml',
+    sitemap: 'https://linear.dude.fi/sitemap.xml',
   }
 }
