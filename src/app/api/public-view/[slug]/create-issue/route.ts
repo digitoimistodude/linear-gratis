@@ -203,22 +203,19 @@ export async function POST(
     // Fetch team metadata directly from Linear API
     const teamMetadata = await fetchTeamMetadata(decryptedToken, viewData.team_id);
 
-    // Determine the correct state for public issue creation
-    // Priority: 1) Triage state if enabled, 2) First unstarted state, 3) First available state
+    // Determine the correct state for public issue creation.
+    // When triage is enabled we omit stateId entirely so Linear auto-routes
+    // the new issue into the team's triage queue - matches Linear's docs and
+    // avoids relying on `triageIssueState.id` which may be stale or null.
     let finalStateId: string | undefined = undefined;
 
-    if (teamMetadata?.triageEnabled && teamMetadata?.triageIssueState) {
-      // Force triage state when triage is enabled
-      finalStateId = teamMetadata.triageIssueState.id;
-    } else if (teamMetadata?.states?.nodes) {
-      // Fall back to unstarted state
+    if (!teamMetadata?.triageEnabled && teamMetadata?.states?.nodes) {
       const unstartedState = teamMetadata.states.nodes.find(
         (s: WorkflowState) => s.type === 'unstarted'
       );
       if (unstartedState) {
         finalStateId = unstartedState.id;
       } else if (teamMetadata.states.nodes.length > 0) {
-        // Last resort: use first available state
         finalStateId = teamMetadata.states.nodes[0].id;
       }
     }
