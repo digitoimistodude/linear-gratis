@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { notFound } from 'next/navigation'
 import { KanbanBoard } from '@/components/kanban-board'
 import { FilterDropdown, FilterState, generateFilterOptions, FilterOptions } from '@/components/filter-dropdown'
+import { SortDropdown, SortKey, SORT_OPTIONS, DEFAULT_SORT, sortIssues } from '@/components/sort-dropdown'
 import { IssueCreationModal } from '@/components/issue-creation-modal'
 import { IssueDetailModal } from '@/components/issue-detail-modal'
 import { ProjectUpdatesModal } from '@/components/project-updates-modal'
@@ -51,6 +52,9 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
   const [defaultStateName, setDefaultStateName] = useState<string | undefined>(undefined)
   const filterButtonRef = useRef<HTMLButtonElement>(null)
+  const [sort, setSort] = useState<SortKey>(DEFAULT_SORT)
+  const [showSortDropdown, setShowSortDropdown] = useState(false)
+  const sortButtonRef = useRef<HTMLButtonElement>(null)
 
   // Load branding settings for this view's owner
   const { branding } = useBrandingSettings(view?.user_id || null)
@@ -401,6 +405,32 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
               triggerRef={filterButtonRef}
             />
 
+            <div className="relative">
+              <button
+                ref={sortButtonRef}
+                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  showSortDropdown
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                }`}
+              >
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M3 2.75a.75.75 0 0 1 1.5 0v9.69l1.97-1.97a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L.97 11.53a.75.75 0 1 1 1.06-1.06L3 11.44V2.75ZM9 3.5a.75.75 0 0 1 .75-.75h5.5a.75.75 0 0 1 0 1.5h-5.5A.75.75 0 0 1 9 3.5ZM9 7.5A.75.75 0 0 1 9.75 6.75h3.5a.75.75 0 0 1 0 1.5h-3.5A.75.75 0 0 1 9 7.5ZM9.75 10.75a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5Z"/>
+                </svg>
+                <span className="hidden sm:inline">
+                  {SORT_OPTIONS.find((o) => o.key === sort)?.label ?? 'Sort'}
+                </span>
+              </button>
+              <SortDropdown
+                isOpen={showSortDropdown}
+                onClose={() => setShowSortDropdown(false)}
+                sort={sort}
+                onSortChange={setSort}
+                triggerRef={sortButtonRef}
+              />
+            </div>
+
             {/* Active filter indicators */}
             {hasActiveFilters() && (
               <div className="flex items-center gap-2 text-xs">
@@ -476,7 +506,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           <div className="linear-fade-in">
             {/* Linear-style Kanban Board */}
             <KanbanBoard
-              issues={issues}
+              issues={sortIssues(issues, sort)}
               showAssignees={view.show_assignees}
               showLabels={view.show_labels}
               showPriorities={view.show_priorities}

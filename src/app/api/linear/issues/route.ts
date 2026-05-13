@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       query Issues($after: String, $filter: IssueFilter) {
         issues(
           filter: $filter
-          orderBy: updatedAt
+          orderBy: createdAt
           first: 250
           after: $after
         ) {
