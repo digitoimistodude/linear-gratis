@@ -348,7 +348,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   // already show), refetch the view data. This replaces polling.
   useEffect(() => {
     if (!view?.id) return
-    const channel = supabase.channel('linear-updates')
+    const channel = supabase.channel('linear-updates', { config: { broadcast: { self: false } } })
     channel
       .on('broadcast', { event: 'update' }, ({ payload }) => {
         const p = payload as { issueId?: string; teamId?: string; projectId?: string }
@@ -370,7 +370,11 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           setModalReloadKey((k) => k + 1)
         }
       })
-      .subscribe()
+      .subscribe((status, err) => {
+        if (status !== 'SUBSCRIBED') {
+          console.warn('[linear-updates] subscribe status', status, err)
+        }
+      })
     return () => {
       supabase.removeChannel(channel)
     }

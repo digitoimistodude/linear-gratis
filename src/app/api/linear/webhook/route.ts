@@ -125,6 +125,8 @@ export async function POST(request: NextRequest) {
           {
             topic: 'linear-updates',
             event: 'update',
+            // Public channel so unauthenticated viewers receive the broadcast.
+            private: false,
             payload: {
               action: payload.action,
               type: payload.type,
