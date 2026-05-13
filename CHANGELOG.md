@@ -1,3 +1,8 @@
+### 0.6.2: 2026-05-13
+
+* Add Linear-style Sort dropdown to public views (Last created, First created, Last updated, First updated, Priority, Title) with `createdAt-desc` as the default and `orderBy: createdAt` on the issues query (`feature/view-sort-options`)
+* Persist sort choice in the URL and localStorage so reloads and shared links keep the same ordering (dude-specific change)
+
 ### 0.6.1: 2026-05-12
 
 * Omit stateId on customer issue create when team has triage enabled so Linear auto-routes new issues into the triage queue (`feature/customer-issue-triage-routing`)

@@ -65,8 +65,19 @@ const filtersAreEmpty = (filters: FilterState): boolean =>
   filters.creators.length === 0 &&
   filters.projects.length === 0
 
-const storageKey = (slug: string, kind: 'filters' | 'password') =>
+const storageKey = (slug: string, kind: 'filters' | 'password' | 'sort') =>
   `public-view-${kind}:${slug}`
+
+const SORT_KEYS: SortKey[] = [
+  'createdAt-desc',
+  'createdAt-asc',
+  'updatedAt-desc',
+  'updatedAt-asc',
+  'priority-asc',
+  'title-asc',
+]
+const isValidSort = (value: string | null | undefined): value is SortKey =>
+  !!value && (SORT_KEYS as string[]).includes(value)
 
 export default function PublicViewPage({ params }: PublicViewPageProps) {
   const [view, setView] = useState<PublicView | null>(null)
@@ -185,6 +196,13 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           setFilters({ ...EMPTY_FILTERS, ...parsed })
         }
       }
+      const sortFromUrl = urlParams.get('sort')
+      if (isValidSort(sortFromUrl)) {
+        setSort(sortFromUrl)
+      } else {
+        const storedSort = window.localStorage.getItem(storageKey(slug, 'sort'))
+        if (isValidSort(storedSort)) setSort(storedSort)
+      }
     } catch (err) {
       console.error('Failed to hydrate filters:', err)
     } finally {
@@ -198,7 +216,9 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
   useEffect(() => {
     if (!slug || !filtersHydrated.current) return
     try {
-      const search = filtersToSearchParams(filters).toString()
+      const params = filtersToSearchParams(filters)
+      if (sort !== DEFAULT_SORT) params.set('sort', sort)
+      const search = params.toString()
       const newUrl = search
         ? `${window.location.pathname}?${search}`
         : window.location.pathname
@@ -210,10 +230,15 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       } else {
         window.localStorage.setItem(storageKey(slug, 'filters'), JSON.stringify(filters))
       }
+      if (sort === DEFAULT_SORT) {
+        window.localStorage.removeItem(storageKey(slug, 'sort'))
+      } else {
+        window.localStorage.setItem(storageKey(slug, 'sort'), sort)
+      }
     } catch (err) {
       console.error('Failed to persist filters:', err)
     }
-  }, [filters, slug])
+  }, [filters, sort, slug])
 
   const loadView = async (providedPassword?: string) => {
     if (!slug) return
