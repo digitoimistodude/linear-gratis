@@ -1,3 +1,8 @@
+### 0.6.3: 2026-05-15
+
+* Add a "paste SVG markup" textarea to branding admin alongside file upload and URL, render inline on public view header and navigation, sanitize on save and at render (`feature/branding-logo-svg`)
+* Run migration `018_add_logo_svg.sql` in Supabase before deploying
+
 ### 0.6.2: 2026-05-13
 
 * Add Linear-style Sort dropdown to public views (Last created, First created, Last updated, First updated, Priority, Title) with `createdAt-desc` as the default and `orderBy: createdAt` on the issues query (`feature/view-sort-options`)
