@@ -568,12 +568,14 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           {/* Left side - Brand logo or team name */}
           <div className="flex items-center gap-3 sm:gap-6 max-w-[50%] min-w-0">
             <div className="flex items-center gap-2 min-w-0">
-              {branding?.logo_svg ? (
+              {(view.branding_logo_svg || branding?.logo_svg) ? (
                 <div
-                  aria-label={branding.brand_name || 'Logo'}
+                  aria-label={branding?.brand_name || 'Logo'}
                   className="flex-shrink-0 flex items-center"
-                  style={{ maxHeight: `${branding.logo_height || 40}px` }}
-                  dangerouslySetInnerHTML={{ __html: sanitizeSvgMarkup(branding.logo_svg) }}
+                  style={{ maxHeight: `${branding?.logo_height || 40}px` }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeSvgMarkup(view.branding_logo_svg || branding?.logo_svg),
+                  }}
                 />
               ) : (view.branding_logo_url || branding?.logo_url) ? (
                 // eslint-disable-next-line @next/next/no-img-element -- user-provided URL, domain not known at build time

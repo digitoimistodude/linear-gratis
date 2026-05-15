@@ -73,6 +73,8 @@ export default function PublicViewsPage() {
   const [showEditView, setShowEditView] = useState(false);
   const [allowIssueCreation, setAllowIssueCreation] = useState(false);
   const [brandingLogoUrl, setBrandingLogoUrl] = useState("");
+  const [brandingLogoSvg, setBrandingLogoSvg] = useState("");
+  const [brandingLogoUploading, setBrandingLogoUploading] = useState(false);
   const [brandingPrimaryColor, setBrandingPrimaryColor] = useState("");
   const [showComments, setShowComments] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
@@ -185,6 +187,45 @@ export default function PublicViewsPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourcesFetched, sourcesLoading, linearToken]);
+
+  const handleBrandingLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setBrandingLogoUploading(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      if (!token) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "logo");
+
+      const response = await fetch("/api/branding/upload-logo", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as { url: string };
+        setBrandingLogoUrl(data.url);
+      } else {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        toast.error(data.error || "Failed to upload logo");
+      }
+    } catch (error) {
+      console.error("Failed to upload logo:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to upload logo");
+    } finally {
+      setBrandingLogoUploading(false);
+      event.target.value = "";
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -325,6 +366,7 @@ export default function PublicViewsPage() {
         is_active: true,
         allow_issue_creation: allowIssueCreation,
         branding_logo_url: brandingLogoUrl || null,
+        branding_logo_svg: brandingLogoSvg || null,
         branding_primary_color: brandingPrimaryColor || null,
         show_project_updates: showProjectUpdates,
         excluded_issue_ids: excludedIssueIds,
@@ -412,6 +454,7 @@ export default function PublicViewsPage() {
     setPassword("");
     setAllowIssueCreation(false);
     setBrandingLogoUrl("");
+    setBrandingLogoSvg("");
     setBrandingPrimaryColor("");
     setShowComments(false);
     setShowActivity(false);
@@ -469,6 +512,7 @@ export default function PublicViewsPage() {
     setPassword("");
     setAllowIssueCreation(view.allow_issue_creation || false);
     setBrandingLogoUrl(view.branding_logo_url || "");
+    setBrandingLogoSvg(view.branding_logo_svg || "");
     setBrandingPrimaryColor(view.branding_primary_color || "");
     setShowComments(view.show_comments ?? false);
     setShowActivity(view.show_activity ?? false);
@@ -599,6 +643,7 @@ export default function PublicViewsPage() {
           show_descriptions: showDescriptions,
           show_labels: showLabels,
           branding_logo_url: brandingLogoUrl || null,
+          branding_logo_svg: brandingLogoSvg || null,
           branding_primary_color: brandingPrimaryColor || null,
           show_comments: showComments,
           show_activity: showActivity,
@@ -935,8 +980,23 @@ export default function PublicViewsPage() {
                         value={brandingLogoUrl}
                         onChange={(e) => setBrandingLogoUrl(e.target.value)}
                       />
+                      <Input
+                        id="branding-logo-upload"
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                        onChange={handleBrandingLogoUpload}
+                        disabled={brandingLogoUploading}
+                      />
+                      <Textarea
+                        id="branding-logo-svg"
+                        value={brandingLogoSvg}
+                        onChange={(e) => setBrandingLogoSvg(e.target.value)}
+                        placeholder="Or paste SVG markup: <svg viewBox='0 0 100 40' xmlns='http://www.w3.org/2000/svg'>...</svg>"
+                        rows={3}
+                        className="font-mono text-xs"
+                      />
                       <p className="text-xs text-muted-foreground">
-                        Overrides the global branding logo for this view
+                        Pasted SVG takes precedence over URL/upload. Overrides workspace branding for this view.
                       </p>
                     </div>
 
@@ -1350,8 +1410,23 @@ export default function PublicViewsPage() {
                         value={brandingLogoUrl}
                         onChange={(e) => setBrandingLogoUrl(e.target.value)}
                       />
+                      <Input
+                        id="edit-branding-logo-upload"
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                        onChange={handleBrandingLogoUpload}
+                        disabled={brandingLogoUploading}
+                      />
+                      <Textarea
+                        id="edit-branding-logo-svg"
+                        value={brandingLogoSvg}
+                        onChange={(e) => setBrandingLogoSvg(e.target.value)}
+                        placeholder="Or paste SVG markup: <svg viewBox='0 0 100 40' xmlns='http://www.w3.org/2000/svg'>...</svg>"
+                        rows={3}
+                        className="font-mono text-xs"
+                      />
                       <p className="text-xs text-muted-foreground">
-                        Overrides the global branding logo for this view
+                        Pasted SVG takes precedence over URL/upload. Overrides workspace branding for this view.
                       </p>
                     </div>
 

@@ -76,6 +76,7 @@ export type PublicView = {
   allow_customer_comments: boolean
   show_sub_issues: boolean
   branding_logo_url?: string
+  branding_logo_svg?: string
   branding_primary_color?: string
   created_at: string
   updated_at: string

@@ -1,3 +1,8 @@
+### 0.6.4: 2026-05-15
+
+* Extend per-view branding override on `/views` with file upload and pasted-SVG markup alongside URL; render precedence is per-view SVG, workspace SVG, per-view URL, workspace URL, text (dude-specific change)
+* Run migration `019_add_view_branding_logo_svg.sql` in Supabase before deploying
+
 ### 0.6.3: 2026-05-15
 
 * Add a "paste SVG markup" textarea to branding admin alongside file upload and URL, render inline on public view header and navigation, sanitize on save and at render (`feature/branding-logo-svg`)

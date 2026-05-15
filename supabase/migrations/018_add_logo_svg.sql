@@ -3,5 +3,5 @@
 -- preserving sharpness and letting the SVG inherit theme colours via
 -- currentColor / CSS variables.
 
-alter table branding_settings
+alter table public.branding_settings
   add column if not exists logo_svg text;
