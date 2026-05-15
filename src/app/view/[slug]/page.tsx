@@ -325,10 +325,15 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
             </div>
 
             {/* Navigation tabs - Linear style */}
-            <div className="hidden sm:flex items-center gap-1">
-              <div className="px-3 py-1.5 rounded-md bg-accent/50 text-sm font-medium text-foreground border border-border/50">
+            <div className="hidden sm:flex items-center gap-1 min-w-0">
+              <div className="px-3 py-1.5 rounded-md bg-accent/50 text-sm font-medium text-foreground border border-border/50 flex-shrink-0">
                 {view.view_title}
               </div>
+              {view.description && (
+                <span className="text-sm text-muted-foreground truncate ml-3" title={view.description}>
+                  {view.description}
+                </span>
+              )}
             </div>
           </div>
 
