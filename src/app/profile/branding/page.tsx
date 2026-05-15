@@ -18,6 +18,7 @@ import { Navigation } from "@/components/navigation";
 import { supabase, BrandingSettings } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { Palette, Upload, Trash2, Save, RefreshCw } from "lucide-react";
+import { sanitizeSvgMarkup, looksLikeSvg } from "@/lib/svg-sanitize";
 
 // These match the actual CSS theme defaults in globals.css (light theme)
 // Used for display placeholders only - not saved to database when reset
@@ -193,6 +194,7 @@ export default function BrandingPage() {
         logo_height: 40,
         // Clear assets and content
         logo_url: undefined,
+        logo_svg: undefined,
         favicon_url: undefined,
         brand_name: undefined,
         tagline: undefined,
@@ -320,14 +322,22 @@ export default function BrandingPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <Label>Logo</Label>
-                  {branding.logo_url && (
-                    <div className="border border-border rounded-lg p-4 bg-muted/20">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- user-provided URL, domain not known at build time */}
-                      <img
-                        src={branding.logo_url}
-                        alt="Logo preview"
-                        className="max-h-20 mx-auto"
-                      />
+                  {(branding.logo_svg || branding.logo_url) && (
+                    <div className="border border-border rounded-lg p-4 bg-muted/20 flex items-center justify-center">
+                      {branding.logo_svg ? (
+                        <div
+                          aria-label="Logo preview"
+                          style={{ maxHeight: '5rem' }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeSvgMarkup(branding.logo_svg) }}
+                        />
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element -- user-provided URL, domain not known at build time */
+                        <img
+                          src={branding.logo_url}
+                          alt="Logo preview"
+                          className="max-h-20 mx-auto"
+                        />
+                      )}
                     </div>
                   )}
                   <div className="flex gap-2">
@@ -338,15 +348,34 @@ export default function BrandingPage() {
                       disabled={uploading}
                       className="flex-1"
                     />
-                    {branding.logo_url && (
+                    {(branding.logo_url || branding.logo_svg) && (
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => setBranding({ ...branding, logo_url: undefined })}
+                        onClick={() => setBranding({ ...branding, logo_url: undefined, logo_svg: undefined })}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="logo-svg" className="text-xs">Or paste SVG markup</Label>
+                    <Textarea
+                      id="logo-svg"
+                      value={branding.logo_svg ?? ''}
+                      onChange={(e) =>
+                        setBranding({ ...branding, logo_svg: e.target.value || undefined })
+                      }
+                      placeholder="<svg viewBox='0 0 100 40' xmlns='http://www.w3.org/2000/svg'>...</svg>"
+                      rows={4}
+                      className="font-mono text-xs"
+                    />
+                    {branding.logo_svg && !looksLikeSvg(branding.logo_svg) && (
+                      <p className="text-xs text-destructive">Doesn&apos;t look like an SVG — must contain an &lt;svg&gt; element.</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Takes precedence over the uploaded logo when set. Scripts and event handlers are stripped before rendering.
+                    </p>
                   </div>
                   <div>
                     <Label htmlFor="logo-height" className="text-xs">Max height (px)</Label>

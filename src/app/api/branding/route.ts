@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+import { sanitizeSvgMarkup } from '@/lib/svg-sanitize';
+
 interface BrandingSettings {
   logo_url?: string | null;
+  logo_svg?: string | null;
   logo_height?: number | null;
   favicon_url?: string | null;
   brand_name?: string | null;
@@ -70,6 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json() as BrandingSettings;
+    const cleanedSvg = body.logo_svg ? sanitizeSvgMarkup(body.logo_svg) : body.logo_svg;
 
     // Check if branding settings already exist
     const { data: existing } = await supabaseAdmin
@@ -85,6 +89,7 @@ export async function POST(request: NextRequest) {
         .from('branding_settings')
         .update({
           logo_url: normalise(body.logo_url),
+          logo_svg: normalise(cleanedSvg),
           logo_height: normalise(body.logo_height),
           favicon_url: normalise(body.favicon_url),
           brand_name: normalise(body.brand_name),
@@ -113,6 +118,7 @@ export async function POST(request: NextRequest) {
         .insert({
           user_id: user.id,
           logo_url: normalise(body.logo_url),
+          logo_svg: normalise(cleanedSvg),
           logo_height: normalise(body.logo_height),
           favicon_url: normalise(body.favicon_url),
           brand_name: normalise(body.brand_name),
