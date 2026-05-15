@@ -1,12 +1,12 @@
-### 0.6.4: 2026-05-15
+### 0.6.5: 2026-05-15
 
+* Add a "paste SVG markup" textarea to workspace branding admin alongside file upload and URL, render inline on public view header and navigation, sanitize on save and at render (`feature/branding-logo-svg`)
 * Extend per-view branding override on `/views` with file upload and pasted-SVG markup alongside URL; render precedence is per-view SVG, workspace SVG, per-view URL, workspace URL, text (dude-specific change)
-* Run migration `019_add_view_branding_logo_svg.sql` in Supabase before deploying
-
-### 0.6.3: 2026-05-15
-
-* Add a "paste SVG markup" textarea to branding admin alongside file upload and URL, render inline on public view header and navigation, sanitize on save and at render (`feature/branding-logo-svg`)
-* Run migration `018_add_logo_svg.sql` in Supabase before deploying
+* Return `branding_logo_svg` from `/api/public-view/[slug]` so per-view SVG actually renders (dude-specific change)
+* Render the view description next to the view title in the public header (`feature/show-view-description-on-public-page`)
+* Replace absolute creation dates on views, forms, and domains admin with Linear-style relative labels and full timestamp tooltips (`feature/relative-dates`)
+* Rename `Preview` button on `/views` to `Open view` to match what it actually does (dude-specific change)
+* Run migrations `018_add_logo_svg.sql` and `019_add_view_branding_logo_svg.sql` in Supabase before deploying
 
 ### 0.6.2: 2026-05-13
 

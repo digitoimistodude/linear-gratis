@@ -121,6 +121,7 @@ export async function GET(
         allow_customer_comments: viewData.allow_customer_comments ?? false,
         show_sub_issues: viewData.show_sub_issues ?? true,
         branding_logo_url: viewData.branding_logo_url || null,
+        branding_logo_svg: viewData.branding_logo_svg || null,
         branding_primary_color: viewData.branding_primary_color || null,
         created_at: viewData.created_at
       },
@@ -253,6 +254,7 @@ export async function POST(
         allow_customer_comments: viewData.allow_customer_comments ?? false,
         show_sub_issues: viewData.show_sub_issues ?? true,
         branding_logo_url: viewData.branding_logo_url || null,
+        branding_logo_svg: viewData.branding_logo_svg || null,
         branding_primary_color: viewData.branding_primary_color || null,
         created_at: viewData.created_at
       },

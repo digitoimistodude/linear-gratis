@@ -1859,7 +1859,7 @@ export default function PublicViewsPage() {
                             className="flex items-center gap-2"
                           >
                             <Eye className="h-4 w-4" />
-                            Preview
+                            Open view
                           </Button>
                         </Link>
                         {view.user_id === user?.id && (
