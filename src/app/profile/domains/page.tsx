@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatRelativeDate, formatTooltipDate } from "@/lib/relative-date";
 import {
   Card,
   CardContent,
@@ -575,8 +576,8 @@ export default function CustomDomainsPage() {
                           <span>
                             Points to: /{domain.target_type}/{domain.target_slug}
                           </span>
-                          <span>
-                            Added {new Date(domain.created_at).toLocaleDateString()}
+                          <span title={formatTooltipDate(domain.created_at)}>
+                            Added {formatRelativeDate(domain.created_at)}
                           </span>
                         </div>
                         {domain.error_message && (

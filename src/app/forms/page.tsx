@@ -26,6 +26,7 @@ import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Link2 } from "lucide-react";
+import { formatRelativeDate, formatTooltipDate } from "@/lib/relative-date";
 
 type Project = {
   id: string;
@@ -607,9 +608,8 @@ export default function FormsPage() {
                           </p>
                         )}
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>
-                            Created{" "}
-                            {new Date(form.created_at).toLocaleDateString()}
+                          <span title={formatTooltipDate(form.created_at)}>
+                            Created {formatRelativeDate(form.created_at)}
                           </span>
                           <span className="flex items-center gap-1">
                             <code className="bg-muted px-1 py-0.5 rounded text-xs">

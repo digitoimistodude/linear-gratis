@@ -27,6 +27,7 @@ import { decryptTokenClient } from "@/lib/client-encryption";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Eye, Copy, Globe, Lock, Edit3 } from "lucide-react";
+import { formatRelativeDate, formatTooltipDate } from "@/lib/relative-date";
 import bcrypt from "bcryptjs";
 
 type Project = {
@@ -1385,9 +1386,8 @@ export default function PublicViewsPage() {
                           </p>
                         )}
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>
-                            Created{" "}
-                            {new Date(view.created_at).toLocaleDateString()}
+                          <span title={formatTooltipDate(view.created_at)}>
+                            Created {formatRelativeDate(view.created_at)}
                           </span>
                           <span className="flex items-center gap-1">
                             <code className="bg-muted px-1 py-0.5 rounded text-xs">
