@@ -6,6 +6,7 @@ import { SimpleThemeToggle } from '@/components/theme-toggle'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { BrandingSettings } from '@/lib/supabase'
+import { sanitizeSvgMarkup } from '@/lib/svg-sanitize'
 
 export function Navigation() {
   const { user, signOut, loading } = useAuth()
@@ -39,6 +40,22 @@ export function Navigation() {
     // Don't show fallback text while branding is loading for authenticated users
     if (user && !brandingLoaded) {
       return <div className="h-6" />
+    }
+
+    if (branding?.logo_svg) {
+      return (
+        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
+          <div
+            aria-label={branding.brand_name || 'Logo'}
+            style={{ maxHeight: `${branding.logo_height || 32}px` }}
+            className="flex-shrink-0 flex items-center"
+            dangerouslySetInnerHTML={{ __html: sanitizeSvgMarkup(branding.logo_svg) }}
+          />
+          {branding.brand_name && (
+            <span className="text-base font-semibold">{branding.brand_name}</span>
+          )}
+        </Link>
+      )
     }
 
     if (branding?.logo_url) {
