@@ -1,3 +1,7 @@
+### 0.6.6: 2026-05-22
+
+* Fix issue creation on project-only views by deriving the team from the chosen Linear project instead of erroring with "View has no team configured" (dude-specific change)
+
 ### 0.6.5: 2026-05-15
 
 * Add a "paste SVG markup" textarea to workspace branding admin alongside file upload and URL, render inline on public view header and navigation, sanitize on save and at render (`feature/branding-logo-svg`)
