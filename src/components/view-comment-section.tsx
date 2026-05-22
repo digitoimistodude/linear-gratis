@@ -86,6 +86,24 @@ export function ViewCommentSection({
     }
   }, [viewSlug, issueId, fetchComments])
 
+  // Also refetch when a Linear webhook reports a comment change on this issue,
+  // so team replies made inside Linear (and deletions) appear live - same path
+  // as status changes.
+  useEffect(() => {
+    const channel = supabase.channel('linear-updates')
+    channel
+      .on('broadcast', { event: 'update' }, ({ payload }) => {
+        const p = payload as { type?: string; issueId?: string }
+        if (p.type === 'Comment' && p.issueId === issueId) {
+          fetchComments(false)
+        }
+      })
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [issueId, fetchComments])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 

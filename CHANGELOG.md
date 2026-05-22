@@ -1,6 +1,10 @@
 ### 0.6.6: 2026-05-22
 
 * Fix issue creation on project-only views by deriving the team from the chosen Linear project instead of erroring with "View has no team configured" (dude-specific change)
+* Show Linear-side replies on the public comment thread by nesting them under the customer comment they reply to, keeping unrelated internal Linear comments private (dude-specific change)
+* Propagate Linear comment deletions to the public view so removed comments disappear (dude-specific change)
+* Refetch the public comment thread live on Linear comment webhooks, matching the real-time behaviour of status changes (dude-specific change)
+* Run migration `020_add_view_comment_linear_id.sql` in Supabase before deploying
 
 ### 0.6.5: 2026-05-15
 

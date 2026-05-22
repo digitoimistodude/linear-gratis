@@ -1,8 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { decryptToken } from '@/lib/encryption';
+import { getLinearToken } from '@/lib/linear-token';
 import type { PublicView, ViewComment } from '@/lib/supabase';
 import crypto from 'crypto';
+
+// Strip the "Commented via linear.dude.fi" footer we append when syncing a
+// customer comment into Linear, so it never shows back on the public view.
+function stripSyncFooter(body: string): string {
+  return body.replace(/\n\n---\nCommented via \[[^\]]*\]\([^)]*\)\s*$/i, '').trim();
+}
+
+type LinearThreadComment = {
+  id: string;
+  body: string;
+  createdAt: string;
+  parent?: { id: string } | null;
+  user?: { name?: string; displayName?: string } | null;
+  botActor?: { name?: string } | null;
+};
+
+async function fetchLinearThread(apiToken: string, issueId: string): Promise<LinearThreadComment[] | null> {
+  const query = `
+    query IssueComments($issueId: String!) {
+      issue(id: $issueId) {
+        comments(first: 100) {
+          nodes {
+            id
+            body
+            createdAt
+            parent { id }
+            user { name displayName }
+            botActor { name }
+          }
+        }
+      }
+    }
+  `;
+  try {
+    const res = await fetch('https://api.linear.app/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: apiToken.replace(/[^\x00-\xFF]/g, ''),
+      },
+      body: JSON.stringify({ query, variables: { issueId } }),
+    });
+    const json = await res.json() as {
+      data?: { issue?: { comments?: { nodes?: LinearThreadComment[] } } };
+    };
+    return json.data?.issue?.comments?.nodes ?? null;
+  } catch (err) {
+    console.error('Failed to fetch Linear comment thread:', err);
+    return null;
+  }
+}
 
 function hashIP(ip: string): string {
   const salt = process.env.IP_HASH_SALT || 'default-salt';
@@ -42,7 +94,7 @@ export async function GET(
     // Check if view exists and is active
     const { data: viewData, error: viewError } = await supabaseAdmin
       .from('public_views')
-      .select('id, is_active')
+      .select('id, user_id, is_active')
       .eq('slug', slug)
       .eq('is_active', true)
       .single();
@@ -55,9 +107,9 @@ export async function GET(
     }
 
     // Fetch approved, non-hidden comments
-    const { data: comments, error: commentsError } = await supabaseAdmin
+    const { data: rows, error: commentsError } = await supabaseAdmin
       .from('view_comments')
-      .select('id, author_name, content, created_at')
+      .select('id, author_name, content, created_at, linear_comment_id')
       .eq('view_id', viewData.id)
       .eq('issue_id', issueId)
       .eq('is_approved', true)
@@ -68,9 +120,61 @@ export async function GET(
       throw commentsError;
     }
 
+    type Row = Pick<ViewComment, 'id' | 'author_name' | 'content' | 'created_at'> & { linear_comment_id?: string | null };
+    const customerComments = (rows ?? []) as Row[];
+
+    // Pull the live Linear thread so team replies appear publicly and deleted
+    // comments drop off. Only replies nested under a customer comment are shown
+    // - unrelated internal Linear comments stay private.
+    const token = await getLinearToken(viewData.user_id);
+    const thread = token ? await fetchLinearThread(token, issueId) : null;
+
+    let merged: Array<{ id: string; author_name: string; content: string; created_at: string }>;
+
+    if (thread) {
+      const liveIds = new Set(thread.map((c) => c.id));
+      const rootIds = new Set(
+        customerComments.map((c) => c.linear_comment_id).filter((id): id is string => Boolean(id)),
+      );
+
+      // Customer comments still present in Linear (or legacy ones with no synced
+      // id, which we keep showing rather than risk hiding real feedback).
+      const visibleCustomer = customerComments
+        .filter((c) => !c.linear_comment_id || liveIds.has(c.linear_comment_id))
+        .map((c) => ({
+          id: c.id,
+          author_name: c.author_name,
+          content: c.content,
+          created_at: c.created_at,
+        }));
+
+      // Team replies = Linear comments whose parent is one of our customer
+      // comments and that aren't themselves a synced customer comment.
+      const replies = thread
+        .filter((c) => c.parent?.id && rootIds.has(c.parent.id) && !rootIds.has(c.id))
+        .map((c) => ({
+          id: `linear-${c.id}`,
+          author_name: c.user?.displayName || c.user?.name || c.botActor?.name || 'Team',
+          content: stripSyncFooter(c.body),
+          created_at: c.createdAt,
+        }));
+
+      merged = [...visibleCustomer, ...replies].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      );
+    } else {
+      // No Linear token available - fall back to the stored customer comments.
+      merged = customerComments.map((c) => ({
+        id: c.id,
+        author_name: c.author_name,
+        content: c.content,
+        created_at: c.created_at,
+      }));
+    }
+
     return NextResponse.json({
       success: true,
-      comments: comments || [],
+      comments: merged,
     });
   } catch (error) {
     console.error('View comments GET error:', error);
@@ -238,6 +342,7 @@ export async function POST(
           mutation CommentCreate($input: CommentCreateInput!) {
             commentCreate(input: $input) {
               success
+              comment { id }
             }
           }
         `;
@@ -254,7 +359,7 @@ export async function POST(
           commentInput.displayIconUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName.trim())}&background=random&size=128`;
         }
 
-        await fetch('https://api.linear.app/graphql', {
+        const commentRes = await fetch('https://api.linear.app/graphql', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -265,6 +370,23 @@ export async function POST(
             variables: { input: commentInput },
           }),
         });
+
+        // Persist the created comment's Linear ID so the public thread can later
+        // surface team replies nested under it and detect its deletion.
+        try {
+          const commentJson = await commentRes.json() as {
+            data?: { commentCreate?: { comment?: { id?: string } } };
+          };
+          const linearCommentId = commentJson.data?.commentCreate?.comment?.id;
+          if (linearCommentId) {
+            await supabaseAdmin
+              .from('view_comments')
+              .update({ linear_comment_id: linearCommentId })
+              .eq('id', comment.id);
+          }
+        } catch (idError) {
+          console.error('Failed to capture Linear comment id:', idError);
+        }
       }
 
       // Create attachment using personal API key (always, if available)
