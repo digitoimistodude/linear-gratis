@@ -70,6 +70,35 @@ async function fetchTeamMetadata(apiToken: string, teamId: string) {
   return data.data?.team;
 }
 
+// Resolve which team a project belongs to. Project-only views (multi-project
+// support) carry no team_id, but Linear requires a team to create an issue.
+async function fetchProjectTeamId(apiToken: string, projectId: string): Promise<string | null> {
+  const query = `
+    query ProjectTeam($projectId: String!) {
+      project(id: $projectId) {
+        teams(first: 1) {
+          nodes { id }
+        }
+      }
+    }
+  `;
+
+  const response = await fetch(LINEAR_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': apiToken,
+    },
+    body: JSON.stringify({ query, variables: { projectId } }),
+  });
+
+  const data = await response.json() as {
+    data?: { project?: { teams?: { nodes?: Array<{ id: string }> } } };
+  };
+
+  return data.data?.project?.teams?.nodes?.[0]?.id ?? null;
+}
+
 // Create issue directly via Linear API
 async function createLinearIssue(
   apiToken: string,
@@ -184,42 +213,6 @@ export async function POST(
       );
     }
 
-    if (!viewData.team_id) {
-      return NextResponse.json(
-        { error: 'View has no team configured' },
-        { status: 400 }
-      );
-    }
-
-    // Get the Linear token (workspace-shared, falling back to user's personal)
-    const decryptedToken = await getLinearToken(viewData.user_id);
-    if (!decryptedToken) {
-      return NextResponse.json(
-        { error: 'Unable to create issue - Linear API token not found' },
-        { status: 500 }
-      );
-    }
-
-    // Fetch team metadata directly from Linear API
-    const teamMetadata = await fetchTeamMetadata(decryptedToken, viewData.team_id);
-
-    // Determine the correct state for public issue creation.
-    // When triage is enabled we omit stateId entirely so Linear auto-routes
-    // the new issue into the team's triage queue - matches Linear's docs and
-    // avoids relying on `triageIssueState.id` which may be stale or null.
-    let finalStateId: string | undefined = undefined;
-
-    if (!teamMetadata?.triageEnabled && teamMetadata?.states?.nodes) {
-      const unstartedState = teamMetadata.states.nodes.find(
-        (s: WorkflowState) => s.type === 'unstarted'
-      );
-      if (unstartedState) {
-        finalStateId = unstartedState.id;
-      } else if (teamMetadata.states.nodes.length > 0) {
-        finalStateId = teamMetadata.states.nodes[0].id;
-      }
-    }
-
     // Resolve the project the new issue should land in. Multi-project views
     // require the customer to pick one via the modal; validate it's allowed.
     const allowedProjectIds: string[] = viewData.project_ids?.length
@@ -238,6 +231,54 @@ export async function POST(
       resolvedProjectId = allowedProjectIds[0];
     }
 
+    if (!viewData.team_id && !resolvedProjectId) {
+      return NextResponse.json(
+        { error: 'View has no team or project configured' },
+        { status: 400 }
+      );
+    }
+
+    // Get the Linear token (workspace-shared, falling back to user's personal)
+    const decryptedToken = await getLinearToken(viewData.user_id);
+    if (!decryptedToken) {
+      return NextResponse.json(
+        { error: 'Unable to create issue - Linear API token not found' },
+        { status: 500 }
+      );
+    }
+
+    // Project-only views carry no team; derive it from the chosen project so
+    // Linear has the team it requires to create the issue.
+    const teamId = viewData.team_id
+      ?? (resolvedProjectId ? await fetchProjectTeamId(decryptedToken, resolvedProjectId) : null);
+
+    if (!teamId) {
+      return NextResponse.json(
+        { error: 'Could not determine a team for this issue' },
+        { status: 400 }
+      );
+    }
+
+    // Fetch team metadata directly from Linear API
+    const teamMetadata = await fetchTeamMetadata(decryptedToken, teamId);
+
+    // Determine the correct state for public issue creation.
+    // When triage is enabled we omit stateId entirely so Linear auto-routes
+    // the new issue into the team's triage queue - matches Linear's docs and
+    // avoids relying on `triageIssueState.id` which may be stale or null.
+    let finalStateId: string | undefined = undefined;
+
+    if (!teamMetadata?.triageEnabled && teamMetadata?.states?.nodes) {
+      const unstartedState = teamMetadata.states.nodes.find(
+        (s: WorkflowState) => s.type === 'unstarted'
+      );
+      if (unstartedState) {
+        finalStateId = unstartedState.id;
+      } else if (teamMetadata.states.nodes.length > 0) {
+        finalStateId = teamMetadata.states.nodes[0].id;
+      }
+    }
+
     // Create the issue with enforced restrictions
     // Note: priority and assigneeId are intentionally not passed for public views
     const result = await createLinearIssue(decryptedToken, {
@@ -246,7 +287,7 @@ export async function POST(
       stateId: finalStateId, // Enforced triage/unstarted state
       priority: 0, // Default to no priority for public views
       projectId: resolvedProjectId,
-      teamId: viewData.team_id,
+      teamId,
       labelIds: issueData.labelIds,
     });
 
