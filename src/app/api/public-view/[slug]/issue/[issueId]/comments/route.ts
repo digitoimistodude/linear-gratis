@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { decryptToken } from '@/lib/encryption';
 import { getLinearToken } from '@/lib/linear-token';
 import { sendEmail, getOwnerEmail, renderCommentEmail } from '@/lib/mail';
+import { upsertSubscription } from '@/lib/subscriptions';
 import type { PublicView, ViewComment } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -194,11 +195,12 @@ export async function POST(
     const { slug, issueId } = await params;
     const body = await request.json() as {
       authorName?: string;
+      authorEmail?: string;
       content?: string;
       issueIdentifier?: string;
     };
 
-    const { authorName, content, issueIdentifier } = body;
+    const { authorName, authorEmail, content, issueIdentifier } = body;
 
     if (!slug || !issueId) {
       return NextResponse.json(
@@ -272,6 +274,20 @@ export async function POST(
 
     const comment = newComment as Pick<ViewComment, 'id' | 'author_name' | 'content' | 'created_at' | 'is_approved'>;
 
+    // If the customer left an email, subscribe them to the thread so Linear-
+    // side replies land in their inbox. Best-effort: never blocks the comment.
+    if (authorEmail) {
+      try {
+        await upsertSubscription({
+          viewId: view.id,
+          issueId,
+          email: authorEmail,
+        });
+      } catch (subError) {
+        console.error('Failed to upsert comment subscription:', subError);
+      }
+    }
+
     // Broadcast via the Realtime HTTP API so it works from Cloudflare Workers
     // without needing an established WebSocket connection.
     if (comment.is_approved) {
@@ -310,15 +326,12 @@ export async function POST(
     try {
       const ownerEmail = await getOwnerEmail(view.user_id);
       if (ownerEmail) {
-        const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.dude.fi';
-        const urlSuffix = issueIdentifier || issueId;
-        const viewUrl = `https://${appDomain}/view/${view.slug}/${urlSuffix}`;
         const { subject, html, text } = renderCommentEmail({
           authorName: authorName.trim(),
           content: trimmedContent,
           viewName: view.name,
+          viewSlug: view.slug,
           issueIdentifier,
-          viewUrl,
         });
         await sendEmail({ to: ownerEmail, subject, html, text });
       }

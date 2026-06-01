@@ -34,11 +34,14 @@ export function ViewCommentSection({
   const formRef = useRef<HTMLFormElement>(null)
 
   const [authorName, setAuthorName] = useState('')
+  const [authorEmail, setAuthorEmail] = useState('')
   const [content, setContent] = useState('')
 
   useEffect(() => {
     const savedName = localStorage.getItem('view_comment_name')
     if (savedName) setAuthorName(savedName)
+    const savedEmail = localStorage.getItem('view_comment_email')
+    if (savedEmail) setAuthorEmail(savedEmail)
   }, [])
 
   const fetchComments = useCallback(async (showSpinner = true) => {
@@ -129,9 +132,13 @@ export function ViewCommentSection({
 
     const submittedContent = content.trim()
     const submittedName = authorName.trim()
+    const submittedEmail = authorEmail.trim()
     setContent('')
 
     localStorage.setItem('view_comment_name', submittedName)
+    if (submittedEmail) {
+      localStorage.setItem('view_comment_email', submittedEmail)
+    }
 
     try {
       const response = await fetch(
@@ -141,6 +148,7 @@ export function ViewCommentSection({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             authorName: submittedName,
+            authorEmail: submittedEmail || undefined,
             content: submittedContent,
             issueIdentifier,
           }),
@@ -282,6 +290,17 @@ export function ViewCommentSection({
             className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors disabled:opacity-50"
             required
           />
+
+          <div className="space-y-1">
+            <input
+              type="email"
+              placeholder="Email (optional, get notified of replies)"
+              value={authorEmail}
+              onChange={(e) => setAuthorEmail(e.target.value)}
+              disabled={submitting}
+              className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors disabled:opacity-50"
+            />
+          </div>
 
           <div className="relative">
             <textarea

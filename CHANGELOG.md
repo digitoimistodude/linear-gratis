@@ -1,3 +1,12 @@
+### 0.7.1: 2026-06-01
+
+* Polish email templates: deep link straight to the issue in the public view, sender attribution and unsubscribe link in the footer (`feature/email-templates-polish`)
+* `MAIL_FROM` is now required so the public repo never bakes in a specific sender address (`feature/email-templates-polish`)
+* Customer email field on the comment form (optional); opting in subscribes the customer to that thread (dude-specific change)
+* Linear-side replies now email every subscribed customer plus every owner of a view that includes the issue, all deduplicated (dude-specific change)
+* `/unsubscribe?token=...` page removes the subscription matching the token from the email footer (dude-specific change)
+* Run migration `021_add_view_subscriptions.sql` in Supabase before deploying
+
 ### 0.7.0: 2026-06-01
 
 * Email the view owner via Resend whenever a customer files a new issue through `allow_issue_creation` (`feature/email-notifications`)

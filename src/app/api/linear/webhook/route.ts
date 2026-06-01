@@ -1,4 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
+import {
+  sendEmail,
+  getOwnerEmail,
+  renderCustomerReplyEmail,
+  renderOwnerReplyEmail,
+  buildUnsubscribeUrl,
+} from '@/lib/mail';
+import { listSubscribers } from '@/lib/subscriptions';
 
 // Events we care about broadcasting to connected clients. Linear fires many
 // event types; we forward the ones that change what a public view renders
@@ -19,12 +28,21 @@ type WebhookBody = {
   type?: string;
   data?: {
     id?: string;
+    body?: string;
     issueId?: string;
     team?: { id?: string };
     teamId?: string;
     project?: { id?: string };
     projectId?: string;
-    issue?: { id?: string; team?: { id?: string }; project?: { id?: string } };
+    issue?: {
+      id?: string;
+      identifier?: string;
+      title?: string;
+      team?: { id?: string };
+      project?: { id?: string };
+    };
+    user?: { id?: string; name?: string; displayName?: string };
+    botActor?: { name?: string };
   };
 };
 
@@ -151,6 +169,29 @@ export async function POST(request: NextRequest) {
     console.log(
       `Webhook forwarded: type=${payload.type} action=${payload.action} issueId=${issueId} teamId=${teamId} projectId=${projectId}`,
     );
+
+    // Customer + owner notifications for new Linear-side comments on issues
+    // that appear on any public view. Subscribers are looked up by issue_id;
+    // owners are looked up by views matching the issue's team or project.
+    if (payload.type === 'Comment' && payload.action === 'create' && issueId) {
+      try {
+        await dispatchCommentNotifications({
+          issueId,
+          teamId,
+          projectId,
+          commentBody: payload.data?.body ?? '',
+          commentAuthor:
+            payload.data?.user?.displayName
+            ?? payload.data?.user?.name
+            ?? payload.data?.botActor?.name
+            ?? 'A teammate',
+          issueIdentifier: payload.data?.issue?.identifier,
+        });
+      } catch (notifyError) {
+        console.error('Webhook notification dispatch failed:', notifyError);
+      }
+    }
+
     return NextResponse.json({ success: true, forwarded: true });
   } catch (error) {
     console.error('Linear webhook error:', error);
@@ -158,6 +199,85 @@ export async function POST(request: NextRequest) {
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 },
     );
+  }
+}
+
+async function dispatchCommentNotifications(args: {
+  issueId: string;
+  teamId?: string;
+  projectId?: string;
+  commentBody: string;
+  commentAuthor: string;
+  issueIdentifier?: string;
+}): Promise<void> {
+  // Find views that include this issue so we know whose owner to notify and
+  // which view name + slug to render in the email. Match by team OR project
+  // (covers single-project, multi-project, and team-source views).
+  let query = supabaseAdmin.from('public_views').select('id, user_id, name, slug, team_id, project_id, project_ids');
+  if (args.teamId && args.projectId) {
+    query = query.or(`team_id.eq.${args.teamId},project_id.eq.${args.projectId},project_ids.cs.{${args.projectId}}`);
+  } else if (args.teamId) {
+    query = query.eq('team_id', args.teamId);
+  } else if (args.projectId) {
+    query = query.or(`project_id.eq.${args.projectId},project_ids.cs.{${args.projectId}}`);
+  } else {
+    return;
+  }
+
+  const { data: views, error } = await query;
+  if (error) {
+    console.error('Failed to look up views for webhook notification:', error);
+    return;
+  }
+  if (!views || views.length === 0) return;
+
+  // Drop the footer that linear.dude.fi appends to synced customer comments -
+  // those are echoes of comments the subscriber wrote, not real replies.
+  const cleaned = args.commentBody.replace(/\n\n---\nCommented via \[[^\]]*\]\([^)]*\)\s*$/i, '').trim();
+  if (!cleaned) return;
+
+  const notifiedEmails = new Set<string>();
+
+  // Customers who opted in: email each per view they subscribed to.
+  for (const view of views) {
+    const subs = await listSubscribers({ viewId: view.id, issueId: args.issueId });
+    for (const sub of subs) {
+      const lower = sub.email.toLowerCase();
+      if (notifiedEmails.has(lower)) continue;
+      notifiedEmails.add(lower);
+      const unsubscribeUrl = buildUnsubscribeUrl(sub.token);
+      if (!unsubscribeUrl) continue;
+      const { subject, html, text } = renderCustomerReplyEmail({
+        authorName: args.commentAuthor,
+        content: cleaned,
+        viewName: view.name,
+        viewSlug: view.slug,
+        issueIdentifier: args.issueIdentifier,
+        unsubscribeUrl,
+      });
+      await sendEmail({ to: sub.email, subject, html, text });
+    }
+  }
+
+  // Owners: one email per unique view owner, skipping anyone already notified
+  // as a subscriber (avoids duplicates when the owner also opted in as a
+  // customer somewhere).
+  const seenOwners = new Set<string>();
+  for (const view of views) {
+    if (seenOwners.has(view.user_id)) continue;
+    seenOwners.add(view.user_id);
+    const ownerEmail = await getOwnerEmail(view.user_id);
+    if (!ownerEmail) continue;
+    if (notifiedEmails.has(ownerEmail.toLowerCase())) continue;
+    notifiedEmails.add(ownerEmail.toLowerCase());
+    const { subject, html, text } = renderOwnerReplyEmail({
+      authorName: args.commentAuthor,
+      content: cleaned,
+      viewName: view.name,
+      viewSlug: view.slug,
+      issueIdentifier: args.issueIdentifier,
+    });
+    await sendEmail({ to: ownerEmail, subject, html, text });
   }
 }
 
