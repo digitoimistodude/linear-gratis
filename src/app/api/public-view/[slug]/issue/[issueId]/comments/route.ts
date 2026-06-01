@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { decryptToken } from '@/lib/encryption';
 import { getLinearToken } from '@/lib/linear-token';
+import { sendEmail, getOwnerEmail, renderCommentEmail } from '@/lib/mail';
 import type { PublicView, ViewComment } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -302,6 +303,27 @@ export async function POST(
       } catch (broadcastError) {
         console.error('Failed to broadcast view comment:', broadcastError);
       }
+    }
+
+    // Email the view owner about the new comment. Best-effort: mail failures
+    // never break the comment response.
+    try {
+      const ownerEmail = await getOwnerEmail(view.user_id);
+      if (ownerEmail) {
+        const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.dude.fi';
+        const urlSuffix = issueIdentifier || issueId;
+        const viewUrl = `https://${appDomain}/view/${view.slug}/${urlSuffix}`;
+        const { subject, html, text } = renderCommentEmail({
+          authorName: authorName.trim(),
+          content: trimmedContent,
+          viewName: view.name,
+          issueIdentifier,
+          viewUrl,
+        });
+        await sendEmail({ to: ownerEmail, subject, html, text });
+      }
+    } catch (mailError) {
+      console.error('Failed to email owner about new comment:', mailError);
     }
 
     // Sync comment to Linear

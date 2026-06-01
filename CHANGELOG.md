@@ -1,3 +1,9 @@
+### 0.7.0: 2026-06-01
+
+* Email the view owner via Resend whenever a customer files a new issue through `allow_issue_creation` (`feature/email-notifications`)
+* Email the view owner via Resend whenever a customer posts a comment on a public view (dude-specific change)
+* Requires `RESEND_API_KEY` Cloudflare secret and a verified sender domain in Resend; `MAIL_FROM` env overrides the default sender
+
 ### 0.6.6: 2026-05-22
 
 * Fix issue creation on project-only views by deriving the team from the chosen Linear project instead of erroring with "View has no team configured" (dude-specific change)
