@@ -64,6 +64,14 @@ openssl rand -base64 32
 2. Set up authentication (email/password recommended)
 3. Create the required database schema by running the migrations in `supabase/migrations`
 
+#### Migrations
+
+Migration files live in `supabase/migrations/` and must be applied **in numeric order** (`001_*.sql`, `002_*.sql`, ...). There is no automated tracking: you are responsible for applying every file that hasn't been applied yet.
+
+Easiest path: open each `.sql` file in order in the Supabase SQL editor and run it. Whenever you pull new commits, check `supabase/migrations/` for new files (matched against what the CHANGELOG entry says to run) and apply them before deploying.
+
+Skipping a migration will manifest as runtime errors like `column "X" does not exist` even though the code references it.
+
 ### Development
 
 Run the development server:

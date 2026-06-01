@@ -40,7 +40,9 @@ The Supabase anon key and Cloudflare account ID in `wrangler.jsonc` are public b
 ## Database
 
 - Database migrations are in `supabase/migrations/`
-- New migrations should be run in the Supabase SQL Editor
+- New migrations should be run in the Supabase SQL Editor, in numeric order
+- There is no tracking table: forgetting a migration shows up at runtime as `column "X" does not exist`
+- Whenever a new migration ships, the CHANGELOG entry must say `Run migration NNN_*.sql in Supabase before deploying`
 
 ## Design guidelines
 
