@@ -312,17 +312,15 @@ export async function POST(
     try {
       const ownerEmail = await getOwnerEmail(viewData.user_id);
       if (ownerEmail) {
-        const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.gratis';
         const issue = result.data.issueCreate.issue as {
           identifier?: string;
           title?: string;
         } | undefined;
-        const viewUrl = `https://${appDomain}/view/${viewData.slug}`;
         const { subject, html, text } = renderIssueCreatedEmail({
           title: issue?.title ?? issueData.title,
           identifier: issue?.identifier,
           viewName: viewData.name,
-          viewUrl,
+          viewSlug: viewData.slug,
         });
         await sendEmail({ to: ownerEmail, subject, html, text });
       }
