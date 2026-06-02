@@ -1,3 +1,7 @@
+### 0.7.2: 2026-06-01
+
+* Security/privacy fix: webhook notification dispatch now requires the new comment's parent to be a Linear comment we synced from a customer via linear.dude.fi. Top-level Linear comments and replies in unrelated internal threads no longer email subscribers or view owners (dude-specific change)
+
 ### 0.7.1: 2026-06-01
 
 * Polish email templates: deep link straight to the issue in the public view, sender attribution and unsubscribe link in the footer (`feature/email-templates-polish`)

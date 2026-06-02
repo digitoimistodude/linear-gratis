@@ -43,6 +43,12 @@ type WebhookBody = {
     };
     user?: { id?: string; name?: string; displayName?: string };
     botActor?: { name?: string };
+    // For Comment events: the comment this one replies to. We use this to
+    // restrict notifications to threads started by a customer via
+    // linear.dude.fi; replies in unrelated internal Linear threads must NOT
+    // leak to view owners or customer subscribers.
+    parentId?: string;
+    parent?: { id?: string };
   };
 };
 
@@ -171,14 +177,24 @@ export async function POST(request: NextRequest) {
     );
 
     // Customer + owner notifications for new Linear-side comments on issues
-    // that appear on any public view. Subscribers are looked up by issue_id;
-    // owners are looked up by views matching the issue's team or project.
-    if (payload.type === 'Comment' && payload.action === 'create' && issueId) {
+    // that appear on any public view. Strictly gated to replies inside a
+    // thread that was started by a customer via linear.dude.fi (i.e. the
+    // comment's parent is a Linear comment we synced from our view_comments
+    // table). Top-level or other-thread replies are internal team chatter and
+    // MUST NOT leak to subscribers or view owners.
+    const parentLinearCommentId = payload.data?.parent?.id ?? payload.data?.parentId;
+    if (
+      payload.type === 'Comment'
+      && payload.action === 'create'
+      && issueId
+      && parentLinearCommentId
+    ) {
       try {
         await dispatchCommentNotifications({
           issueId,
           teamId,
           projectId,
+          parentLinearCommentId,
           commentBody: payload.data?.body ?? '',
           commentAuthor:
             payload.data?.user?.displayName
@@ -206,10 +222,30 @@ async function dispatchCommentNotifications(args: {
   issueId: string;
   teamId?: string;
   projectId?: string;
+  parentLinearCommentId: string;
   commentBody: string;
   commentAuthor: string;
   issueIdentifier?: string;
 }): Promise<void> {
+  // Hard privacy gate: only notify if this reply's parent is a Linear comment
+  // we know originated from linear.dude.fi (we recorded its id when the
+  // customer first commented). Any other thread is internal team chatter and
+  // must never reach a subscriber or view owner's inbox.
+  const { data: parentRows, error: parentError } = await supabaseAdmin
+    .from('view_comments')
+    .select('id')
+    .eq('issue_id', args.issueId)
+    .eq('linear_comment_id', args.parentLinearCommentId)
+    .limit(1);
+  if (parentError) {
+    console.error('Failed to verify customer-thread parent for webhook notification:', parentError);
+    return;
+  }
+  if (!parentRows || parentRows.length === 0) {
+    // Parent is not a customer-synced comment - drop silently.
+    return;
+  }
+
   // Find views that include this issue so we know whose owner to notify and
   // which view name + slug to render in the email. Match by team OR project
   // (covers single-project, multi-project, and team-source views).
