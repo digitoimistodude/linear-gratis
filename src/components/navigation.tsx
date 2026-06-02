@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/auth-context'
 import { Button } from '@/components/ui/button'
 import { SimpleThemeToggle } from '@/components/theme-toggle'
+import { NotificationBell } from '@/components/notification-bell'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { BrandingSettings } from '@/lib/supabase'
@@ -154,6 +155,7 @@ export function Navigation() {
               <span className="text-sm text-muted-foreground hidden sm:block">
                 {user.email}
               </span>
+              <NotificationBell userId={user.id ?? null} />
               <SimpleThemeToggle />
               <Button
                 variant="ghost"

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { sendEmail, getOwnerEmail, renderIssueCreatedEmail } from '@/lib/mail';
+import { createNotification } from '@/lib/notifications';
 
 const LINEAR_API_URL = 'https://api.linear.app/graphql';
 
@@ -309,16 +310,18 @@ export async function POST(
 
     // Notify the view owner about the new customer-filed issue. Best-effort:
     // mail failures never break the create response.
+    const createdIssue = result.data.issueCreate.issue as {
+      id?: string;
+      identifier?: string;
+      title?: string;
+    } | undefined;
+
     try {
       const ownerEmail = await getOwnerEmail(viewData.user_id);
       if (ownerEmail) {
-        const issue = result.data.issueCreate.issue as {
-          identifier?: string;
-          title?: string;
-        } | undefined;
         const { subject, html, text } = renderIssueCreatedEmail({
-          title: issue?.title ?? issueData.title,
-          identifier: issue?.identifier,
+          title: createdIssue?.title ?? issueData.title,
+          identifier: createdIssue?.identifier,
           viewName: viewData.name,
           viewSlug: viewData.slug,
         });
@@ -327,6 +330,17 @@ export async function POST(
     } catch (mailError) {
       console.error('Failed to email owner about new issue:', mailError);
     }
+
+    await createNotification({
+      userId: viewData.user_id,
+      viewId: viewData.id,
+      issueId: createdIssue?.id ?? null,
+      issueIdentifier: createdIssue?.identifier ?? null,
+      kind: 'issue_created',
+      title: `New issue${createdIssue?.identifier ? ` ${createdIssue.identifier}` : ''} via ${viewData.name}`,
+      body: createdIssue?.title ?? issueData.title,
+      viewSlug: viewData.slug,
+    });
 
     return NextResponse.json({
       success: true,

@@ -4,6 +4,7 @@ import { decryptToken } from '@/lib/encryption';
 import { getLinearToken } from '@/lib/linear-token';
 import { sendEmail, getOwnerEmail, renderCommentEmail } from '@/lib/mail';
 import { upsertSubscription } from '@/lib/subscriptions';
+import { createNotification } from '@/lib/notifications';
 import type { PublicView, ViewComment } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -339,6 +340,17 @@ export async function POST(
       console.error('Failed to email owner about new comment:', mailError);
     }
 
+    await createNotification({
+      userId: view.user_id,
+      viewId: view.id,
+      issueId,
+      issueIdentifier,
+      kind: 'comment',
+      title: `New comment on ${issueIdentifier ?? view.name}`,
+      body: `${authorName.trim()}: ${trimmedContent.slice(0, 200)}`,
+      viewSlug: view.slug,
+    });
+
     // Sync comment to Linear
     try {
       const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'linear.dude.fi';
@@ -410,9 +422,19 @@ export async function POST(
         // surface team replies nested under it and detect its deletion.
         try {
           const commentJson = await commentRes.json() as {
-            data?: { commentCreate?: { comment?: { id?: string } } };
+            data?: { commentCreate?: { success?: boolean; comment?: { id?: string } } };
+            errors?: unknown[];
           };
           const linearCommentId = commentJson.data?.commentCreate?.comment?.id;
+          if (!commentRes.ok || commentJson.errors || !commentJson.data?.commentCreate?.success || !linearCommentId) {
+            console.error('Linear commentCreate did not return a comment id:', {
+              status: commentRes.status,
+              hasErrors: Boolean(commentJson.errors),
+              errors: commentJson.errors,
+              success: commentJson.data?.commentCreate?.success,
+              tokenSource: oauthToken ? 'oauth' : 'personal',
+            });
+          }
           if (linearCommentId) {
             await supabaseAdmin
               .from('view_comments')

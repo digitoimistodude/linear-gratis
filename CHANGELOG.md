@@ -1,3 +1,9 @@
+### 0.7.3: 2026-06-01
+
+* Add bell icon to the top-right nav for logged-in admins with unread count, recent notifications dropdown, mark-as-read, and live Realtime updates when new notifications land (dude-specific change)
+* Log the Linear `commentCreate` response when no comment id comes back, so the next test paste tells us why the customer-to-Linear sync is being silently rejected (dude-specific change)
+* Run migration `022_add_notifications.sql` in Supabase before deploying
+
 ### 0.7.2: 2026-06-01
 
 * Security/privacy fix: webhook notification dispatch now requires the new comment's parent to be a Linear comment we synced from a customer via linear.dude.fi. Top-level Linear comments and replies in unrelated internal threads no longer email subscribers or view owners (dude-specific change)

@@ -8,6 +8,7 @@ import {
   buildUnsubscribeUrl,
 } from '@/lib/mail';
 import { listSubscribers } from '@/lib/subscriptions';
+import { createNotification } from '@/lib/notifications';
 
 // Events we care about broadcasting to connected clients. Linear fires many
 // event types; we forward the ones that change what a public view renders
@@ -312,6 +313,16 @@ async function dispatchCommentNotifications(args: {
       viewName: view.name,
       viewSlug: view.slug,
       issueIdentifier: args.issueIdentifier,
+    });
+    await createNotification({
+      userId: view.user_id,
+      viewId: view.id,
+      issueId: args.issueId,
+      issueIdentifier: args.issueIdentifier,
+      kind: 'reply',
+      title: `New reply on ${args.issueIdentifier ?? view.name}`,
+      body: `${args.commentAuthor}: ${cleaned.slice(0, 200)}`,
+      viewSlug: view.slug,
     });
     await sendEmail({ to: ownerEmail, subject, html, text });
   }
