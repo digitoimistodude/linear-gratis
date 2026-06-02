@@ -406,11 +406,19 @@ export async function POST(
           commentInput.displayIconUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName.trim())}&background=random&size=128`;
         }
 
+        // Linear requires a `Bearer` prefix for OAuth tokens but rejects it on
+        // personal API keys. Pick the correct header shape for whichever we
+        // ended up using.
+        const cleanCommentToken = commentToken.replace(/[^\x00-\xFF]/g, '');
+        const commentAuthHeader = oauthToken
+          ? `Bearer ${cleanCommentToken}`
+          : cleanCommentToken;
+
         const commentRes = await fetch('https://api.linear.app/graphql', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `${commentToken.replace(/[^\x00-\xFF]/g, '')}`,
+            Authorization: commentAuthHeader,
           },
           body: JSON.stringify({
             query: commentMutation,

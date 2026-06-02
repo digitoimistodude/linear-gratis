@@ -1,3 +1,8 @@
+### 0.7.4: 2026-06-02
+
+* Fix silent Linear `commentCreate` 401: send OAuth tokens with the `Bearer` prefix Linear requires, keep raw personal API keys as-is (dude-specific change)
+* Stop the customer comment double-rendering by deduping when the Supabase Realtime broadcast brings in the server row before the POST response handler runs (dude-specific change)
+
 ### 0.7.3: 2026-06-01
 
 * Add bell icon to the top-right nav for logged-in admins with unread count, recent notifications dropdown, mark-as-read, and live Realtime updates when new notifications land (dude-specific change)

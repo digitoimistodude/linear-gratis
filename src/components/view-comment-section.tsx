@@ -165,9 +165,17 @@ export function ViewCommentSection({
 
       if (data.success) {
         if (data.comment && !data.pending) {
-          setComments((prev) =>
-            prev.map((c) => (c.id === tempId ? { ...data.comment!, isPending: false } : c))
-          )
+          // Race-safe replace: the Realtime broadcast may have already brought
+          // in the server-side row before this response handler runs. If so,
+          // just drop the optimistic placeholder instead of inserting a second
+          // copy of the same comment.
+          setComments((prev) => {
+            const serverId = data.comment!.id
+            if (prev.some((c) => c.id === serverId)) {
+              return prev.filter((c) => c.id !== tempId)
+            }
+            return prev.map((c) => (c.id === tempId ? { ...data.comment!, isPending: false } : c))
+          })
         } else if (data.pending) {
           setComments((prev) => prev.filter((c) => c.id !== tempId))
           setSuccess(data.message || 'Comment submitted for review')
