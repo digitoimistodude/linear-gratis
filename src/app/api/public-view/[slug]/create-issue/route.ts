@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
-import { sendEmail, getOwnerEmail, renderIssueCreatedEmail } from '@/lib/mail';
 import { createNotification } from '@/lib/notifications';
 
 const LINEAR_API_URL = 'https://api.linear.app/graphql';
@@ -308,28 +307,12 @@ export async function POST(
       );
     }
 
-    // Notify the view owner about the new customer-filed issue. Best-effort:
-    // mail failures never break the create response.
+    // Owners get this via Linear's own notifications - in-app bell only.
     const createdIssue = result.data.issueCreate.issue as {
       id?: string;
       identifier?: string;
       title?: string;
     } | undefined;
-
-    try {
-      const ownerEmail = await getOwnerEmail(viewData.user_id);
-      if (ownerEmail) {
-        const { subject, html, text } = renderIssueCreatedEmail({
-          title: createdIssue?.title ?? issueData.title,
-          identifier: createdIssue?.identifier,
-          viewName: viewData.name,
-          viewSlug: viewData.slug,
-        });
-        await sendEmail({ to: ownerEmail, subject, html, text });
-      }
-    } catch (mailError) {
-      console.error('Failed to email owner about new issue:', mailError);
-    }
 
     await createNotification({
       userId: viewData.user_id,

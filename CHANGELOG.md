@@ -1,3 +1,10 @@
+### 0.7.5: 2026-06-02
+
+* Match luku.app footer structure on linear.dude.fi: nav left, version + attribution right; "Made with ♥ in Finland, sponsored by Dude" when signed in, "Forked by digitoimistodude" when signed out (dude-specific change)
+* Hide the app footer on `/view/*` so it never leaks app chrome onto a branded customer view (dude-specific change)
+* Strip owner-side notification emails entirely - workspace owners already get Linear's native notifications, so our duplicate mail is gone; bell-icon in-app notifications stay (dude-specific change)
+* Drop the optimistic insert on the customer comment form; the Realtime fetch round-trip is the only source of truth so comments no longer flash twice before settling (dude-specific change)
+
 ### 0.7.4: 2026-06-02
 
 * Fix silent Linear `commentCreate` 401: send OAuth tokens with the `Bearer` prefix Linear requires, keep raw personal API keys as-is (dude-specific change)

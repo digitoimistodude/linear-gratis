@@ -119,17 +119,6 @@ export function ViewCommentSection({
     setError(null)
     setSuccess(null)
 
-    const tempId = `temp-${Date.now()}`
-    const optimisticComment: Comment = {
-      id: tempId,
-      author_name: authorName.trim(),
-      content: content.trim(),
-      created_at: new Date().toISOString(),
-      isPending: true,
-    }
-
-    setComments((prev) => [...prev, optimisticComment])
-
     const submittedContent = content.trim()
     const submittedName = authorName.trim()
     const submittedEmail = authorEmail.trim()
@@ -164,39 +153,24 @@ export function ViewCommentSection({
       }
 
       if (data.success) {
-        if (data.comment && !data.pending) {
-          // Race-safe replace: the Realtime broadcast may have already brought
-          // in the server-side row before this response handler runs. If so,
-          // just drop the optimistic placeholder instead of inserting a second
-          // copy of the same comment.
-          setComments((prev) => {
-            const serverId = data.comment!.id
-            if (prev.some((c) => c.id === serverId)) {
-              return prev.filter((c) => c.id !== tempId)
-            }
-            return prev.map((c) => (c.id === tempId ? { ...data.comment!, isPending: false } : c))
-          })
-        } else if (data.pending) {
-          setComments((prev) => prev.filter((c) => c.id !== tempId))
+        if (data.pending) {
           setSuccess(data.message || 'Comment submitted for review')
           setTimeout(() => setSuccess(null), 5000)
-        } else {
-          setComments((prev) =>
-            prev.map((c) => (c.id === tempId ? { ...c, isPending: false } : c))
-          )
         }
+        // Skip optimistic insert entirely; the Realtime broadcast triggers a
+        // fresh fetch that renders the server-side row exactly once. Avoids
+        // the previous race where both the optimistic placeholder and the
+        // fetched row briefly co-existed.
+        await fetchComments(false)
       } else {
-        setComments((prev) =>
-          prev.map((c) => (c.id === tempId ? { ...c, isPending: false, isFailed: true } : c))
-        )
         setError(data.error || 'Failed to post comment')
+        // Restore the content so the user can retry without retyping.
+        setContent(submittedContent)
       }
     } catch (err) {
       console.error('Error posting comment:', err)
-      setComments((prev) =>
-        prev.map((c) => (c.id === tempId ? { ...c, isPending: false, isFailed: true } : c))
-      )
-      setError('Failed to post comment. Please try again.')
+      setError(err instanceof Error ? err.message : 'Failed to post comment')
+      setContent(submittedContent)
     } finally {
       setSubmitting(false)
     }

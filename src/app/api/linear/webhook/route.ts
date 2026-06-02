@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import {
   sendEmail,
-  getOwnerEmail,
   renderCustomerReplyEmail,
-  renderOwnerReplyEmail,
   buildUnsubscribeUrl,
 } from '@/lib/mail';
 import { listSubscribers } from '@/lib/subscriptions';
@@ -296,24 +294,11 @@ async function dispatchCommentNotifications(args: {
     }
   }
 
-  // Owners: one email per unique view owner, skipping anyone already notified
-  // as a subscriber (avoids duplicates when the owner also opted in as a
-  // customer somewhere).
+  // Owners get this via Linear's own notifications - in-app bell only.
   const seenOwners = new Set<string>();
   for (const view of views) {
     if (seenOwners.has(view.user_id)) continue;
     seenOwners.add(view.user_id);
-    const ownerEmail = await getOwnerEmail(view.user_id);
-    if (!ownerEmail) continue;
-    if (notifiedEmails.has(ownerEmail.toLowerCase())) continue;
-    notifiedEmails.add(ownerEmail.toLowerCase());
-    const { subject, html, text } = renderOwnerReplyEmail({
-      authorName: args.commentAuthor,
-      content: cleaned,
-      viewName: view.name,
-      viewSlug: view.slug,
-      issueIdentifier: args.issueIdentifier,
-    });
     await createNotification({
       userId: view.user_id,
       viewId: view.id,
@@ -324,7 +309,6 @@ async function dispatchCommentNotifications(args: {
       body: `${args.commentAuthor}: ${cleaned.slice(0, 200)}`,
       viewSlug: view.slug,
     });
-    await sendEmail({ to: ownerEmail, subject, html, text });
   }
 }
 

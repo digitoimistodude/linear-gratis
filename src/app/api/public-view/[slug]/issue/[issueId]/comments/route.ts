@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { decryptToken } from '@/lib/encryption';
 import { getLinearToken } from '@/lib/linear-token';
-import { sendEmail, getOwnerEmail, renderCommentEmail } from '@/lib/mail';
 import { upsertSubscription } from '@/lib/subscriptions';
 import { createNotification } from '@/lib/notifications';
 import type { PublicView, ViewComment } from '@/lib/supabase';
@@ -322,24 +321,7 @@ export async function POST(
       }
     }
 
-    // Email the view owner about the new comment. Best-effort: mail failures
-    // never break the comment response.
-    try {
-      const ownerEmail = await getOwnerEmail(view.user_id);
-      if (ownerEmail) {
-        const { subject, html, text } = renderCommentEmail({
-          authorName: authorName.trim(),
-          content: trimmedContent,
-          viewName: view.name,
-          viewSlug: view.slug,
-          issueIdentifier,
-        });
-        await sendEmail({ to: ownerEmail, subject, html, text });
-      }
-    } catch (mailError) {
-      console.error('Failed to email owner about new comment:', mailError);
-    }
-
+    // Owners get this via Linear's own notifications - in-app bell only.
     await createNotification({
       userId: view.user_id,
       viewId: view.id,
