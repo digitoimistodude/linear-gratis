@@ -220,32 +220,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="border-t border-border/50 bg-card/50 backdrop-blur-sm">
-          <div className="container mx-auto px-6 py-12">
-            <div className="max-w-6xl mx-auto">
-              <div className="flex flex-col md:flex-row justify-between items-center">
-                <div className="mb-6 md:mb-0">
-                  <h3 className="text-xl font-semibold mb-2">linear.dude.fi</h3>
-                  <p className="text-muted-foreground">
-                    Linear issues shared with Dude clients
-                  </p>
-                </div>
-
-                <Link
-                  href="https://github.com/digitoimistodude/linear-gratis"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                  style={{ gap: '10px' }}
-                >
-                  <span>Forked by digitoimistodude</span>
-                  <Github className="h-5 w-5" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
     );
   }

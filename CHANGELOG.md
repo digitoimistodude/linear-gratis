@@ -4,6 +4,7 @@
 * Hide the app footer on `/view/*` so it never leaks app chrome onto a branded customer view (dude-specific change)
 * Strip owner-side notification emails entirely - workspace owners already get Linear's native notifications, so our duplicate mail is gone; bell-icon in-app notifications stay (dude-specific change)
 * Drop the optimistic insert on the customer comment form; the Realtime fetch round-trip is the only source of truth so comments no longer flash twice before settling (dude-specific change)
+* Remove the in-page footer on the landing page that was duplicating the new app footer (dude-specific change)
 
 ### 0.7.4: 2026-06-02
 
