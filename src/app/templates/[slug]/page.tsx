@@ -89,12 +89,6 @@ export default async function TemplatePage({ params }: TemplatePageProps) {
                 <Link href="/templates" className="text-sm text-muted-foreground hover:text-foreground">
                   All templates
                 </Link>
-                <Link href="/use-cases" className="text-sm text-muted-foreground hover:text-foreground">
-                  Use cases
-                </Link>
-                <Link href="/comparison" className="text-sm text-muted-foreground hover:text-foreground">
-                  Comparisons
-                </Link>
                 <Button asChild size="sm">
                   <Link href="/login">Use this template</Link>
                 </Button>

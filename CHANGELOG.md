@@ -5,6 +5,7 @@
 * Strip owner-side notification emails entirely - workspace owners already get Linear's native notifications, so our duplicate mail is gone; bell-icon in-app notifications stay (dude-specific change)
 * Drop the optimistic insert on the customer comment form; the Realtime fetch round-trip is the only source of truth so comments no longer flash twice before settling (dude-specific change)
 * Remove the in-page footer on the landing page that was duplicating the new app footer (dude-specific change)
+* Drop the `/use-cases`, `/integrations`, `/comparison` upstream marketing pages we don't ship, along with their data files and the nav links pointing at them (dude-specific change)
 
 ### 0.7.4: 2026-06-02
 

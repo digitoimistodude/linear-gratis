@@ -615,12 +615,6 @@ export default function FeaturesPage() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="h-12 px-8 font-semibold">
-              <Link href="/comparison">
-                <Github className="mr-2 h-4 w-4" />
-                View quick comparison
-              </Link>
-            </Button>
           </div>
         </div>
       </section>

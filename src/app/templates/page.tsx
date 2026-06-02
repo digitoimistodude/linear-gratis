@@ -59,12 +59,6 @@ export default function TemplatesPage() {
               linear.dude.fi
             </Link>
             <div className="flex items-center gap-4">
-              <Link href="/use-cases" className="text-sm text-muted-foreground hover:text-foreground">
-                Use cases
-              </Link>
-              <Link href="/comparison" className="text-sm text-muted-foreground hover:text-foreground">
-                Comparisons
-              </Link>
               <Link href="/features" className="text-sm text-muted-foreground hover:text-foreground">
                 Features
               </Link>
@@ -296,11 +290,6 @@ export default function TemplatesPage() {
                   <Link href="/login">
                     Start with a template
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="h-12 px-8">
-                  <Link href="/use-cases">
-                    See use cases
                   </Link>
                 </Button>
               </div>

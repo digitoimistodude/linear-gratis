@@ -11,9 +11,6 @@ const versionString = commit ? `v${version}-${commit}` : `v${version}`
 
 const NAV_LINKS = [
   { href: '/features', label: 'Features' },
-  { href: '/integrations', label: 'Integrations' },
-  { href: '/use-cases', label: 'Use cases' },
-  { href: '/comparison', label: 'Compare' },
   {
     href: 'https://github.com/digitoimistodude/linear-gratis/blob/dude/CHANGELOG.md',
     label: 'Changelog',
