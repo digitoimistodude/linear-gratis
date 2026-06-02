@@ -6,6 +6,7 @@
 * Drop the optimistic insert on the customer comment form; the Realtime fetch round-trip is the only source of truth so comments no longer flash twice before settling (dude-specific change)
 * Remove the in-page footer on the landing page that was duplicating the new app footer (dude-specific change)
 * Drop the `/use-cases`, `/integrations`, `/comparison` upstream marketing pages we don't ship, along with their data files and the nav links pointing at them (dude-specific change)
+* Show the same "Forked by digitoimistodude" footer in both signed-in and signed-out states for consistency (dude-specific change)
 
 ### 0.7.4: 2026-06-02
 

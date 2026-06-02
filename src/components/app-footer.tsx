@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/contexts/auth-context'
 import { Github } from 'lucide-react'
 
 const version = process.env.NEXT_PUBLIC_APP_VERSION ?? ''
@@ -51,13 +50,11 @@ function NavList() {
 }
 
 export function AppFooter() {
-  const { user, loading } = useAuth()
   const pathname = usePathname()
 
   // Public view pages render their own branded footer; the app footer would
   // clash with view-owner branding and leak app chrome to customers.
   if (pathname?.startsWith('/view/')) return null
-  if (loading) return null
 
   return (
     <footer className="border-t border-border/40 mt-12 py-4 px-6 text-xs text-muted-foreground">
@@ -73,33 +70,18 @@ export function AppFooter() {
             {versionString}
           </a>
           <Dot />
-          {user ? (
-            <span>
-              Made with <span aria-hidden="true" className="text-red-500">♥</span> in Finland, sponsored by{' '}
-              <a
-                href="https://www.dude.fi"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-foreground transition-colors"
-              >
-                Dude
-              </a>
-              , a digital agency worth knowing.
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1">
-              Forked by{' '}
-              <a
-                href="https://github.com/digitoimistodude/linear-gratis"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
-              >
-                digitoimistodude
-                <Github className="h-3 w-3" />
-              </a>
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1">
+            Forked by{' '}
+            <a
+              href="https://github.com/digitoimistodude/linear-gratis"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+            >
+              digitoimistodude
+              <Github className="h-3 w-3" />
+            </a>
+          </span>
         </span>
       </div>
     </footer>
