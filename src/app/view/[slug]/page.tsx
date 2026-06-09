@@ -123,18 +123,14 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     view?.show_labels === false ? { ...filterOptions, labels: [] } : filterOptions
   ), [filterOptions, view?.show_labels])
 
-  // Detect whether the current viewer is logged in as the view owner so the
-  // IssueDetailModal can render owner-only controls (per-issue public
-  // description override editor). Public visitors remain unauthenticated.
+  // Show the per-issue override editor to any signed-in workspace user, not
+  // just the view's original creator. Public visitors remain unauthenticated
+  // and never see the editor or get past the override API's auth check.
   useEffect(() => {
     let cancelled = false
-    if (!view?.user_id) {
-      setIsOwner(false)
-      return
-    }
     supabase.auth.getUser().then(({ data }) => {
       if (cancelled) return
-      setIsOwner(Boolean(data.user?.id && data.user.id === view.user_id))
+      setIsOwner(Boolean(data.user?.id))
     }).catch(() => {
       if (!cancelled) setIsOwner(false)
     })

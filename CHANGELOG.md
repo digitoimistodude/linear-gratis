@@ -7,6 +7,8 @@
 * Remove the in-page footer on the landing page that was duplicating the new app footer (dude-specific change)
 * Drop the `/use-cases`, `/integrations`, `/comparison` upstream marketing pages we don't ship, along with their data files and the nav links pointing at them (dude-specific change)
 * Show the same "Forked by digitoimistodude" footer in both signed-in and signed-out states for consistency (dude-specific change)
+* Let any signed-in workspace user edit, delete, and add per-issue description overrides on any public view, not only the original creator; logged-out and external visitors are still rejected by the API and never see the editor (dude-specific change)
+* Run migration `023_share_public_views_admin_access.sql` in Supabase before deploying
 
 ### 0.7.4: 2026-06-02
 

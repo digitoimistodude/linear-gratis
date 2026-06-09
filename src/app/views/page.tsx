@@ -1862,7 +1862,7 @@ export default function PublicViewsPage() {
                             Open view
                           </Button>
                         </Link>
-                        {view.user_id === user?.id && (
+                        {user && (
                           <>
                             <Button
                               variant="outline"
