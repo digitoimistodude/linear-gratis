@@ -1,6 +1,6 @@
 ### 0.7.6: 2026-06-18
 
-* Fix inverted priority labels in the filter dropdown (`fix/inverted-priority-filter-labels`)
+* Fix inverted priority labels in the filter dropdown and the issue creation modal (`fix/inverted-priority-filter-labels`)
 
 ### 0.7.5: 2026-06-02
 
