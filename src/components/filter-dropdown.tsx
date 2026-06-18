@@ -591,10 +591,10 @@ export function generateFilterOptions(issues: LinearIssue[]): FilterOptions {
 
   const priorities = [
     { value: 0, label: 'No priority' },
-    { value: 1, label: 'Low' },
-    { value: 2, label: 'Medium' },
-    { value: 3, label: 'High' },
-    { value: 4, label: 'Urgent' },
+    { value: 1, label: 'Urgent' },
+    { value: 2, label: 'High' },
+    { value: 3, label: 'Medium' },
+    { value: 4, label: 'Low' },
   ].filter(priority =>
     issues.some(issue => issue.priority === priority.value)
   )
