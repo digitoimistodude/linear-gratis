@@ -66,10 +66,10 @@ interface Metadata {
 
 const priorities = [
   { value: 0, label: 'No priority', icon: NoPriorityIcon },
-  { value: 1, label: 'Low', icon: LowPriorityIcon },
-  { value: 2, label: 'Medium', icon: MediumPriorityIcon },
-  { value: 3, label: 'High', icon: HighPriorityIcon },
-  { value: 4, label: 'Urgent', icon: UrgentPriorityIcon },
+  { value: 1, label: 'Urgent', icon: UrgentPriorityIcon },
+  { value: 2, label: 'High', icon: HighPriorityIcon },
+  { value: 3, label: 'Medium', icon: MediumPriorityIcon },
+  { value: 4, label: 'Low', icon: LowPriorityIcon },
 ]
 
 function NoPriorityIcon() {
