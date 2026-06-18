@@ -29,6 +29,7 @@ The Supabase anon key and Cloudflare account ID in `wrangler.jsonc` are public b
 
 - Build: `npm run build:worker`
 - Deploy: `npx wrangler deploy`
+- ALWAYS rebuild (`npm run build:worker`) before `npx wrangler deploy`. Wrangler ships whatever is already in `.open-next/`, so deploying without a fresh build can silently push the previous build's bundle. Verify the deploy by curling the live URL or checking a tagged string in the new chunk.
 - Secrets managed via `npx wrangler secret put <KEY>`
 - Local dev env vars in `.env.local` (gitignored)
 
