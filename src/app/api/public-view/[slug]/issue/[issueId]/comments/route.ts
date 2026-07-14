@@ -4,6 +4,7 @@ import { decryptToken } from '@/lib/encryption';
 import { getLinearToken } from '@/lib/linear-token';
 import { upsertSubscription } from '@/lib/subscriptions';
 import { createNotification } from '@/lib/notifications';
+import { fetchIssueScope, issueInViewScope } from '@/lib/view-scope';
 import type { PublicView, ViewComment } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -96,7 +97,7 @@ export async function GET(
     // Check if view exists and is active
     const { data: viewData, error: viewError } = await supabaseAdmin
       .from('public_views')
-      .select('id, user_id, is_active')
+      .select('id, user_id, is_active, project_ids, project_id, team_id, excluded_issue_ids, allowed_statuses')
       .eq('slug', slug)
       .eq('is_active', true)
       .single();
@@ -106,6 +107,16 @@ export async function GET(
         { error: 'Public view not found or inactive' },
         { status: 404 }
       );
+    }
+
+    // Only serve comments for an issue that belongs to this view. Without this a
+    // slug holder could read the comment thread of any workspace issue by id.
+    const token = await getLinearToken(viewData.user_id);
+    if (token) {
+      const scope = await fetchIssueScope(token, issueId);
+      if (!scope || !issueInViewScope(viewData, scope)) {
+        return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+      }
     }
 
     // Fetch approved, non-hidden comments
@@ -128,7 +139,6 @@ export async function GET(
     // Pull the live Linear thread so team replies appear publicly and deleted
     // comments drop off. Only replies nested under a customer comment are shown
     // - unrelated internal Linear comments stay private.
-    const token = await getLinearToken(viewData.user_id);
     const thread = token ? await fetchLinearThread(token, issueId) : null;
 
     let merged: Array<{ id: string; author_name: string; content: string; created_at: string }>;
@@ -219,7 +229,7 @@ export async function POST(
     // Check if view exists, is active, and allows comments
     const { data: viewData, error: viewError } = await supabaseAdmin
       .from('public_views')
-      .select('id, user_id, slug, name, is_active, allow_customer_comments')
+      .select('id, user_id, slug, name, is_active, allow_customer_comments, project_ids, project_id, team_id, excluded_issue_ids, allowed_statuses')
       .eq('slug', slug)
       .eq('is_active', true)
       .single();
@@ -231,13 +241,29 @@ export async function POST(
       );
     }
 
-    const view = viewData as Pick<PublicView, 'id' | 'user_id' | 'slug' | 'name' | 'is_active' | 'allow_customer_comments'>;
+    const view = viewData as Pick<PublicView, 'id' | 'user_id' | 'slug' | 'name' | 'is_active' | 'allow_customer_comments' | 'project_ids' | 'project_id' | 'team_id' | 'excluded_issue_ids' | 'allowed_statuses'>;
 
     if (!view.allow_customer_comments) {
       return NextResponse.json(
         { error: 'Comments are disabled for this view' },
         { status: 403 }
       );
+    }
+
+    // Reject comments targeting an issue outside this view's scope. A
+    // comment-enabled slug must not become a write primitive against arbitrary
+    // workspace issues (the sync below posts to Linear with the owner's token
+    // and can impersonate an author via createAsUser).
+    const scopeToken = await getLinearToken(view.user_id);
+    if (!scopeToken) {
+      return NextResponse.json(
+        { error: 'Unable to verify issue - Linear API token not found' },
+        { status: 500 }
+      );
+    }
+    const scope = await fetchIssueScope(scopeToken, issueId);
+    if (!scope || !issueInViewScope(view, scope)) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
     const trimmedContent = content.trim();
