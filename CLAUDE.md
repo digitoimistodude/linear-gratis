@@ -32,6 +32,7 @@ The Supabase anon key and Cloudflare account ID in `wrangler.jsonc` are public b
 - ALWAYS rebuild (`npm run build:worker`) before `npx wrangler deploy`. Wrangler ships whatever is already in `.open-next/`, so deploying without a fresh build can silently push the previous build's bundle. Verify the deploy by curling the live URL or checking a tagged string in the new chunk.
 - Secrets managed via `npx wrangler secret put <KEY>`
 - Local dev env vars in `.env.local` (gitignored)
+- A passing curl does not mean a passing browser. `fetch` writes a header value one byte per JS code unit, so `ä` leaves the browser as latin-1 `0xE4`, while curl sends the shell's UTF-8 `0xC3 0xA4` and the Worker decodes headers as UTF-8. Anything non-ASCII crossing a header must be percent-encoded, and verification has to use the bytes the browser actually sends. This shipped a broken password-protected view once.
 
 ## Auth
 
