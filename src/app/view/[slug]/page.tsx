@@ -13,6 +13,7 @@ import { LinearIssue } from '@/app/api/linear/issues/route'
 import { RefreshCw, Lock } from 'lucide-react'
 import { useBrandingSettings, applyBrandingToPage, getBrandingStyles } from '@/hooks/use-branding'
 import { sanitizeSvgMarkup } from '@/lib/svg-sanitize'
+import { viewPasswordHeaders, viewPasswordStorageKey } from '@/lib/view-password'
 
 interface PublicViewPageProps {
   params: Promise<{
@@ -66,7 +67,9 @@ const filtersAreEmpty = (filters: FilterState): boolean =>
   filters.creators.length === 0 &&
   filters.projects.length === 0
 
-const storageKey = (slug: string, kind: 'filters' | 'password' | 'sort') =>
+// The password key lives in lib/view-password so the child-endpoint fetches
+// read the same entry this page writes.
+const storageKey = (slug: string, kind: 'filters' | 'sort') =>
   `public-view-${kind}:${slug}`
 
 const SORT_KEYS: SortKey[] = [
@@ -261,7 +264,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           // re-enter without the auto-submit loop.
           if (providedPassword) {
             try {
-              window.localStorage.removeItem(storageKey(slug, 'password'))
+              window.localStorage.removeItem(viewPasswordStorageKey(slug))
             } catch {
               // localStorage unavailable - non-fatal
             }
@@ -287,7 +290,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       // on refresh / new tab.
       if (providedPassword) {
         try {
-          window.localStorage.setItem(storageKey(slug, 'password'), providedPassword)
+          window.localStorage.setItem(viewPasswordStorageKey(slug), providedPassword)
         } catch {
           // localStorage unavailable - non-fatal
         }
@@ -413,6 +416,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...viewPasswordHeaders(slug),
       },
       body: JSON.stringify({
         title: issueData.title,
@@ -439,7 +443,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     if (!slug) return
     let savedPassword: string | null = null
     try {
-      savedPassword = window.localStorage.getItem(storageKey(slug, 'password'))
+      savedPassword = window.localStorage.getItem(viewPasswordStorageKey(slug))
     } catch {
       // localStorage unavailable - fall through to unauthenticated load
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getLinearToken } from '@/lib/linear-token'
+import { viewPasswordSatisfied } from '@/lib/view-password-check'
 
 interface RouteContext {
   params: Promise<{
@@ -27,6 +28,15 @@ export async function GET(
       return NextResponse.json(
         { error: 'View not found' },
         { status: 404 }
+      )
+    }
+
+    // Project updates are view content, so a protected view gates them on the
+    // same password the parent endpoint checks.
+    if (!(await viewPasswordSatisfied(view, request))) {
+      return NextResponse.json(
+        { error: 'Password required', requiresPassword: true },
+        { status: 401 }
       )
     }
 

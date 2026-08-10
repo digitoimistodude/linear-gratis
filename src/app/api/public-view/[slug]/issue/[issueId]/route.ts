@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
+import { issueInViewScope } from '@/lib/view-scope';
+import { viewPasswordSatisfied } from '@/lib/view-password-check';
 
 export type IssueComment = {
   id: string;
@@ -109,6 +111,17 @@ export async function GET(
       );
     }
 
+    // A protected view's password guards this endpoint too. The parent endpoint
+    // validates it once per visitor, but this request stands alone, so without
+    // the check a visitor who never had the password could read the view's
+    // issues directly (CWE-862).
+    if (!(await viewPasswordSatisfied(viewData, request))) {
+      return NextResponse.json(
+        { error: 'Password required', requiresPassword: true },
+        { status: 401 }
+      );
+    }
+
     // Get the Linear token (workspace-shared, falling back to user's personal)
     const decryptedToken = await getLinearToken(viewData.user_id);
     if (!decryptedToken) {
@@ -134,6 +147,12 @@ export async function GET(
           priorityLabel
           estimate
           url
+          project {
+            id
+          }
+          team {
+            id
+          }
           state {
             id
             name
@@ -226,6 +245,8 @@ export async function GET(
           priorityLabel: string;
           estimate?: number;
           url: string;
+          project?: { id: string } | null;
+          team?: { id: string } | null;
           state: {
             id: string;
             name: string;
@@ -304,6 +325,21 @@ export async function GET(
     }
 
     const issue = result.data.issue;
+
+    // Enforce that the requested issue actually belongs to this view. The slug
+    // and is_active checks above only prove the view exists - without this an
+    // active-slug holder could read any workspace issue by id, bypassing the
+    // view's project scope, exclusions and password (BOLA / CWE-639).
+    if (
+      !issueInViewScope(viewData, {
+        id: issue.id,
+        projectId: issue.project?.id ?? null,
+        teamId: issue.team?.id ?? null,
+        stateName: issue.state?.name ?? null,
+      })
+    ) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
+    }
 
     // Substitute the Linear description with the per-view override if present.
     const { data: override } = await supabaseAdmin

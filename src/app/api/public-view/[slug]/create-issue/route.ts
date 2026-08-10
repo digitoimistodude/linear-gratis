@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { createNotification } from '@/lib/notifications';
+import { viewPasswordSatisfied } from '@/lib/view-password-check';
 
 const LINEAR_API_URL = 'https://api.linear.app/graphql';
 
@@ -197,12 +198,22 @@ export async function POST(
       .from('public_views')
       .select('*')
       .eq('slug', slug)
+      .eq('is_active', true)
       .single();
 
     if (viewError || !viewData) {
       return NextResponse.json(
         { error: 'View not found' },
         { status: 404 }
+      );
+    }
+
+    // Filing into a protected view requires its password. Without this anyone
+    // holding the slug could write issues into the owner's Linear workspace.
+    if (!(await viewPasswordSatisfied(viewData, request))) {
+      return NextResponse.json(
+        { error: 'Password required', requiresPassword: true },
+        { status: 401 }
       );
     }
 
