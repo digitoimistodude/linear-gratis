@@ -29,8 +29,19 @@ export async function viewPasswordSatisfied(
   const supplied = request.headers.get(VIEW_PASSWORD_HEADER);
   if (!supplied) return false;
 
+  // The client percent-encodes the value to keep the header ASCII-safe; see
+  // viewPasswordHeaders. A value that was never encoded round-trips unchanged
+  // through decodeURIComponent, so hand-built requests still work, while a
+  // malformed escape throws URIError and is treated as a failed attempt.
+  let candidate: string;
   try {
-    return await bcrypt.compare(supplied, view.password_hash);
+    candidate = decodeURIComponent(supplied);
+  } catch {
+    return false;
+  }
+
+  try {
+    return await bcrypt.compare(candidate, view.password_hash);
   } catch {
     return false;
   }

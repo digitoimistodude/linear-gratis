@@ -1,3 +1,7 @@
+### 0.7.8: 2026-08-10
+
+* Percent-encode the view password in the `x-view-password` header so non-ASCII passwords work: browsers write header values one byte per code unit, so an `ä` went out as a single latin-1 byte that the Worker then read as invalid UTF-8, breaking every child endpoint on password-protected views whose password is not pure ASCII (`fix/public-view-bola-scope`)
+
 ### 0.7.7: 2026-08-10
 
 * Scope public-view child endpoints to the view: `issue/[issueId]` and its `comments` route now verify the requested issue belongs to the view's projects, exclusions and allowed statuses, so an active slug can no longer read or comment on arbitrary workspace issues (`fix/public-view-bola-scope`)
