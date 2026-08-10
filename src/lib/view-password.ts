@@ -33,8 +33,17 @@ export function storedViewPassword(slug: string): string | null {
 /**
  * Header bag to spread into a child-endpoint `fetch`. Empty when the visitor has
  * no remembered password, which is the normal case for an unprotected view.
+ *
+ * The value is percent-encoded, and must be: a header value is a byte sequence,
+ * so `fetch` writes each JS code unit as one byte (latin-1). A password
+ * containing "ä" would go out as 0xE4 while the runtime reading it back decodes
+ * headers as UTF-8, where a lone 0xE4 is invalid and becomes U+FFFD - the
+ * compare then fails for every non-ASCII password. encodeURIComponent keeps the
+ * header pure ASCII so the bytes survive the round trip intact.
  */
 export function viewPasswordHeaders(slug: string): Record<string, string> {
   const password = storedViewPassword(slug);
-  return password ? { [VIEW_PASSWORD_HEADER]: password } : {};
+  return password
+    ? { [VIEW_PASSWORD_HEADER]: encodeURIComponent(password) }
+    : {};
 }
