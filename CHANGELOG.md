@@ -1,3 +1,10 @@
+### 0.7.7: 2026-08-10
+
+* Scope public-view child endpoints to the view: `issue/[issueId]` and its `comments` route now verify the requested issue belongs to the view's projects, exclusions and allowed statuses, so an active slug can no longer read or comment on arbitrary workspace issues (`fix/public-view-bola-scope`)
+* Require the view password on every public-view child endpoint, not just the parent: issue detail, comments, project updates, creation metadata and issue creation all reject requests without it, sent as an `x-view-password` header (`fix/public-view-bola-scope`)
+* Deny comment thread reads when the Linear token is missing instead of falling through to stored comments, so the scope check cannot be skipped (`fix/public-view-bola-scope`) (dude-specific change)
+* Restrict creation metadata and issue creation to active views, matching the other public-view endpoints (`fix/public-view-bola-scope`)
+
 ### 0.7.6: 2026-06-18
 
 * Fix inverted priority labels in the filter dropdown and the issue creation modal (`fix/inverted-priority-filter-labels`)

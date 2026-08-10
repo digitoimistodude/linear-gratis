@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { issueInViewScope } from '@/lib/view-scope';
+import { viewPasswordSatisfied } from '@/lib/view-password-check';
 
 export type IssueComment = {
   id: string;
@@ -107,6 +108,17 @@ export async function GET(
       return NextResponse.json(
         { error: 'This public view has expired' },
         { status: 410 }
+      );
+    }
+
+    // A protected view's password guards this endpoint too. The parent endpoint
+    // validates it once per visitor, but this request stands alone, so without
+    // the check a visitor who never had the password could read the view's
+    // issues directly (CWE-862).
+    if (!(await viewPasswordSatisfied(viewData, request))) {
+      return NextResponse.json(
+        { error: 'Password required', requiresPassword: true },
+        { status: 401 }
       );
     }
 

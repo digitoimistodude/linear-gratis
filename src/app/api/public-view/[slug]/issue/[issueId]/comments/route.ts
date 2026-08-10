@@ -5,6 +5,7 @@ import { getLinearToken } from '@/lib/linear-token';
 import { upsertSubscription } from '@/lib/subscriptions';
 import { createNotification } from '@/lib/notifications';
 import { fetchIssueScope, issueInViewScope } from '@/lib/view-scope';
+import { viewPasswordSatisfied } from '@/lib/view-password-check';
 import type { PublicView, ViewComment } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -97,7 +98,7 @@ export async function GET(
     // Check if view exists and is active
     const { data: viewData, error: viewError } = await supabaseAdmin
       .from('public_views')
-      .select('id, user_id, is_active, project_ids, project_id, team_id, excluded_issue_ids, allowed_statuses')
+      .select('id, user_id, is_active, password_protected, password_hash, project_ids, project_id, team_id, excluded_issue_ids, allowed_statuses')
       .eq('slug', slug)
       .eq('is_active', true)
       .single();
@@ -109,14 +110,29 @@ export async function GET(
       );
     }
 
+    // A protected view's password guards the thread as well, not just the
+    // parent view payload.
+    if (!(await viewPasswordSatisfied(viewData, request))) {
+      return NextResponse.json(
+        { error: 'Password required', requiresPassword: true },
+        { status: 401 }
+      );
+    }
+
     // Only serve comments for an issue that belongs to this view. Without this a
     // slug holder could read the comment thread of any workspace issue by id.
+    // No token means the scope claim can't be verified, so deny rather than
+    // fall through to whatever is stored under the caller-supplied issue id.
     const token = await getLinearToken(viewData.user_id);
-    if (token) {
-      const scope = await fetchIssueScope(token, issueId);
-      if (!scope || !issueInViewScope(viewData, scope)) {
-        return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
-      }
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unable to verify issue - Linear API token not found' },
+        { status: 500 }
+      );
+    }
+    const scope = await fetchIssueScope(token, issueId);
+    if (!scope || !issueInViewScope(viewData, scope)) {
+      return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
     }
 
     // Fetch approved, non-hidden comments
@@ -139,7 +155,7 @@ export async function GET(
     // Pull the live Linear thread so team replies appear publicly and deleted
     // comments drop off. Only replies nested under a customer comment are shown
     // - unrelated internal Linear comments stay private.
-    const thread = token ? await fetchLinearThread(token, issueId) : null;
+    const thread = await fetchLinearThread(token, issueId);
 
     let merged: Array<{ id: string; author_name: string; content: string; created_at: string }>;
 
@@ -175,7 +191,7 @@ export async function GET(
         (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
       );
     } else {
-      // No Linear token available - fall back to the stored customer comments.
+      // Linear thread unreachable - fall back to the stored customer comments.
       merged = customerComments.map((c) => ({
         id: c.id,
         author_name: c.author_name,
@@ -229,7 +245,7 @@ export async function POST(
     // Check if view exists, is active, and allows comments
     const { data: viewData, error: viewError } = await supabaseAdmin
       .from('public_views')
-      .select('id, user_id, slug, name, is_active, allow_customer_comments, project_ids, project_id, team_id, excluded_issue_ids, allowed_statuses')
+      .select('id, user_id, slug, name, is_active, password_protected, password_hash, allow_customer_comments, project_ids, project_id, team_id, excluded_issue_ids, allowed_statuses')
       .eq('slug', slug)
       .eq('is_active', true)
       .single();
@@ -241,7 +257,16 @@ export async function POST(
       );
     }
 
-    const view = viewData as Pick<PublicView, 'id' | 'user_id' | 'slug' | 'name' | 'is_active' | 'allow_customer_comments' | 'project_ids' | 'project_id' | 'team_id' | 'excluded_issue_ids' | 'allowed_statuses'>;
+    const view = viewData as Pick<PublicView, 'id' | 'user_id' | 'slug' | 'name' | 'is_active' | 'password_protected' | 'password_hash' | 'allow_customer_comments' | 'project_ids' | 'project_id' | 'team_id' | 'excluded_issue_ids' | 'allowed_statuses'>;
+
+    // Posting into a protected view requires its password, so the write path is
+    // no more reachable than the read path.
+    if (!(await viewPasswordSatisfied(view, request))) {
+      return NextResponse.json(
+        { error: 'Password required', requiresPassword: true },
+        { status: 401 }
+      );
+    }
 
     if (!view.allow_customer_comments) {
       return NextResponse.json(
