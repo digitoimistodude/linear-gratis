@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { fetchLinearIssues } from '@/lib/linear';
+import { redactPublicViewIssue } from '@/lib/public-redaction';
 import bcrypt from 'bcryptjs';
 
 export async function GET(
@@ -91,9 +92,15 @@ export async function GET(
     const overrides = new Map<string, string>(
       (overrideRows ?? []).map((row) => [row.issue_id, row.public_description])
     );
-    const visibleIssues = filteredIssues.map((issue) => overrides.has(issue.id)
-      ? { ...issue, description: overrides.get(issue.id), has_override: true }
-      : { ...issue, has_override: false });
+    // Redact first, then let an override put a description back: an override is
+    // text the owner wrote for this audience, so it shows even when
+    // show_descriptions is off, flagged by has_override.
+    const visibleIssues = filteredIssues.map((issue) => {
+      const redacted = redactPublicViewIssue(issue, viewData);
+      return overrides.has(issue.id)
+        ? { ...redacted, description: overrides.get(issue.id), has_override: true }
+        : { ...redacted, has_override: false };
+    });
 
     return NextResponse.json({
       success: true,
@@ -223,9 +230,25 @@ export async function POST(
     }
 
     const excludedIds = new Set<string>(viewData.excluded_issue_ids ?? []);
-    const visibleIssues = excludedIds.size > 0
+    const filteredIssues = excludedIds.size > 0
       ? issuesResult.issues.filter((issue) => !excludedIds.has(issue.id))
       : issuesResult.issues;
+
+    // Same redaction and override handling as the unprotected GET path above.
+    const { data: overrideRows } = await supabaseAdmin
+      .from('view_issue_description_overrides')
+      .select('issue_id, public_description')
+      .eq('view_id', viewData.id)
+      .in('issue_id', filteredIssues.map((issue) => issue.id));
+    const overrides = new Map<string, string>(
+      (overrideRows ?? []).map((row) => [row.issue_id, row.public_description])
+    );
+    const visibleIssues = filteredIssues.map((issue) => {
+      const redacted = redactPublicViewIssue(issue, viewData);
+      return overrides.has(issue.id)
+        ? { ...redacted, description: overrides.get(issue.id), has_override: true }
+        : { ...redacted, has_override: false };
+    });
 
     return NextResponse.json({
       success: true,

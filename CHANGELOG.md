@@ -1,3 +1,8 @@
+### 0.7.10: 2026-08-12
+
+* Apply the view display flags server-side: `show_descriptions`, `show_labels`, `show_assignees` and `show_priorities` now strip the data from the public-view and roadmap payloads instead of leaving it in the JSON for the client to hide, closing a leak where a password-protected view returned descriptions the owner had switched off; ported from upstream `e74fdeb`
+* Apply per-issue description overrides on password-protected views too, so the override feature works on the POST path and survives a hidden `show_descriptions` (dude-specific change)
+
 ### 0.7.9: 2026-08-11
 
 * Escape the `title`, `subtitle` and `category` query parameters in `/api/og` and cap their length, closing a reflected XSS that ran same-origin on linear.dude.fi; ported verbatim from upstream `e74fdeb`, which fixed this in April

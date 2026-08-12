@@ -349,7 +349,16 @@ export async function GET(
       .eq('issue_id', issueId)
       .maybeSingle();
     const hasOverride = Boolean(override?.public_description);
-    const effectiveDescription = override?.public_description ?? issue.description;
+
+    const descriptionsVisible = viewData.show_descriptions !== false;
+    const prioritiesVisible = viewData.show_priorities !== false;
+    const assigneesVisible = viewData.show_assignees !== false;
+    const labelsVisible = viewData.show_labels !== false;
+
+    // An override is text written for this audience, so it survives a hidden
+    // show_descriptions; the Linear description does not.
+    const effectiveDescription = override?.public_description
+      ?? (descriptionsVisible ? issue.description : undefined);
 
     const issueDetail: IssueDetail = {
       has_override: hasOverride,
@@ -357,13 +366,13 @@ export async function GET(
       identifier: issue.identifier,
       title: issue.title,
       description: effectiveDescription,
-      priority: issue.priority,
-      priorityLabel: issue.priorityLabel,
-      estimate: issue.estimate,
+      priority: prioritiesVisible ? issue.priority : 0,
+      priorityLabel: prioritiesVisible ? issue.priorityLabel : 'No priority',
+      estimate: prioritiesVisible ? issue.estimate : undefined,
       url: issue.url,
       state: issue.state,
-      assignee: issue.assignee,
-      labels: issue.labels.nodes,
+      assignee: assigneesVisible ? issue.assignee : undefined,
+      labels: labelsVisible ? issue.labels.nodes : [],
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
       comments: issue.comments?.nodes ?? [],
