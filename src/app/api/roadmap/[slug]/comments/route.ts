@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { authoriseRoadmap } from '@/lib/roadmap-auth';
+import { assertRoadmapIssueInScope } from '@/lib/roadmap-issue-access';
 import type { Roadmap, RoadmapComment } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -58,6 +59,9 @@ export async function GET(
     const auth = await authoriseRoadmap(slug, request);
     if (!auth.ok) return auth.response;
     const roadmapData = auth.roadmap;
+
+    const scope = await assertRoadmapIssueInScope(roadmapData, issueId);
+    if (!scope.ok) return scope.response;
 
     const roadmap = roadmapData as Pick<Roadmap, 'id' | 'is_active'>;
 
@@ -126,6 +130,9 @@ export async function POST(
     const auth = await authoriseRoadmap(slug, request);
     if (!auth.ok) return auth.response;
     const roadmapData = auth.roadmap;
+
+    const scope = await assertRoadmapIssueInScope(roadmapData, issueId);
+    if (!scope.ok) return scope.response;
 
     const roadmap = roadmapData as Pick<Roadmap, 'id' | 'allow_comments' | 'require_email_for_comments' | 'moderate_comments' | 'is_active'>;
 
