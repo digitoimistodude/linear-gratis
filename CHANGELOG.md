@@ -1,3 +1,10 @@
+### 0.8.0: 2026-08-12
+
+* Replace the `x-view-password` header with a signed httpOnly access cookie: the password is proven once at the parent endpoint and the child endpoints verify a scoped, 24h, hash-fingerprinted token instead, so the plaintext password no longer sits in `localStorage` where any XSS could read it and no request pays a bcrypt compare; ported from upstream `fdda5c0`
+* Route every public-view child endpoint through one `authorisePublicView` guard covering active state, expiry and password, so a new child endpoint cannot silently skip the check; ported from upstream `fdda5c0`
+* Require the roadmap password on the public roadmap comment and vote endpoints, which previously checked only the slug and active state, via the matching `authoriseRoadmap` guard; ported from upstream `fdda5c0`
+* Visitors to a password-protected view or roadmap now re-enter the password once every 24 hours instead of never, because access is a signed cookie rather than a stored password
+
 ### 0.7.10: 2026-08-12
 
 * Apply the view display flags server-side: `show_descriptions`, `show_labels`, `show_assignees` and `show_priorities` now strip the data from the public-view and roadmap payloads instead of leaving it in the JSON for the client to hide, closing a leak where a password-protected view returned descriptions the owner had switched off; ported from upstream `e74fdeb`

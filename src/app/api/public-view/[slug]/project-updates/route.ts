@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 import { getLinearToken } from '@/lib/linear-token'
-import { viewPasswordSatisfied } from '@/lib/view-password-check'
+import { authorisePublicView } from '@/lib/public-view-auth'
 
 interface RouteContext {
   params: Promise<{
@@ -16,29 +15,9 @@ export async function GET(
   try {
     const { slug } = await context.params
 
-    // Get the view from the database
-    const { data: view, error: viewError } = await supabaseAdmin
-      .from('public_views')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single()
-
-    if (viewError || !view) {
-      return NextResponse.json(
-        { error: 'View not found' },
-        { status: 404 }
-      )
-    }
-
-    // Project updates are view content, so a protected view gates them on the
-    // same password the parent endpoint checks.
-    if (!(await viewPasswordSatisfied(view, request))) {
-      return NextResponse.json(
-        { error: 'Password required', requiresPassword: true },
-        { status: 401 }
-      )
-    }
+    const auth = await authorisePublicView(slug, request)
+    if (!auth.ok) return auth.response
+    const view = auth.view
 
     // Resolve which project to fetch updates for. Multi-project views pass
     // the chosen projectId via the query string; single-project views fall back

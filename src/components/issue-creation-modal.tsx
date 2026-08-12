@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { X, Maximize2, ChevronDown } from 'lucide-react'
-import { viewPasswordHeaders } from '@/lib/view-password'
 
 interface IssueCreationModalProps {
   isOpen: boolean
@@ -221,7 +220,7 @@ export function IssueCreationModal({
       const metadataUrl = selectedProjectId
         ? `/api/public-view/${viewSlug}/metadata?projectId=${encodeURIComponent(selectedProjectId)}`
         : `/api/public-view/${viewSlug}/metadata`
-      const response = await fetch(metadataUrl, { headers: viewPasswordHeaders(viewSlug) })
+      const response = await fetch(metadataUrl)
 
       const data = await response.json() as { success?: boolean; metadata?: Metadata }
       if (data.success && data.metadata) {

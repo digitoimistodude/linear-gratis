@@ -13,7 +13,6 @@ import { LinearIssue } from '@/app/api/linear/issues/route'
 import { RefreshCw, Lock } from 'lucide-react'
 import { useBrandingSettings, applyBrandingToPage, getBrandingStyles } from '@/hooks/use-branding'
 import { sanitizeSvgMarkup } from '@/lib/svg-sanitize'
-import { viewPasswordHeaders, viewPasswordStorageKey } from '@/lib/view-password'
 
 interface PublicViewPageProps {
   params: Promise<{
@@ -67,8 +66,6 @@ const filtersAreEmpty = (filters: FilterState): boolean =>
   filters.creators.length === 0 &&
   filters.projects.length === 0
 
-// The password key lives in lib/view-password so the child-endpoint fetches
-// read the same entry this page writes.
 const storageKey = (slug: string, kind: 'filters' | 'sort') =>
   `public-view-${kind}:${slug}`
 
@@ -260,15 +257,6 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
           setRequiresPassword(true)
           setView(null)
           setIssues([])
-          // Stored password was wrong or expired - clear it so the visitor can
-          // re-enter without the auto-submit loop.
-          if (providedPassword) {
-            try {
-              window.localStorage.removeItem(viewPasswordStorageKey(slug))
-            } catch {
-              // localStorage unavailable - non-fatal
-            }
-          }
           return
         } else if (response.status === 404) {
           notFound()
@@ -285,16 +273,6 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       setFilterOptions(generateFilterOptions(issuesData))
       setLastUpdated(new Date())
       setRequiresPassword(false)
-
-      // Remember the successful password so the visitor isn't prompted again
-      // on refresh / new tab.
-      if (providedPassword) {
-        try {
-          window.localStorage.setItem(viewPasswordStorageKey(slug), providedPassword)
-        } catch {
-          // localStorage unavailable - non-fatal
-        }
-      }
 
     } catch (err) {
       console.error('Error loading view:', err)
@@ -416,7 +394,6 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...viewPasswordHeaders(slug),
       },
       body: JSON.stringify({
         title: issueData.title,
@@ -441,13 +418,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
 
   useEffect(() => {
     if (!slug) return
-    let savedPassword: string | null = null
-    try {
-      savedPassword = window.localStorage.getItem(viewPasswordStorageKey(slug))
-    } catch {
-      // localStorage unavailable - fall through to unauthenticated load
-    }
-    loadView(savedPassword || undefined)
+    loadView()
   }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Merge workspace branding with per-view overrides so both applyBrandingToPage

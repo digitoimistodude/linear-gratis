@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, User } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { viewPasswordHeaders } from '@/lib/view-password'
 
 interface Comment {
   id: string
@@ -50,7 +49,6 @@ export function ViewCommentSection({
       if (showSpinner) setLoading(true)
       const response = await fetch(
         `/api/public-view/${viewSlug}/issue/${issueId}/comments`,
-        { headers: viewPasswordHeaders(viewSlug) },
       )
       if (response.ok) {
         const data = await response.json() as { comments: Comment[] }
@@ -136,7 +134,7 @@ export function ViewCommentSection({
         `/api/public-view/${viewSlug}/issue/${issueId}/comments`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...viewPasswordHeaders(viewSlug) },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             authorName: submittedName,
             authorEmail: submittedEmail || undefined,

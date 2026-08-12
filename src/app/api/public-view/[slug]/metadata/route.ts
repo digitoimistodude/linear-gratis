@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { fetchLinearMetadata } from '@/lib/linear-metadata';
-import { viewPasswordSatisfied } from '@/lib/view-password-check';
+import { authorisePublicView } from '@/lib/public-view-auth';
 
 export async function GET(
   request: NextRequest,
@@ -11,25 +10,9 @@ export async function GET(
   try {
     const { slug } = await params;
 
-    const { data: viewData, error: viewError } = await supabaseAdmin
-      .from('public_views')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
-
-    if (viewError || !viewData) {
-      return NextResponse.json({ error: 'View not found' }, { status: 404 });
-    }
-
-    // Creation metadata names the owner's teams, states, labels and members, so
-    // a protected view must not hand it out without the password.
-    if (!(await viewPasswordSatisfied(viewData, request))) {
-      return NextResponse.json(
-        { error: 'Password required', requiresPassword: true },
-        { status: 401 }
-      );
-    }
+    const auth = await authorisePublicView(slug, request);
+    if (!auth.ok) return auth.response;
+    const viewData = auth.view;
 
     if (!viewData.allow_issue_creation) {
       return NextResponse.json(

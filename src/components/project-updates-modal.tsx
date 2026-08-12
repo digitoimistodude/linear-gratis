@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { UserAvatar } from '@/components/user-avatar'
-import { viewPasswordHeaders } from '@/lib/view-password'
 
 interface ProjectUpdate {
   id: string
@@ -84,7 +83,7 @@ export function ProjectUpdatesModal({ isOpen, onClose, viewSlug, projects = [], 
       const url = selectedProjectId
         ? `/api/public-view/${viewSlug}/project-updates?projectId=${encodeURIComponent(selectedProjectId)}`
         : `/api/public-view/${viewSlug}/project-updates`
-      const response = await fetch(url, { headers: viewPasswordHeaders(viewSlug) })
+      const response = await fetch(url)
       const result = await response.json() as { success?: boolean; error?: string; project?: ProjectUpdateData['project']; updates?: ProjectUpdate[] }
 
       if (!response.ok || !result.success) {

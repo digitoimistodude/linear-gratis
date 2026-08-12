@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { issueInViewScope } from '@/lib/view-scope';
-import { viewPasswordSatisfied } from '@/lib/view-password-check';
+import { authorisePublicView } from '@/lib/public-view-auth';
 
 export type IssueComment = {
   id: string;
@@ -90,37 +90,9 @@ export async function GET(
       );
     }
 
-    const { data: viewData, error: viewError } = await supabaseAdmin
-      .from('public_views')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
-
-    if (viewError || !viewData) {
-      return NextResponse.json(
-        { error: 'Public view not found or inactive' },
-        { status: 404 }
-      );
-    }
-
-    if (viewData.expires_at && new Date(viewData.expires_at) < new Date()) {
-      return NextResponse.json(
-        { error: 'This public view has expired' },
-        { status: 410 }
-      );
-    }
-
-    // A protected view's password guards this endpoint too. The parent endpoint
-    // validates it once per visitor, but this request stands alone, so without
-    // the check a visitor who never had the password could read the view's
-    // issues directly (CWE-862).
-    if (!(await viewPasswordSatisfied(viewData, request))) {
-      return NextResponse.json(
-        { error: 'Password required', requiresPassword: true },
-        { status: 401 }
-      );
-    }
+    const auth = await authorisePublicView(slug, request);
+    if (!auth.ok) return auth.response;
+    const viewData = auth.view;
 
     // Get the Linear token (workspace-shared, falling back to user's personal)
     const decryptedToken = await getLinearToken(viewData.user_id);

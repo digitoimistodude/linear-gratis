@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { fetchLinearIssues } from '@/lib/linear';
 import { redactPublicViewIssue } from '@/lib/public-redaction';
+import { setPublicViewAccessCookie } from '@/lib/public-view-auth';
 import bcrypt from 'bcryptjs';
 
 export async function GET(
@@ -250,7 +251,7 @@ export async function POST(
         : { ...redacted, has_override: false };
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       view: {
         id: viewData.id,
@@ -283,6 +284,12 @@ export async function POST(
       },
       issues: visibleIssues
     });
+
+    // The correct password was just proven, so vouch for this browser on the
+    // child endpoints with a signed httpOnly cookie instead of having the page
+    // keep the password around and replay it.
+    setPublicViewAccessCookie(response, viewData);
+    return response;
 
   } catch (error) {
     console.error('Public view password validation error:', error);

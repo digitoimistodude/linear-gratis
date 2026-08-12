@@ -4,6 +4,7 @@ import type { Roadmap, KanbanColumn } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { fetchRoadmapIssues, type RoadmapIssue } from '@/lib/linear';
 import { redactRoadmapIssue } from '@/lib/public-redaction';
+import { setRoadmapAccessCookie } from '@/lib/roadmap-auth';
 import bcrypt from 'bcryptjs';
 
 type VoteCount = {
@@ -163,7 +164,12 @@ export async function POST(
       );
     }
 
-    return await fetchRoadmapData(roadmap);
+    const response = await fetchRoadmapData(roadmap);
+    // Only vouch for the browser if the payload actually built.
+    if (response.status >= 200 && response.status < 300) {
+      setRoadmapAccessCookie(response, roadmap);
+    }
+    return response;
 
   } catch (error) {
     console.error('Roadmap password validation error:', error);

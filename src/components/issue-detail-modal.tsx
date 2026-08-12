@@ -9,7 +9,6 @@ import { IssueDetail } from '@/app/api/public-view/[slug]/issue/[issueId]/route'
 import { ViewCommentSection } from '@/components/view-comment-section'
 import { PriorityIcon, EstimateIcon } from '@/components/priority-icon'
 import { UserAvatar } from '@/components/user-avatar'
-import { viewPasswordHeaders } from '@/lib/view-password'
 
 interface IssueDetailModalProps {
   isOpen: boolean
@@ -164,9 +163,7 @@ export function IssueDetailModal({
     setError(null)
 
     try {
-      const response = await fetch(`/api/public-view/${viewSlug}/issue/${issueId}`, {
-        headers: viewPasswordHeaders(viewSlug),
-      })
+      const response = await fetch(`/api/public-view/${viewSlug}/issue/${issueId}`)
       const data = await response.json() as { success?: boolean; issue?: IssueDetail; error?: string }
 
       if (!response.ok || !data.success) {

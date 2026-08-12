@@ -5,7 +5,7 @@ import { getLinearToken } from '@/lib/linear-token';
 import { upsertSubscription } from '@/lib/subscriptions';
 import { createNotification } from '@/lib/notifications';
 import { fetchIssueScope, issueInViewScope } from '@/lib/view-scope';
-import { viewPasswordSatisfied } from '@/lib/view-password-check';
+import { authorisePublicView } from '@/lib/public-view-auth';
 import type { PublicView, ViewComment } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -95,29 +95,9 @@ export async function GET(
       );
     }
 
-    // Check if view exists and is active
-    const { data: viewData, error: viewError } = await supabaseAdmin
-      .from('public_views')
-      .select('id, user_id, is_active, password_protected, password_hash, project_ids, project_id, team_id, excluded_issue_ids, allowed_statuses')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
-
-    if (viewError || !viewData) {
-      return NextResponse.json(
-        { error: 'Public view not found or inactive' },
-        { status: 404 }
-      );
-    }
-
-    // A protected view's password guards the thread as well, not just the
-    // parent view payload.
-    if (!(await viewPasswordSatisfied(viewData, request))) {
-      return NextResponse.json(
-        { error: 'Password required', requiresPassword: true },
-        { status: 401 }
-      );
-    }
+    const auth = await authorisePublicView(slug, request);
+    if (!auth.ok) return auth.response;
+    const viewData = auth.view;
 
     // Only serve comments for an issue that belongs to this view. Without this a
     // slug holder could read the comment thread of any workspace issue by id.
@@ -242,31 +222,9 @@ export async function POST(
       );
     }
 
-    // Check if view exists, is active, and allows comments
-    const { data: viewData, error: viewError } = await supabaseAdmin
-      .from('public_views')
-      .select('id, user_id, slug, name, is_active, password_protected, password_hash, allow_customer_comments, project_ids, project_id, team_id, excluded_issue_ids, allowed_statuses')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
-
-    if (viewError || !viewData) {
-      return NextResponse.json(
-        { error: 'Public view not found or inactive' },
-        { status: 404 }
-      );
-    }
-
-    const view = viewData as Pick<PublicView, 'id' | 'user_id' | 'slug' | 'name' | 'is_active' | 'password_protected' | 'password_hash' | 'allow_customer_comments' | 'project_ids' | 'project_id' | 'team_id' | 'excluded_issue_ids' | 'allowed_statuses'>;
-
-    // Posting into a protected view requires its password, so the write path is
-    // no more reachable than the read path.
-    if (!(await viewPasswordSatisfied(view, request))) {
-      return NextResponse.json(
-        { error: 'Password required', requiresPassword: true },
-        { status: 401 }
-      );
-    }
+    const auth = await authorisePublicView(slug, request);
+    if (!auth.ok) return auth.response;
+    const view = auth.view;
 
     if (!view.allow_customer_comments) {
       return NextResponse.json(
