@@ -1,3 +1,8 @@
+### 0.7.9: 2026-08-11
+
+* Escape the `title`, `subtitle` and `category` query parameters in `/api/og` and cap their length, closing a reflected XSS that ran same-origin on linear.dude.fi; ported verbatim from upstream `e74fdeb`, which fixed this in April
+* Send `Content-Security-Policy` and `X-Content-Type-Options: nosniff` from `/api/og` so a future escaping regression cannot execute scripts (dude-specific change)
+
 ### 0.7.8: 2026-08-10
 
 * Percent-encode the view password in the `x-view-password` header so non-ASCII passwords work: browsers write header values one byte per code unit, so an `ä` went out as a single latin-1 byte that the Worker then read as invalid UTF-8, breaking every child endpoint on password-protected views whose password is not pure ASCII (`fix/public-view-bola-scope`)
