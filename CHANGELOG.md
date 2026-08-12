@@ -1,3 +1,14 @@
+### 0.8.1: 2026-08-12
+
+* Reject Linear webhook payloads whose signature does not match: the check computed the HMAC and logged a mismatch but never returned, so any unauthenticated caller could forge a webhook and trigger customer reply emails from our sending domain plus unbounded Realtime broadcasts (dude-specific change)
+* Validate the team and project ids from a webhook payload as UUIDs before they reach a PostgREST `.or()` filter, closing a filter-injection that could widen the notified view set (dude-specific change)
+* Require an authenticated session on `/api/auth/linear/connect`, which revokes and clears the workspace Linear OAuth token before starting a new consent flow and was reachable by anyone (dude-specific change)
+* Require an authenticated session on `/api/auth/linear/callback` so an OAuth token cannot be bound as the workspace token by an unauthenticated caller (dude-specific change)
+* Derive the OAuth redirect URI from the request URL instead of the caller-supplied `Origin` and `Referer` headers (dude-specific change)
+* Return an explicit column list from the public branding endpoint instead of `select('*')` (dude-specific change)
+* Bump `ws` to clear a high-severity advisory reached through `@supabase/realtime-js`
+* Run migration `024_fix_view_comments_rls.sql` in Supabase before deploying
+
 ### 0.8.0: 2026-08-12
 
 * Replace the `x-view-password` header with a signed httpOnly access cookie: the password is proven once at the parent endpoint and the child endpoints verify a scoped, 24h, hash-fingerprinted token instead, so the plaintext password no longer sits in `localStorage` where any XSS could read it and no request pays a bcrypt compare; ported from upstream `fdda5c0`

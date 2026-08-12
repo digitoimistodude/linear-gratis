@@ -66,6 +66,12 @@ async function signHex(secret: string, bytes: ArrayBuffer): Promise<string> {
     .join('');
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string | undefined | null): value is string {
+  return typeof value === 'string' && UUID_RE.test(value);
+}
+
 // Constant-time hex string compare to avoid timing oracles on signature match.
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -95,8 +101,8 @@ export async function POST(request: NextRequest) {
     const rawBytes = await request.arrayBuffer();
     const expected = await signHex(secret, rawBytes);
     if (!safeEqual(signature, expected)) {
-      // Broadcast payload is IDs only; clients refetch via authenticated Linear API.
-      console.warn(`Linear webhook signature mismatch (sig=${signature.slice(0, 8)}... expected=${expected.slice(0, 8)}...)`);
+      console.warn('Linear webhook signature mismatch - payload rejected');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     const payload = JSON.parse(new TextDecoder().decode(rawBytes)) as WebhookBody;
@@ -248,13 +254,19 @@ async function dispatchCommentNotifications(args: {
   // Find views that include this issue so we know whose owner to notify and
   // which view name + slug to render in the email. Match by team OR project
   // (covers single-project, multi-project, and team-source views).
+  // These arrive from the webhook payload and are interpolated into a PostgREST
+  // filter string, where a comma or dot would inject extra filter terms. Only
+  // Linear UUIDs may reach the query.
+  const teamId = isUuid(args.teamId) ? args.teamId : undefined;
+  const projectId = isUuid(args.projectId) ? args.projectId : undefined;
+
   let query = supabaseAdmin.from('public_views').select('id, user_id, name, slug, team_id, project_id, project_ids');
-  if (args.teamId && args.projectId) {
-    query = query.or(`team_id.eq.${args.teamId},project_id.eq.${args.projectId},project_ids.cs.{${args.projectId}}`);
-  } else if (args.teamId) {
-    query = query.eq('team_id', args.teamId);
-  } else if (args.projectId) {
-    query = query.or(`project_id.eq.${args.projectId},project_ids.cs.{${args.projectId}}`);
+  if (teamId && projectId) {
+    query = query.or(`team_id.eq.${teamId},project_id.eq.${projectId},project_ids.cs.{${projectId}}`);
+  } else if (teamId) {
+    query = query.eq('team_id', teamId);
+  } else if (projectId) {
+    query = query.or(`project_id.eq.${projectId},project_ids.cs.{${projectId}}`);
   } else {
     return;
   }

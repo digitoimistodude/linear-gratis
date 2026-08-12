@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { decryptToken } from '@/lib/encryption';
 import crypto from 'crypto';
 
 export async function GET(request: NextRequest) {
   try {
+    // This route revokes and clears the workspace OAuth token before starting a
+    // new consent flow, so an unauthenticated caller could knock out every
+    // Linear integration on the workspace.
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     // Read OAuth settings from workspace_settings
     const { data: settings, error } = await supabaseAdmin
       .from('workspace_settings')
@@ -45,9 +55,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Determine the redirect URI from the request origin
-    const origin = request.headers.get('origin') || request.headers.get('referer')?.replace(/\/[^/]*$/, '') || new URL(request.url).origin;
-    const redirectUri = `${origin}/api/auth/linear/callback`;
+    // Derive the redirect URI from the request URL only. Origin and Referer are
+    // caller-controlled, so trusting them lets an attacker point the OAuth
+    // redirect at a host of their choosing.
+    const redirectUri = `${new URL(request.url).origin}/api/auth/linear/callback`;
 
     // Generate a random state for CSRF protection
     const state = crypto.randomBytes(32).toString('hex');

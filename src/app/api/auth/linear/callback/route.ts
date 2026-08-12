@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { encryptToken, decryptToken } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
   const origin = new URL(request.url).origin;
 
   try {
+    // This binds a Linear OAuth token as the workspace token, so only a signed-in
+    // user may complete the exchange.
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.redirect(`${origin}/login`);
+    }
+
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
