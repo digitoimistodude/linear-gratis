@@ -31,8 +31,8 @@ by hand, then move the SHA in `.github/upstream-watch-state` forward. Never
 advance that file without reviewing, or commits get skipped silently — which is
 how six vulnerabilities stayed live for four months.
 
-Run it locally with `node scripts/check-upstream-security.mjs`, or against any
-baseline with `node scripts/check-upstream-security.mjs <sha>`.
+Run it locally with `node .github/scripts/check-upstream-security.mjs`, or against any
+baseline with `node .github/scripts/check-upstream-security.mjs <sha>`.
 
 ## PR draft tasks for upstream PRs
 

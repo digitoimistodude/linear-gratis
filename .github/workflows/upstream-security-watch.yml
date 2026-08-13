@@ -27,7 +27,7 @@ jobs:
       - name: Scan upstream for security-relevant commits
         id: scan
         run: |
-          node scripts/check-upstream-security.mjs > report.md
+          node .github/scripts/check-upstream-security.mjs > report.md
           echo "new_state=$(grep '^NEW_STATE=' report.md | cut -d= -f2)" >> "$GITHUB_OUTPUT"
           if grep -q '^## Security' report.md || grep -q '^## Worth a look' report.md; then
             echo "hits=true" >> "$GITHUB_OUTPUT"
