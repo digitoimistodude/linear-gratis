@@ -1,3 +1,8 @@
+### 0.9.4: 2026-08-13
+
+* Revoke `consume_rate_limit` from `anon` and `authenticated`: migration 025 revoked it from PUBLIC, which Supabase overrides with its own role grants, so an unauthenticated caller could still consume any rate-limit key and lock a specific customer out of commenting or voting
+* Run migration `026_lock_down_consume_rate_limit.sql` in Supabase before deploying
+
 ### 0.9.3: 2026-08-13
 
 * Bump Next.js from 15.5.9 to 15.5.23, clearing every Next advisory that applied to us including the middleware and proxy bypasses and the Server Action SSRF; production dependencies now report no vulnerabilities
