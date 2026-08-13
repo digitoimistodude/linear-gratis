@@ -1,23 +1,23 @@
 ### 0.9.4: 2026-08-13
 
-* Revoke `consume_rate_limit` from `anon` and `authenticated`: migration 025 revoked it from PUBLIC, which Supabase overrides with its own role grants, so an unauthenticated caller could still consume any rate-limit key and lock a specific customer out of commenting or voting
+* Revoke `consume_rate_limit` from `anon` and `authenticated`, which a PUBLIC revoke alone does not cover on Supabase (dude-specific change)
 * Run migration `026_lock_down_consume_rate_limit.sql` in Supabase before deploying
 
 ### 0.9.3: 2026-08-13
 
-* Bump Next.js from 15.5.9 to 15.5.23, clearing every Next advisory that applied to us including the middleware and proxy bypasses and the Server Action SSRF; production dependencies now report no vulnerabilities
-* Match our own hostnames exactly or as a subdomain in middleware instead of by substring, so a Host header like `localhost.attacker.com` is no longer treated as one of ours (dude-specific change)
+* Bump Next.js from 15.5.9 to 15.5.23, clearing every Next advisory that applied to us
+* Match our hostnames exactly or as a subdomain in middleware instead of by substring (dude-specific change)
 
 ### 0.9.2: 2026-08-13
 
-* Rate-limit the unauthenticated write endpoints: customer comments, public issue creation, roadmap comments, roadmap votes and form submissions now return 429 with `Retry-After` past their per-IP budget, so a loop can no longer write into the Linear workspace with the owner's token or burn its API quota; ported from upstream `e74fdeb`
-* Fall back to in-memory buckets when `consume_rate_limit` is unavailable, so a missing migration degrades the limiter instead of taking public views down
+* Rate-limit the unauthenticated write endpoints with a per-IP budget, returning 429 with `Retry-After`
+* Fall back to in-memory buckets when `consume_rate_limit` is unavailable, so a late migration cannot break public views
 * Run migration `025_add_public_rate_limits.sql` in Supabase before deploying
 
 ### 0.9.1: 2026-08-13
 
-* Add a weekly `upstream-security-watch` GitHub Action that reports upstream commits whose subject or touched files look security-relevant and opens one GitHub issue for review, so dropping the fork sync does not mean losing sight of their security fixes (dude-specific change)
-* Record the reviewed upstream commit in `.github/upstream-watch-state`, which only moves forward after a report has been read, so nothing is skipped silently (dude-specific change)
+* Add a weekly `upstream-security-watch` GitHub Action that fails when upstream ships a security-relevant commit (dude-specific change)
+* Track the last reviewed upstream commit in `.github/upstream-watch-state` (dude-specific change)
 
 ### 0.9.0: 2026-08-13
 
@@ -30,10 +30,10 @@
 
 ### 0.8.1: 2026-08-12
 
-* Reject Linear webhook payloads whose signature does not match: the check computed the HMAC and logged a mismatch but never returned, so any unauthenticated caller could forge a webhook and trigger customer reply emails from our sending domain plus unbounded Realtime broadcasts (dude-specific change)
-* Validate the team and project ids from a webhook payload as UUIDs before they reach a PostgREST `.or()` filter, closing a filter-injection that could widen the notified view set (dude-specific change)
-* Require an authenticated session on `/api/auth/linear/connect`, which revokes and clears the workspace Linear OAuth token before starting a new consent flow and was reachable by anyone (dude-specific change)
-* Require an authenticated session on `/api/auth/linear/callback` so an OAuth token cannot be bound as the workspace token by an unauthenticated caller (dude-specific change)
+* Reject Linear webhook payloads whose signature does not match, which was logged but never enforced (dude-specific change)
+* Validate webhook team and project ids as UUIDs before they reach a PostgREST `.or()` filter (dude-specific change)
+* Require an authenticated session on `/api/auth/linear/connect`, which revokes the workspace OAuth token (dude-specific change)
+* Require an authenticated session on `/api/auth/linear/callback` (dude-specific change)
 * Derive the OAuth redirect URI from the request URL instead of the caller-supplied `Origin` and `Referer` headers (dude-specific change)
 * Return an explicit column list from the public branding endpoint instead of `select('*')` (dude-specific change)
 * Bump `ws` to clear a high-severity advisory reached through `@supabase/realtime-js`
@@ -41,31 +41,31 @@
 
 ### 0.8.0: 2026-08-12
 
-* Replace the `x-view-password` header with a signed httpOnly access cookie: the password is proven once at the parent endpoint and the child endpoints verify a scoped, 24h, hash-fingerprinted token instead, so the plaintext password no longer sits in `localStorage` where any XSS could read it and no request pays a bcrypt compare; ported from upstream `fdda5c0`
-* Route every public-view child endpoint through one `authorisePublicView` guard covering active state, expiry and password, so a new child endpoint cannot silently skip the check; ported from upstream `fdda5c0`
-* Require the roadmap password on the public roadmap comment and vote endpoints, which previously checked only the slug and active state, via the matching `authoriseRoadmap` guard; ported from upstream `fdda5c0`
-* Verify the caller-supplied issue id belongs to one of the roadmap's projects on the public roadmap comment and vote endpoints, so they can no longer store rows against arbitrary issue ids
-* Visitors to a password-protected view or roadmap now re-enter the password once every 24 hours instead of never, because access is a signed cookie rather than a stored password
+* Replace the `x-view-password` header with a signed httpOnly access cookie, so the plaintext password no longer sits in `localStorage`
+* Route every public-view child endpoint through one `authorisePublicView` guard
+* Require the roadmap password on the public roadmap comment and vote endpoints
+* Verify the caller-supplied issue id belongs to the roadmap on its comment and vote endpoints
+* Visitors to a password-protected view or roadmap re-enter the password once every 24 hours instead of never
 
 ### 0.7.10: 2026-08-12
 
-* Apply the view display flags server-side: `show_descriptions`, `show_labels`, `show_assignees` and `show_priorities` now strip the data from the public-view and roadmap payloads instead of leaving it in the JSON for the client to hide, closing a leak where a password-protected view returned descriptions the owner had switched off; ported from upstream `e74fdeb`
-* Apply per-issue description overrides on password-protected views too, so the override feature works on the POST path and survives a hidden `show_descriptions` (dude-specific change)
+* Apply the view display flags server-side so hidden descriptions, labels, assignees and priorities no longer ship in the JSON
+* Apply per-issue description overrides on password-protected views too (dude-specific change)
 
 ### 0.7.9: 2026-08-11
 
-* Escape the `title`, `subtitle` and `category` query parameters in `/api/og` and cap their length, closing a reflected XSS that ran same-origin on linear.dude.fi; ported verbatim from upstream `e74fdeb`, which fixed this in April
-* Send `Content-Security-Policy` and `X-Content-Type-Options: nosniff` from `/api/og` so a future escaping regression cannot execute scripts (dude-specific change)
+* Escape and length-cap the `title`, `subtitle` and `category` query parameters in `/api/og`, closing a reflected XSS
+* Send `Content-Security-Policy` and `X-Content-Type-Options: nosniff` from `/api/og` (dude-specific change)
 
 ### 0.7.8: 2026-08-10
 
-* Percent-encode the view password in the `x-view-password` header so non-ASCII passwords work: browsers write header values one byte per code unit, so an `ä` went out as a single latin-1 byte that the Worker then read as invalid UTF-8, breaking every child endpoint on password-protected views whose password is not pure ASCII (`fix/public-view-bola-scope`)
+* Percent-encode the view password header so non-ASCII passwords survive the browser byte encoding (`fix/public-view-bola-scope`)
 
 ### 0.7.7: 2026-08-10
 
-* Scope public-view child endpoints to the view: `issue/[issueId]` and its `comments` route now verify the requested issue belongs to the view's projects, exclusions and allowed statuses, so an active slug can no longer read or comment on arbitrary workspace issues (`fix/public-view-bola-scope`)
-* Require the view password on every public-view child endpoint, not just the parent: issue detail, comments, project updates, creation metadata and issue creation all reject requests without it, sent as an `x-view-password` header (`fix/public-view-bola-scope`)
-* Deny comment thread reads when the Linear token is missing instead of falling through to stored comments, so the scope check cannot be skipped (`fix/public-view-bola-scope`) (dude-specific change)
+* Scope public-view child endpoints to the view, so an active slug can no longer read or comment on arbitrary workspace issues (`fix/public-view-bola-scope`)
+* Require the view password on every public-view child endpoint, not just the parent (`fix/public-view-bola-scope`)
+* Deny comment thread reads when the Linear token is missing, so the scope check cannot be skipped (dude-specific change)
 * Restrict creation metadata and issue creation to active views, matching the other public-view endpoints (`fix/public-view-bola-scope`)
 
 ### 0.7.6: 2026-06-18
