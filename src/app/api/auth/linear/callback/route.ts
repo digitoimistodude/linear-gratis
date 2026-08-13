@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     }
 
     const clientId = settings.linear_oauth_client_id;
-    const clientSecret = decryptToken(settings.linear_oauth_client_secret);
+    const clientSecret = await decryptToken(settings.linear_oauth_client_secret);
     const redirectUri = `${origin}/api/auth/linear/callback`;
 
     // Exchange code for access token
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Encrypt and store the token
-    const encryptedToken = encryptToken(accessToken);
+    const encryptedToken = await encryptToken(accessToken);
 
     const { error: updateError } = await supabaseAdmin
       .from('workspace_settings')

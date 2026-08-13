@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const encryptedSecret = encryptToken(clientSecret);
+    const encryptedSecret = await encryptToken(clientSecret);
 
     // Check if workspace_settings already has a row
     const { data: existing } = await supabaseAdmin

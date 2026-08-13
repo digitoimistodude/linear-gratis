@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
     // If there's an existing token, revoke it first so Linear shows the consent screen
     if (settings.linear_oauth_token && settings.linear_oauth_client_secret) {
       try {
-        const existingToken = decryptToken(settings.linear_oauth_token);
-        const clientSecret = decryptToken(settings.linear_oauth_client_secret);
+        const existingToken = await decryptToken(settings.linear_oauth_token);
+        const clientSecret = await decryptToken(settings.linear_oauth_client_secret);
         await fetch('https://api.linear.app/oauth/revoke', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

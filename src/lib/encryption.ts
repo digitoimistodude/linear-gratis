@@ -1,54 +1,54 @@
+// Dispatches encryption and decryption by version prefix.
+// New writes always use v2 (AES-256-GCM). Reads transparently handle v1
+// (CryptoJS) and v2 so existing rows keep working until they are rotated to v2
+// on first authenticated decrypt via decryptAndRotateTokenIfNeeded.
+// Ported from upstream c3dff90.
+
 import CryptoJS from 'crypto-js'
+import { encryptTokenV2, decryptTokenV2, isV2Ciphertext } from './encryption-v2'
 
-// Only validate encryption key on server-side
-const ENCRYPTION_KEY = typeof window === 'undefined' ? process.env.ENCRYPTION_KEY : null
-
-if (typeof window === 'undefined' && !ENCRYPTION_KEY) {
-  throw new Error(
-    'ENCRYPTION_KEY environment variable is required. ' +
-    'Generate one with: openssl rand -base64 32'
-  )
+function getLegacyKey(): string {
+  const key = process.env.ENCRYPTION_KEY
+  if (!key) {
+    throw new Error(
+      'ENCRYPTION_KEY environment variable is required. ' +
+      'Generate one with: openssl rand -base64 32'
+    )
+  }
+  return key
 }
 
-export function encryptToken(token: string): string {
-  if (!token) return ''
+export async function encryptToken(plaintext: string): Promise<string> {
+  if (!plaintext) return ''
+  return encryptTokenV2(plaintext)
+}
 
-  // Only allow encryption on server-side
-  if (typeof window !== 'undefined') {
-    throw new Error('Encryption can only be performed on the server-side')
-  }
+export async function decryptToken(ciphertext: string): Promise<string> {
+  if (!ciphertext) return ''
 
-  if (!ENCRYPTION_KEY) {
-    throw new Error('ENCRYPTION_KEY is not available')
+  if (isV2Ciphertext(ciphertext)) {
+    return decryptTokenV2(ciphertext)
   }
 
   try {
-    const encrypted = CryptoJS.AES.encrypt(token, ENCRYPTION_KEY).toString()
-    return encrypted
+    const bytes = CryptoJS.AES.decrypt(ciphertext, getLegacyKey())
+    const plaintext = bytes.toString(CryptoJS.enc.Utf8)
+    if (!plaintext) {
+      throw new Error('Decryption produced empty result')
+    }
+    return plaintext
   } catch (error) {
-    console.error('Error encrypting token:', error)
-    throw new Error('Failed to encrypt token')
-  }
-}
-
-export function decryptToken(encryptedToken: string): string {
-  if (!encryptedToken) return ''
-
-  // Only allow decryption on server-side
-  if (typeof window !== 'undefined') {
-    throw new Error('Decryption can only be performed on the server-side')
-  }
-
-  if (!ENCRYPTION_KEY) {
-    throw new Error('ENCRYPTION_KEY is not available')
-  }
-
-  try {
-    const bytes = CryptoJS.AES.decrypt(encryptedToken, ENCRYPTION_KEY)
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8)
-    return decrypted
-  } catch (error) {
-    console.error('Error decrypting token:', error)
+    console.error('Error decrypting token:', error instanceof Error ? error.name : 'unknown')
     throw new Error('Failed to decrypt token')
   }
+}
+
+/**
+ * Returns true if the given ciphertext is a legacy (v1) encoding that should be
+ * re-encrypted as v2 on next access. Callers holding a row id and an admin
+ * client should use decryptAndRotateTokenIfNeeded instead of calling this
+ * directly.
+ */
+export function isLegacyCiphertext(ciphertext: string): boolean {
+  return !isV2Ciphertext(ciphertext)
 }

@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase';
-import { decryptToken } from './encryption';
+import { decryptAndRotateTokenIfNeeded } from './encryption-rotation';
 
 /**
  * Resolves the Linear API token to use for API calls.
@@ -8,19 +8,24 @@ import { decryptToken } from './encryption';
  * otherwise falls back to the user's personal `linear_api_token` in `profiles`.
  *
  * Centralising token resolution here ensures every server-side caller goes
- * through one auditable path and never trusts client-supplied tokens.
+ * through one auditable path and never trusts client-supplied tokens. Legacy
+ * v1 ciphertexts are rotated to AES-256-GCM on first read.
  */
 export async function getLinearToken(userId: string | null | undefined): Promise<string | null> {
   // Try workspace-shared token first
   try {
     const { data: workspace } = await supabaseAdmin
       .from('workspace_settings')
-      .select('linear_api_token')
+      .select('id, linear_api_token')
       .limit(1)
       .single();
 
     if (workspace?.linear_api_token) {
-      return decryptToken(workspace.linear_api_token);
+      return decryptAndRotateTokenIfNeeded(workspace.linear_api_token, {
+        admin: supabaseAdmin,
+        id: workspace.id,
+        table: 'workspace_settings',
+      });
     }
   } catch {
     // workspace_settings table may not exist yet, or no row yet
@@ -37,5 +42,8 @@ export async function getLinearToken(userId: string | null | undefined): Promise
 
   if (!profile?.linear_api_token) return null;
 
-  return decryptToken(profile.linear_api_token);
+  return decryptAndRotateTokenIfNeeded(profile.linear_api_token, {
+    admin: supabaseAdmin,
+    id: userId,
+  });
 }

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 });
     }
 
-    const encryptedToken = encryptToken(token.trim());
+    const encryptedToken = await encryptToken(token.trim());
 
     const { data: existing } = await supabaseAdmin
       .from('workspace_settings')

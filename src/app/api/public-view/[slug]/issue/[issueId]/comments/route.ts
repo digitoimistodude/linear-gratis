@@ -363,11 +363,11 @@ export async function POST(
         .single();
 
       const personalToken = profileData?.linear_api_token
-        ? decryptToken(profileData.linear_api_token)
+        ? await decryptToken(profileData.linear_api_token)
         : null;
 
       const oauthToken = workspaceSettings?.linear_oauth_token
-        ? decryptToken(workspaceSettings.linear_oauth_token)
+        ? await decryptToken(workspaceSettings.linear_oauth_token)
         : null;
 
       // Build comment body
