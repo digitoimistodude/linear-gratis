@@ -7,15 +7,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
-import { encryptTokenClient, decryptTokenClient } from '@/lib/client-encryption'
 import { useRouter } from 'next/navigation'
 
 export default function ProfilePage() {
   const { user, signOut, loading: authLoading } = useAuth()
   const [linearToken, setLinearToken] = useState('')
+  const [tokenConfigured, setTokenConfigured] = useState(false)
   const [hideOnboarding, setHideOnboarding] = useState(false)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [removing, setRemoving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const router = useRouter()
 
@@ -26,7 +27,7 @@ export default function ProfilePage() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('linear_api_token, hide_onboarding')
+        .select('hide_onboarding')
         .eq('id', user.id)
         .single()
 
@@ -36,14 +37,12 @@ export default function ProfilePage() {
         setHideOnboarding(data.hide_onboarding ?? false)
       }
 
-      if (data?.linear_api_token) {
-        try {
-          const decryptedToken = await decryptTokenClient(data.linear_api_token)
-          setLinearToken(decryptedToken)
-        } catch (error) {
-          console.error('Error decrypting token:', error)
-          setMessage({ type: 'error', text: 'Error loading saved token. Please re-enter your token.' })
-        }
+      // The token itself is write-only: the server reports only whether one
+      // is configured, so no plaintext token is ever sent to the browser.
+      const response = await fetch('/api/profile/linear-token')
+      if (response.ok) {
+        const status = await response.json() as { configured: boolean }
+        setTokenConfigured(status.configured)
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -71,24 +70,11 @@ export default function ProfilePage() {
     setMessage(null)
 
     try {
-      let encryptedToken = null
-      if (linearToken) {
-        try {
-          encryptedToken = await encryptTokenClient(linearToken)
-        } catch (error) {
-          setMessage({ type: 'error', text: 'Failed to encrypt token. Please try again.' })
-          console.error('Error encrypting token:', error)
-          setSaving(false)
-          return
-        }
-      }
-
       const { error } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           email: user.email!,
-          linear_api_token: encryptedToken,
           hide_onboarding: hideOnboarding,
           updated_at: new Date().toISOString()
         })
@@ -96,14 +82,54 @@ export default function ProfilePage() {
       if (error) {
         setMessage({ type: 'error', text: 'Failed to save profile. Please try again.' })
         console.error('Error saving profile:', error)
-      } else {
-        setMessage({ type: 'success', text: 'Profile saved successfully!' })
+        return
       }
+
+      if (linearToken.trim()) {
+        const response = await fetch('/api/profile/linear-token', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: linearToken.trim() }),
+        })
+
+        if (!response.ok) {
+          setMessage({ type: 'error', text: 'Failed to save token. Please try again.' })
+          return
+        }
+
+        setTokenConfigured(true)
+        setLinearToken('')
+      }
+
+      setMessage({ type: 'success', text: 'Profile saved successfully!' })
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to save profile. Please try again.' })
       console.error('Error saving profile:', error)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const removeToken = async () => {
+    setRemoving(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch('/api/profile/linear-token', { method: 'DELETE' })
+
+      if (!response.ok) {
+        setMessage({ type: 'error', text: 'Failed to remove token. Please try again.' })
+        return
+      }
+
+      setTokenConfigured(false)
+      setLinearToken('')
+      setMessage({ type: 'success', text: 'Linear token removed.' })
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to remove token. Please try again.' })
+      console.error('Error removing token:', error)
+    } finally {
+      setRemoving(false)
     }
   }
 
@@ -232,18 +258,34 @@ export default function ProfilePage() {
 
                 <form onSubmit={(e) => { e.preventDefault(); saveProfile(); }} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="linear-token">Linear API token</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="linear-token">Linear API token</Label>
+                      <span className={`text-xs font-medium ${tokenConfigured ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                        {tokenConfigured ? 'Configured' : 'Not configured'}
+                      </span>
+                    </div>
                     <Input
                       id="linear-token"
                       type="password"
-                      placeholder={linearToken ? "Token is configured" : "Paste your Linear API token here"}
+                      placeholder={tokenConfigured ? 'Enter a new token to replace the current one' : 'Paste your Linear API token here'}
                       value={linearToken}
                       onChange={(e) => setLinearToken(e.target.value)}
-                      autoComplete="current-password"
+                      autoComplete="new-password"
                     />
                     <p className="text-sm text-muted-foreground">
-                      This token will be encrypted and stored securely. It&apos;s used to create customer requests in your Linear workspace.
+                      This token is encrypted and stored securely. It&apos;s used to create customer requests in your Linear workspace. Once saved it is never shown again, so replace it by entering a new one.
                     </p>
+                    {tokenConfigured && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={removeToken}
+                        disabled={removing}
+                      >
+                        {removing ? 'Removing token...' : 'Remove token'}
+                      </Button>
+                    )}
                   </div>
 
                   {message && (
@@ -265,10 +307,16 @@ export default function ProfilePage() {
 
                   <Button
                     type="submit"
-                    disabled={saving || !linearToken.trim()}
+                    disabled={saving || (!linearToken.trim() && !tokenConfigured)}
                     className="w-full"
                   >
-                    {saving ? 'Saving token...' : linearToken ? 'Save Linear token' : 'Enter token to continue'}
+                    {saving
+                      ? 'Saving...'
+                      : linearToken.trim()
+                        ? 'Save Linear token'
+                        : tokenConfigured
+                          ? 'Save settings'
+                          : 'Enter token to continue'}
                   </Button>
                 </form>
               </>

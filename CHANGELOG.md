@@ -1,3 +1,12 @@
+### 0.9.0: 2026-08-13
+
+* Delete `/api/decrypt-token` and `/api/encrypt-token`: the decrypt route returned the caller's plaintext Linear API token to any same-origin script with no anti-CSRF token, so any future XSS anywhere on the origin could have lifted the token; ported from upstream `556f7be`
+* Move public form submission server-side to a new `/api/form/[slug]/submit` route that resolves the form owner's token in the route and calls Linear directly, so the token never reaches the browser; ported from upstream `556f7be`
+* Restore public form submissions, which had been broken since `/api/linear` started requiring an authenticated session that anonymous form visitors never have (dude-specific change)
+* Make the profile Linear token write-only: the page now shows a configured or not-configured indicator plus a replace field backed by the new `/api/profile/linear-token` route, instead of round-tripping the plaintext token to display it; ported from upstream `d0dcfeb`
+* Encrypt new tokens with AES-256-GCM behind a `v2:` version prefix, with existing CryptoJS rows read transparently and rotated to `v2` on first authenticated read; ported from upstream `c3dff90`
+* Emit single-line JSON logs tagged `encryption.rotation.failure` so a failing rotation is alertable rather than silent; ported from upstream `f28a240`
+
 ### 0.8.1: 2026-08-12
 
 * Reject Linear webhook payloads whose signature does not match: the check computed the HMAC and logged a mismatch but never returned, so any unauthenticated caller could forge a webhook and trigger customer reply emails from our sending domain plus unbounded Realtime broadcasts (dude-specific change)
