@@ -1,5 +1,5 @@
 # Last upstream commit reviewed for security relevance.
-# scripts/check-upstream-security.mjs reports everything after this SHA.
+# .github/scripts/check-upstream-security.mjs reports everything after this SHA.
 # Move it forward only after reviewing a report, otherwise commits get skipped.
 #
 # Seeded at e6f84b3 on 13.8.2026: all 73 commits up to that point were triaged
