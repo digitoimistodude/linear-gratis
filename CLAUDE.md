@@ -11,11 +11,28 @@ The Supabase anon key and Cloudflare account ID in `wrangler.jsonc` are public b
 
 ## Branch strategy
 
-- `main` — upstream-compatible, keep clean for pulling updates
+- `main` — the fork point, frozen at `d77c950` (14.4.2026). We no longer pull upstream, so this is a historical marker, not a live branch
 - `dude` — Dude-specific customizations, deploy from this branch
 - Features should be built inside branches from `main`
 - PR-able changes must be done in their feature branch first, then merged to `dude` — never the other way around
 - Dude-specific changes go directly on the `dude` branch
+
+## We do not merge upstream
+
+Decided 13.8.2026, DEV-1199. The remaining upstream commits are features we don't
+want, and one of them deletes `issue-detail-modal.tsx`, which hosts customer
+comments. Migration numbering also collided from 015 onward, so a merge was never
+cheap.
+
+That is only safe because we still watch their security work: the weekly
+`.github/workflows/upstream-security-watch.yml` reports upstream commits that
+look security-relevant and opens one GitHub issue for review. Port what applies
+by hand, then move the SHA in `.github/upstream-watch-state` forward. Never
+advance that file without reviewing, or commits get skipped silently — which is
+how six vulnerabilities stayed live for four months.
+
+Run it locally with `node scripts/check-upstream-security.mjs`, or against any
+baseline with `node scripts/check-upstream-security.mjs <sha>`.
 
 ## PR draft tasks for upstream PRs
 

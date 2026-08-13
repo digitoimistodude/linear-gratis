@@ -1,3 +1,8 @@
+### 0.9.1: 2026-08-13
+
+* Add a weekly `upstream-security-watch` GitHub Action that reports upstream commits whose subject or touched files look security-relevant and opens one GitHub issue for review, so dropping the fork sync does not mean losing sight of their security fixes (dude-specific change)
+* Record the reviewed upstream commit in `.github/upstream-watch-state`, which only moves forward after a report has been read, so nothing is skipped silently (dude-specific change)
+
 ### 0.9.0: 2026-08-13
 
 * Delete `/api/decrypt-token` and `/api/encrypt-token`: the decrypt route returned the caller's plaintext Linear API token to any same-origin script with no anti-CSRF token, so any future XSS anywhere on the origin could have lifted the token; ported from upstream `556f7be`

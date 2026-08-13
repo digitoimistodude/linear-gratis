@@ -1,0 +1,76 @@
+name: Upstream security watch
+
+# We deliberately do not merge upstream any more, so this is the only thing that
+# tells us when curiousgeorgios/linear-gratis ships a security fix. Runs on
+# GitHub rather than a laptop so it keeps working when nobody is at a desk.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Scan upstream for security-relevant commits
+        id: scan
+        run: |
+          node scripts/check-upstream-security.mjs > report.md
+          echo "new_state=$(grep '^NEW_STATE=' report.md | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+          if grep -q '^## Security' report.md || grep -q '^## Worth a look' report.md; then
+            echo "hits=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hits=false" >> "$GITHUB_OUTPUT"
+          fi
+          sed -i '/^NEW_STATE=/d' report.md
+          cat report.md
+
+      # One open issue, rewritten in place each run. Repeated runs against the
+      # same baseline update it rather than piling up duplicates, and the body is
+      # always the current full list.
+      - name: Open or refresh the review issue
+        if: steps.scan.outputs.hits == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW_STATE: ${{ steps.scan.outputs.new_state }}
+        run: |
+          {
+            echo "Upstream has shipped commits that look security-relevant. We do not merge upstream, so these need reviewing and porting by hand."
+            echo
+            cat report.md
+            echo
+            echo "---"
+            echo
+            echo "**To close this out:** port what applies, set \`.github/upstream-watch-state\` to \`$NEW_STATE\`, commit, then close this issue. Leaving the state file alone is safe - this issue just keeps reporting the same range."
+            echo
+            echo "Context: [DEV-1222](https://linear.app/dude/issue/DEV-1222). Background on why we stopped merging: [DEV-1199](https://linear.app/dude/issue/DEV-1199)."
+          } > body.md
+
+          existing=$(gh issue list --label upstream-security --state open --limit 1 --json number --jq '.[0].number // empty')
+
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body-file body.md
+            echo "Refreshed issue #$existing"
+          else
+            gh label create upstream-security --color B60205 --description "Upstream security commits awaiting review" 2>/dev/null || true
+            gh issue create \
+              --title "Upstream security commits to review" \
+              --label upstream-security \
+              --body-file body.md
+          fi
+
+      - name: Nothing to report
+        if: steps.scan.outputs.hits != 'true'
+        run: echo "No security-relevant upstream commits since the recorded baseline."
