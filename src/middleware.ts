@@ -69,7 +69,13 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_APP_DOMAIN || '',
   ].filter(Boolean);
 
-  const isMainDomain = mainDomains.some((domain) => hostname.includes(domain));
+  // Exact host, or a subdomain of one of ours. A substring match would treat
+  // `localhost.attacker.com` and `x.workers.dev.attacker.com` as our own.
+  const host = hostname.toLowerCase();
+  const isMainDomain = mainDomains.some((domain) => {
+    const d = domain.toLowerCase();
+    return host === d || host.endsWith(`.${d}`);
+  });
 
   // If it's not the main domain, check if it's a verified custom domain
   if (!isMainDomain) {

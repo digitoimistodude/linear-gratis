@@ -1,3 +1,8 @@
+### 0.9.3: 2026-08-13
+
+* Bump Next.js from 15.5.9 to 15.5.23, clearing every Next advisory that applied to us including the middleware and proxy bypasses and the Server Action SSRF; production dependencies now report no vulnerabilities
+* Match our own hostnames exactly or as a subdomain in middleware instead of by substring, so a Host header like `localhost.attacker.com` is no longer treated as one of ours (dude-specific change)
+
 ### 0.9.2: 2026-08-13
 
 * Rate-limit the unauthenticated write endpoints: customer comments, public issue creation, roadmap comments, roadmap votes and form submissions now return 429 with `Retry-After` past their per-IP budget, so a loop can no longer write into the Linear workspace with the owner's token or burn its API quota; ported from upstream `e74fdeb`
