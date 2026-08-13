@@ -6,6 +6,7 @@ import { upsertSubscription } from '@/lib/subscriptions';
 import { createNotification } from '@/lib/notifications';
 import { fetchIssueScope, issueInViewScope } from '@/lib/view-scope';
 import { authorisePublicView } from '@/lib/public-view-auth';
+import { checkRateLimit, rateLimitResponse } from '@/lib/request-security';
 import type { PublicView, ViewComment } from '@/lib/supabase';
 import crypto from 'crypto';
 
@@ -225,6 +226,14 @@ export async function POST(
     const auth = await authorisePublicView(slug, request);
     if (!auth.ok) return auth.response;
     const view = auth.view;
+
+    // Each accepted comment also writes into Linear with the owner's token, so
+    // an unthrottled loop here burns the workspace's API quota.
+    const limit = await checkRateLimit(`view-comment:${getClientIP(request)}:${view.id}:${issueId}`, {
+      limit: 5,
+      windowMs: 5 * 60 * 1000,
+    });
+    if (!limit.ok) return rateLimitResponse(limit.retryAfterSeconds);
 
     if (!view.allow_customer_comments) {
       return NextResponse.json(

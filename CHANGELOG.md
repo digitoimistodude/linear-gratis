@@ -1,3 +1,9 @@
+### 0.9.2: 2026-08-13
+
+* Rate-limit the unauthenticated write endpoints: customer comments, public issue creation, roadmap comments, roadmap votes and form submissions now return 429 with `Retry-After` past their per-IP budget, so a loop can no longer write into the Linear workspace with the owner's token or burn its API quota; ported from upstream `e74fdeb`
+* Fall back to in-memory buckets when `consume_rate_limit` is unavailable, so a missing migration degrades the limiter instead of taking public views down
+* Run migration `025_add_public_rate_limits.sql` in Supabase before deploying
+
 ### 0.9.1: 2026-08-13
 
 * Add a weekly `upstream-security-watch` GitHub Action that reports upstream commits whose subject or touched files look security-relevant and opens one GitHub issue for review, so dropping the fork sync does not mean losing sight of their security fixes (dude-specific change)

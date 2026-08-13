@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as z from 'zod';
 import { supabaseAdmin } from '@/lib/supabase';
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/request-security';
 import { getLinearToken } from '@/lib/linear-token';
 
 /**
@@ -139,6 +140,13 @@ export async function POST(
     if (!slug) {
       return NextResponse.json({ success: false, error: 'Slug is required' }, { status: 400 });
     }
+
+    // Anonymous endpoint that files a Linear issue with the form owner's token.
+    const limit = await checkRateLimit(`form-submit:${getClientIp(request)}:${slug}`, {
+      limit: 5,
+      windowMs: 10 * 60 * 1000,
+    });
+    if (!limit.ok) return rateLimitResponse(limit.retryAfterSeconds);
 
     const parsed = submitSchema.safeParse(await request.json());
     if (!parsed.success) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLinearToken } from '@/lib/linear-token';
 import { createNotification } from '@/lib/notifications';
 import { authorisePublicView } from '@/lib/public-view-auth';
+import { checkRateLimit, getClientIp, rateLimitResponse } from '@/lib/request-security';
 
 const LINEAR_API_URL = 'https://api.linear.app/graphql';
 
@@ -195,6 +196,13 @@ export async function POST(
     const auth = await authorisePublicView(slug, request);
     if (!auth.ok) return auth.response;
     const viewData = auth.view;
+
+    // Creates a real Linear issue per request.
+    const limit = await checkRateLimit(`view-create-issue:${getClientIp(request)}:${viewData.id}`, {
+      limit: 3,
+      windowMs: 10 * 60 * 1000,
+    });
+    if (!limit.ok) return rateLimitResponse(limit.retryAfterSeconds);
 
     // Check if issue creation is allowed
     if (!viewData.allow_issue_creation) {

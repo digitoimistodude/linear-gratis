@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { authoriseRoadmap } from '@/lib/roadmap-auth';
+import { checkRateLimit, rateLimitResponse } from '@/lib/request-security';
 import { assertRoadmapIssueInScope } from '@/lib/roadmap-issue-access';
 import type { Roadmap } from '@/lib/supabase';
 import crypto from 'crypto';
@@ -65,6 +66,12 @@ export async function POST(
 
     const scope = await assertRoadmapIssueInScope(roadmapData, issueId);
     if (!scope.ok) return scope.response;
+
+    const limit = await checkRateLimit(`roadmap-vote:${getClientIP(request)}:${roadmapData.id}`, {
+      limit: 20,
+      windowMs: 5 * 60 * 1000,
+    });
+    if (!limit.ok) return rateLimitResponse(limit.retryAfterSeconds);
 
     const roadmap = roadmapData as Pick<Roadmap, 'id' | 'allow_voting' | 'is_active'>;
 
@@ -156,6 +163,12 @@ export async function DELETE(
 
     const scope = await assertRoadmapIssueInScope(roadmapData, issueId);
     if (!scope.ok) return scope.response;
+
+    const limit = await checkRateLimit(`roadmap-vote:${getClientIP(request)}:${roadmapData.id}`, {
+      limit: 20,
+      windowMs: 5 * 60 * 1000,
+    });
+    if (!limit.ok) return rateLimitResponse(limit.retryAfterSeconds);
 
     const roadmap = roadmapData as Pick<Roadmap, 'id' | 'is_active'>;
 
