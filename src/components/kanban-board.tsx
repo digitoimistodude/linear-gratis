@@ -2,7 +2,7 @@
 
 import { LinearIssue } from '@/app/api/linear/issues/route'
 import { FilterState } from '@/components/filter-dropdown'
-import { PriorityIcon, EstimateIcon } from '@/components/priority-icon'
+import { PriorityIcon, EstimateIcon, MilestoneIcon } from '@/components/priority-icon'
 import { UserAvatar } from '@/components/user-avatar'
 import { toast } from 'sonner'
 
@@ -106,6 +106,13 @@ export function KanbanBoard({
     // Project filter - only include issues whose project is in the selected list
     if (filters.projects.length > 0) {
       if (!issue.project || !filters.projects.includes(issue.project.id)) {
+        return false
+      }
+    }
+
+    // Milestone filter - only include issues whose milestone is selected
+    if (filters.milestones.length > 0) {
+      if (!issue.milestone || !filters.milestones.includes(issue.milestone.id)) {
         return false
       }
     }
@@ -286,6 +293,14 @@ export function KanbanBoard({
                                   <div className={CARD_BADGE_CLASS}>
                                     <EstimateIcon />
                                     <span>{issue.estimate}</span>
+                                  </div>
+                                )}
+
+                                {/* Milestone badge */}
+                                {issue.milestone && (
+                                  <div className={CARD_BADGE_CLASS}>
+                                    <MilestoneIcon />
+                                    <span className="truncate">{issue.milestone.name}</span>
                                   </div>
                                 )}
 

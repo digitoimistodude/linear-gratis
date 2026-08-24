@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
 import { IssueDetail } from '@/app/api/public-view/[slug]/issue/[issueId]/route'
 import { ViewCommentSection } from '@/components/view-comment-section'
-import { PriorityIcon, EstimateIcon } from '@/components/priority-icon'
+import { PriorityIcon, EstimateIcon, MilestoneIcon } from '@/components/priority-icon'
 import { UserAvatar } from '@/components/user-avatar'
 
 interface IssueDetailModalProps {
@@ -352,6 +352,14 @@ export function IssueDetailModal({
                   <div className="flex items-center gap-2 px-2 py-1 bg-accent/50 rounded-md">
                     <UserAvatar name={issue.assignee.name} avatarUrl={issue.assignee.avatarUrl} />
                     <span className="text-xs font-medium text-foreground">{issue.assignee.name}</span>
+                  </div>
+                )}
+
+                {/* Milestone */}
+                {issue.milestone && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 bg-accent/50 rounded-md">
+                    <MilestoneIcon className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-foreground">{issue.milestone.name}</span>
                   </div>
                 )}
 

@@ -1,3 +1,7 @@
+### 0.9.5: 2026-08-24
+
+* Add a milestone filter to the board and show the milestone on issue cards and in the issue detail modal (dude-specific change)
+
 ### 0.9.4: 2026-08-13
 
 * Revoke `consume_rate_limit` from `anon` and `authenticated`, which a PUBLIC revoke alone does not cover on Supabase (dude-specific change)
