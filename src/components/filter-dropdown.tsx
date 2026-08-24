@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { LinearIssue } from '@/app/api/linear/issues/route'
 import { Checkbox } from '@/components/ui/checkbox'
-import { PriorityIcon } from '@/components/priority-icon'
+import { PriorityIcon, MilestoneIcon } from '@/components/priority-icon'
 
 export type FilterState = {
   search: string
@@ -13,6 +13,7 @@ export type FilterState = {
   labels: string[]
   creators: string[]
   projects: string[]
+  milestones: string[]
 }
 
 export type FilterOptions = {
@@ -23,6 +24,7 @@ export type FilterOptions = {
   labels: Array<{ id: string; name: string; color: string }>
   creators: Array<{ id: string; name: string }>
   projects: Array<{ id: string; name: string }>
+  milestones: Array<{ id: string; name: string }>
 }
 
 interface FilterDropdownProps {
@@ -177,6 +179,7 @@ export function FilterDropdown({
       labels: [],
       creators: [],
       projects: [],
+      milestones: [],
     })
     setSearch('')
   }
@@ -187,7 +190,8 @@ export function FilterDropdown({
     filters.priorities.length > 0 ||
     filters.labels.length > 0 ||
     filters.creators.length > 0 ||
-    filters.projects.length > 0
+    filters.projects.length > 0 ||
+    filters.milestones.length > 0
 
   if (!isOpen) return null
 
@@ -375,6 +379,28 @@ export function FilterDropdown({
                     <path d="M2.75 1.5A1.25 1.25 0 0 0 1.5 2.75v10.5a1.25 1.25 0 0 0 1.25 1.25h10.5a1.25 1.25 0 0 0 1.25-1.25V2.75a1.25 1.25 0 0 0-1.25-1.25H2.75ZM3 3h10v10H3V3Zm2 2v6h2V5H5Zm4 1v5h2V6H9Z" />
                   </svg>
                   <span className="text-sm font-medium text-foreground">Projects</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  ▶
+                </div>
+              </div>
+            </li>
+          )}
+
+          {/* Milestone filter (only shown when some issue has a milestone) */}
+          {filterOptions.milestones.length > 0 && (
+            <li
+              role="option"
+              data-list-row="true"
+              aria-selected={hoverSections.has('milestones')}
+              className="relative flex cursor-pointer select-none items-center px-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent"
+              onMouseEnter={(e) => handleSectionMouseEnter('milestones', e)}
+              onMouseLeave={() => handleSectionMouseLeave('milestones')}
+            >
+              <div className="flex w-full items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MilestoneIcon className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">Milestone</span>
                 </div>
                 <div className="text-xs text-muted-foreground">
                   ▶
@@ -611,6 +637,39 @@ export function FilterDropdown({
                   </div>
                 </li>
               ))}
+
+              {/* Milestone submenu */}
+              {activeSubmenu === 'milestones' && filterOptions.milestones.map((milestone) => (
+                <li
+                  key={milestone.id}
+                  role="option"
+                  data-list-row="true"
+                  data-focused="false"
+                  aria-disabled="false"
+                  aria-selected="false"
+                  aria-checked={filters.milestones.includes(milestone.id)}
+                  className="relative flex cursor-pointer select-none items-center py-1 px-2 text-sm outline-none hover:bg-accent focus:bg-accent rounded"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleFilter('milestones', milestone.id)
+                  }}
+                >
+                  <div className="flex items-center justify-center w-6 h-6 flex-shrink-0 mr-2">
+                    <Checkbox
+                      checked={filters.milestones.includes(milestone.id)}
+                      onChange={() => toggleFilter('milestones', milestone.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      tabIndex={-1}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between flex-1 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MilestoneIcon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm font-medium text-foreground truncate">{milestone.name}</span>
+                    </div>
+                  </div>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -673,6 +732,14 @@ export function generateFilterOptions(issues: LinearIssue[]): FilterOptions {
     ).values()
   ).sort((a, b) => a.name.localeCompare(b.name))
 
+  const milestones = Array.from(
+    new Map(
+      issues
+        .filter(issue => issue.milestone)
+        .map(issue => [issue.milestone!.id, { id: issue.milestone!.id, name: issue.milestone!.name }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name))
+
   const creators = assignees
 
   return {
@@ -683,5 +750,6 @@ export function generateFilterOptions(issues: LinearIssue[]): FilterOptions {
     labels,
     creators,
     projects,
+    milestones,
   }
 }

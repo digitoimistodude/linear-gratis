@@ -66,6 +66,10 @@ export type IssueDetail = {
     name: string;
     color: string;
   }>;
+  milestone?: {
+    id: string;
+    name: string;
+  };
   createdAt: string;
   updatedAt: string;
   comments: IssueComment[];
@@ -121,6 +125,10 @@ export async function GET(
           url
           project {
             id
+          }
+          projectMilestone {
+            id
+            name
           }
           team {
             id
@@ -218,6 +226,7 @@ export async function GET(
           estimate?: number;
           url: string;
           project?: { id: string } | null;
+          projectMilestone?: { id: string; name: string } | null;
           team?: { id: string } | null;
           state: {
             id: string;
@@ -345,6 +354,7 @@ export async function GET(
       state: issue.state,
       assignee: assigneesVisible ? issue.assignee : undefined,
       labels: labelsVisible ? issue.labels.nodes : [],
+      milestone: issue.projectMilestone ?? undefined,
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
       comments: issue.comments?.nodes ?? [],

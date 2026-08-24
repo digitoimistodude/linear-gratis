@@ -28,6 +28,7 @@ const EMPTY_FILTERS: FilterState = {
   labels: [],
   creators: [],
   projects: [],
+  milestones: [],
 }
 
 // Parse a comma-separated query param like `?statuses=Backlog,In Progress`.
@@ -43,6 +44,7 @@ const filtersFromSearchParams = (params: URLSearchParams): FilterState => ({
   labels: parseList(params.get('labels')),
   creators: parseList(params.get('creators')),
   projects: parseList(params.get('projects')),
+  milestones: parseList(params.get('milestones')),
 })
 
 const filtersToSearchParams = (filters: FilterState): URLSearchParams => {
@@ -54,6 +56,7 @@ const filtersToSearchParams = (filters: FilterState): URLSearchParams => {
   if (filters.labels.length) params.set('labels', filters.labels.join(','))
   if (filters.creators.length) params.set('creators', filters.creators.join(','))
   if (filters.projects.length) params.set('projects', filters.projects.join(','))
+  if (filters.milestones.length) params.set('milestones', filters.milestones.join(','))
   return params
 }
 
@@ -64,7 +67,8 @@ const filtersAreEmpty = (filters: FilterState): boolean =>
   filters.priorities.length === 0 &&
   filters.labels.length === 0 &&
   filters.creators.length === 0 &&
-  filters.projects.length === 0
+  filters.projects.length === 0 &&
+  filters.milestones.length === 0
 
 const storageKey = (slug: string, kind: 'filters' | 'sort') =>
   `public-view-${kind}:${slug}`
@@ -101,6 +105,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
     labels: [],
     creators: [],
     projects: [],
+    milestones: [],
   })
   const [showIssueModal, setShowIssueModal] = useState(false)
   const [showIssueDetail, setShowIssueDetail] = useState(false)
@@ -446,6 +451,7 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
       filters.assignees.length > 0 ||
       filters.priorities.length > 0 ||
       filters.labels.length > 0 ||
+      filters.milestones.length > 0 ||
       filters.creators.length > 0 ||
       filters.projects.length > 0
   }
@@ -710,6 +716,11 @@ export default function PublicViewPage({ params }: PublicViewPageProps) {
                 {filters.projects.length > 0 && (
                   <span className="px-2 py-1 bg-primary/10 text-primary rounded-full">
                     {filters.projects.length} project{filters.projects.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {filters.milestones.length > 0 && (
+                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-full">
+                    {filters.milestones.length} milestone{filters.milestones.length !== 1 ? 's' : ''}
                   </span>
                 )}
               </div>

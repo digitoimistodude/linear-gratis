@@ -38,6 +38,10 @@ export type LinearIssue = {
     id: string;
     name: string;
   };
+  milestone?: {
+    id: string;
+    name: string;
+  };
   createdAt: string;
   updatedAt: string;
   /** Set by the public-view API when the description came from a per-view
@@ -72,6 +76,7 @@ type IssueNode = {
   labels: { nodes: Array<{ id: string; name: string; color: string }> };
   parent?: { id: string; identifier: string; title: string };
   project?: { id: string; name: string };
+  projectMilestone?: { id: string; name: string };
   createdAt: string;
   updatedAt: string;
 };
@@ -184,6 +189,10 @@ export async function POST(request: NextRequest) {
               id
               name
             }
+            projectMilestone {
+              id
+              name
+            }
             createdAt
             updatedAt
           }
@@ -221,6 +230,7 @@ export async function POST(request: NextRequest) {
       assignee: issue.assignee,
       labels: issue.labels.nodes,
       parent: issue.parent,
+      milestone: issue.projectMilestone ?? undefined,
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
     }));

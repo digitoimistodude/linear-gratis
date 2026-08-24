@@ -106,3 +106,27 @@ export function EstimateIcon({ className = 'w-3.5 h-3.5' }: EstimateIconProps) {
     </svg>
   )
 }
+
+type MilestoneIconProps = {
+  className?: string
+}
+
+// Linear renders a project milestone as a diamond. Uses currentColor so it
+// inherits the surrounding badge's text colour like EstimateIcon does.
+export function MilestoneIcon({ className = 'w-3.5 h-3.5' }: MilestoneIconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      role="img"
+      aria-label="Milestone"
+    >
+      <path
+        fillRule="evenodd"
+        d="M6.94 1.94a1.5 1.5 0 0 1 2.12 0l5 5a1.5 1.5 0 0 1 0 2.12l-5 5a1.5 1.5 0 0 1-2.12 0l-5-5a1.5 1.5 0 0 1 0-2.12l5-5ZM8 3.06 3.06 8 8 12.94 12.94 8 8 3.06Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  )
+}
