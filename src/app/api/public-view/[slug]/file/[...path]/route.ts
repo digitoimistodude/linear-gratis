@@ -49,9 +49,21 @@ export async function GET(
 
     // Same header shape as our GraphQL calls; Linear documents that file
     // storage accepts the same token and authorization header as the API.
+    // redirect: 'manual' keeps the token on this host: whether a runtime
+    // strips Authorization on a cross-origin redirect is not something we want
+    // to depend on, so a redirect is refused below instead of followed.
     const upstream = await fetch(`https://${LINEAR_UPLOADS_HOST}/${filePath}`, {
       headers: { Authorization: token.trim() },
+      redirect: 'manual',
     })
+
+    if (upstream.status >= 300 && upstream.status < 400) {
+      // Log the status only; a Location header could carry a signed URL.
+      console.error('Linear file proxy: upstream redirected, refusing to follow', {
+        status: upstream.status,
+      })
+      return NextResponse.json({ error: 'File not found' }, { status: 502 })
+    }
 
     if (!upstream.ok || !upstream.body) {
       return NextResponse.json(
