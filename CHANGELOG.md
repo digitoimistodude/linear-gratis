@@ -1,3 +1,8 @@
+### 0.9.6: 2026-09-04
+
+* Proxy Linear-hosted images and attachments on shared views through `/api/public-view/[slug]/file/`, so they load for outsiders without a Linear session (dude-specific change)
+* Sign every proxied file URL per view, so the proxy only serves files that appeared in that view's own content (dude-specific change)
+
 ### 0.9.5: 2026-08-24
 
 * Add a milestone filter to the board and show the milestone on issue cards and in the issue detail modal (dude-specific change)

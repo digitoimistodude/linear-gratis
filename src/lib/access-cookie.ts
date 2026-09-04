@@ -21,7 +21,7 @@ function base64UrlDecode(value: string): string {
   return Buffer.from(padded.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
 }
 
-function getAccessCookieSecret(): string {
+export function getAccessCookieSecret(): string {
   const secret = process.env.ACCESS_COOKIE_SECRET || process.env.ENCRYPTION_KEY
   if (!secret) {
     throw new Error('ACCESS_COOKIE_SECRET or ENCRYPTION_KEY is required for protected public access cookies')
