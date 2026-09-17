@@ -1,9 +1,9 @@
 ### 0.9.6: 2026-09-17
 
-* Proxy Linear-hosted images and attachments on shared views through `/api/public-view/[slug]/file/`, so they load for outsiders without a Linear session (dude-specific change)
-* Sign every proxied file URL per view, so the proxy only serves files that appeared in that view's own content (dude-specific change)
-* Refuse redirects when fetching a proxied file from Linear, so the owner's token can only ever reach `uploads.linear.app` (dude-specific change)
-* Rewrite upload URLs in project update diffs too, which render as markdown like update bodies (dude-specific change)
+* Proxy Linear-hosted images on shared views (dude-specific change)
+* Sign proxied file URLs per view (dude-specific change)
+* Refuse redirects when proxying Linear files (dude-specific change)
+* Rewrite upload URLs in project update diffs (dude-specific change)
 
 ### 0.9.5: 2026-08-24
 
