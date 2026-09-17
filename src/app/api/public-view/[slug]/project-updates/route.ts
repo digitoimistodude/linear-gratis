@@ -158,6 +158,7 @@ export async function GET(
     const updates = result.data.project.projectUpdates.nodes.map((update) => ({
       ...update,
       body: rewriteLinearUploadUrls(update.body, view),
+      diffMarkdown: rewriteLinearUploadUrls(update.diffMarkdown, view),
     }))
 
     return NextResponse.json({
