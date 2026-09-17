@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { issueInViewScope } from '@/lib/view-scope';
 import { authorisePublicView } from '@/lib/public-view-auth';
+import { rewriteLinearUploadUrls } from '@/lib/linear-files';
 
 export type IssueComment = {
   id: string;
@@ -341,12 +342,16 @@ export async function GET(
     const effectiveDescription = override?.public_description
       ?? (descriptionsVisible ? issue.description : undefined);
 
+    // Images and attachments live on uploads.linear.app, which needs a Linear
+    // session. Point them at our signed proxy so outsiders can load them.
+    const description = rewriteLinearUploadUrls(effectiveDescription, viewData);
+
     const issueDetail: IssueDetail = {
       has_override: hasOverride,
       id: issue.id,
       identifier: issue.identifier,
       title: issue.title,
-      description: effectiveDescription,
+      description,
       priority: prioritiesVisible ? issue.priority : 0,
       priorityLabel: prioritiesVisible ? issue.priorityLabel : 'No priority',
       estimate: prioritiesVisible ? issue.estimate : undefined,
@@ -357,7 +362,10 @@ export async function GET(
       milestone: issue.projectMilestone ?? undefined,
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
-      comments: issue.comments?.nodes ?? [],
+      comments: (issue.comments?.nodes ?? []).map((c) => ({
+        ...c,
+        body: rewriteLinearUploadUrls(c.body, viewData),
+      })),
       history: (issue.history?.nodes ?? []).map((h) => ({
         id: h.id,
         createdAt: h.createdAt,

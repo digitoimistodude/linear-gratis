@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getLinearToken } from '@/lib/linear-token'
 import { authorisePublicView } from '@/lib/public-view-auth'
+import { rewriteLinearUploadUrls } from '@/lib/linear-files'
 
 interface RouteContext {
   params: Promise<{
@@ -152,10 +153,17 @@ export async function GET(
       throw new Error('No data returned from Linear API')
     }
 
+    // Update bodies embed images from uploads.linear.app, which needs a Linear
+    // session. Point them at our signed proxy so outsiders can load them.
+    const updates = result.data.project.projectUpdates.nodes.map((update) => ({
+      ...update,
+      body: rewriteLinearUploadUrls(update.body, view),
+    }))
+
     return NextResponse.json({
       success: true,
       project: result.data.project,
-      updates: result.data.project.projectUpdates.nodes
+      updates
     })
 
   } catch (error) {
