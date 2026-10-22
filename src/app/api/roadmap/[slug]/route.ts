@@ -4,7 +4,7 @@ import type { Roadmap, KanbanColumn } from '@/lib/supabase';
 import { getLinearToken } from '@/lib/linear-token';
 import { fetchRoadmapIssues, type RoadmapIssue } from '@/lib/linear';
 import { redactRoadmapIssue } from '@/lib/public-redaction';
-import { setRoadmapAccessCookie } from '@/lib/roadmap-auth';
+import { authoriseRoadmap, setRoadmapAccessCookie } from '@/lib/roadmap-auth';
 import bcrypt from 'bcryptjs';
 
 type VoteCount = {
@@ -58,40 +58,21 @@ export async function GET(
       );
     }
 
-    // Check if roadmap exists and is active
-    const { data: roadmapData, error: roadmapError } = await supabaseAdmin
-      .from('roadmaps')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
+    // Existence, expiry and password cookie checks. A browser that already
+    // proved the password (via POST below) carries a signed access cookie, so
+    // reloads load straight away instead of prompting again. Without a valid
+    // cookie this is the same 401 as before.
+    const auth = await authoriseRoadmap(slug, request);
+    if (!auth.ok) return auth.response;
+    const roadmap = auth.roadmap;
 
-    if (roadmapError || !roadmapData) {
-      return NextResponse.json(
-        { error: 'Roadmap not found or inactive' },
-        { status: 404 }
-      );
+    const response = await fetchRoadmapData(roadmap);
+    // Slide the cookie's expiry forward on every authenticated load so an
+    // active viewer is not logged out mid-session. Lifetime stays the same.
+    if (roadmap.password_protected && response.ok) {
+      setRoadmapAccessCookie(response, roadmap);
     }
-
-    const roadmap = roadmapData as Roadmap;
-
-    // Check if roadmap has expired
-    if (roadmap.expires_at && new Date(roadmap.expires_at) < new Date()) {
-      return NextResponse.json(
-        { error: 'This roadmap has expired' },
-        { status: 410 }
-      );
-    }
-
-    // Check if roadmap requires password
-    if (roadmap.password_protected) {
-      return NextResponse.json(
-        { error: 'Password required', requiresPassword: true },
-        { status: 401 }
-      );
-    }
-
-    return await fetchRoadmapData(roadmap);
+    return response;
 
   } catch (error) {
     console.error('Roadmap API error:', error);
@@ -166,7 +147,7 @@ export async function POST(
 
     const response = await fetchRoadmapData(roadmap);
     // Only vouch for the browser if the payload actually built.
-    if (response.status >= 200 && response.status < 300) {
+    if (response.ok) {
       setRoadmapAccessCookie(response, roadmap);
     }
     return response;
@@ -280,5 +261,9 @@ async function fetchRoadmapData(roadmap: Roadmap) {
     projects: Array.from(projectMap.values()),
   };
 
-  return NextResponse.json(response);
+  const json = NextResponse.json(response);
+  // The payload is per-viewer (password gated, owner token), so nothing in
+  // front of the Worker may cache it for another visitor.
+  json.headers.set('Cache-Control', 'private, no-store');
+  return json;
 }
