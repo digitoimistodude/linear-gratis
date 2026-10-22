@@ -1,3 +1,8 @@
+### 0.9.7: 2026-10-21
+
+* Honour the password access cookie on the view and roadmap GET endpoints, so deep links like `/view/slug/DEV-123` and reloads no longer ask for the password again within 24 hours (dude-specific change)
+* Refresh the access cookie on every authenticated load and mark view and roadmap payloads `private, no-store` (dude-specific change)
+
 ### 0.9.6: 2026-09-17
 
 * Proxy Linear-hosted images on shared views (dude-specific change)
