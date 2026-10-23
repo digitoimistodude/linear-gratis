@@ -1,3 +1,11 @@
+### 0.10.0: 2026-10-23
+
+* Upgrade Next.js from 15.5.23 to 16.4.2, React to 19.3.1 and `@opennextjs/cloudflare` to 1.20.13, so the worker builds again without the unsupported-version override (dude-specific change)
+* Build with Turbopack and drop the webpack `resolve.fallback` block (dude-specific change)
+* Keep `middleware.ts` on the edge runtime instead of renaming it to `proxy.ts`, which OpenNext runs as experimental Node middleware on workerd (dude-specific change)
+* Replace `next lint` with the ESLint CLI and flat config, with the React Compiler rules from `eslint-plugin-react-hooks` 7 off until the flagged call sites are fixed (dude-specific change)
+* Require Node 22 for wrangler 4.148 and later and add `.nvmrc` (dude-specific change)
+
 ### 0.9.7: 2026-10-22
 
 * Honour the password cookie on view and roadmap GET (dude-specific change)

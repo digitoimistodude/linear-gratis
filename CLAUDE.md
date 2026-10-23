@@ -44,9 +44,9 @@ baseline with `node .github/scripts/check-upstream-security.mjs <sha>`.
 
 ## Deployment
 
-- Build: `npx opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion`
-- Deploy: `npx wrangler deploy --x-autoconfig false`
-- Both flags exist only until DEV-1891 moves us to Next 16. OpenNext refuses to build Next 15.5 as out of support, and a plain `npx wrangler deploy` detects OpenNext, delegates to `opennextjs-cloudflare deploy`, rebuilds and hits the same gate. Drop the flags once the upgrade lands.
+- Build: `npm run build:worker`
+- Deploy: `npx wrangler deploy`
+- Node 22 or newer: wrangler 4.148 and later refuse to start on Node 20. `.nvmrc` pins 22, so `nvm use` before building or deploying
 - ALWAYS rebuild (`npm run build:worker`) before `npx wrangler deploy`. Wrangler ships whatever is already in `.open-next/`, so deploying without a fresh build can silently push the previous build's bundle. Verify the deploy by curling the live URL or checking a tagged string in the new chunk.
 - Secrets managed via `npx wrangler secret put <KEY>`
 - Local dev env vars in `.env.local` (gitignored)
