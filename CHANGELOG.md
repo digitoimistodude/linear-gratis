@@ -1,3 +1,7 @@
+### 0.9.8: 2026-11-11
+
+* Upgrade Next.js to 15.5.29 for CVE-2026-126187, Ref: DEV-2629
+
 ### 0.9.7: 2026-10-22
 
 * Honour the password cookie on view and roadmap GET (dude-specific change)
